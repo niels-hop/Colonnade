@@ -33,6 +33,7 @@ enum WindowDirection: String, CaseIterable, Identifiable, Codable {
 
     // Horizontal Fourths
     case firstFourth = "FirstFourth", secondFourth = "SecondFourth", thirdFourth = "ThirdFourth", fourthFourth = "FourthFourth"
+    case horizontalCenterFourth = "HorizontalCenterFourth"
     case leftThreeFourths = "LeftThreeFourths", rightThreeFourths = "RightThreeFourths"
 
     // Vertical Thirds
@@ -71,7 +72,7 @@ enum WindowDirection: String, CaseIterable, Identifiable, Codable {
     static var quarters: [WindowDirection] { [.topLeftQuarter, .topRightQuarter, .bottomLeftQuarter, .bottomRightQuarter] }
     static var horizontalThirds: [WindowDirection] { [.rightThird, .rightTwoThirds, .horizontalCenterThird, .leftTwoThirds, .leftThird] }
     static var verticalThirds: [WindowDirection] { [.topThird, .topTwoThirds, .verticalCenterThird, .bottomTwoThirds, .bottomThird] }
-    static var horizontalFourths: [WindowDirection] { [.firstFourth, .secondFourth, .thirdFourth, .fourthFourth, .leftThreeFourths, .rightThreeFourths] }
+    static var horizontalFourths: [WindowDirection] { [.firstFourth, .secondFourth, .thirdFourth, .fourthFourth, .horizontalCenterFourth, .leftThreeFourths, .rightThreeFourths] }
     static var screenSwitching: [WindowDirection] { [.nextScreen, .previousScreen, .leftScreen, .rightScreen, .topScreen, .bottomScreen] }
     static var sizeAdjustment: [WindowDirection] { [.larger, .smaller] }
     static var shrink: [WindowDirection] { [.shrinkTop, .shrinkBottom, .shrinkRight, .shrinkLeft, .shrinkHorizontal, .shrinkVertical] }
@@ -132,6 +133,7 @@ enum WindowDirection: String, CaseIterable, Identifiable, Codable {
         case .secondFourth: .init(x: 1.0 / 4.0, y: 0, width: 1.0 / 4.0, height: 1.0)
         case .thirdFourth: .init(x: 2.0 / 4.0, y: 0, width: 1.0 / 4.0, height: 1.0)
         case .fourthFourth: .init(x: 3.0 / 4.0, y: 0, width: 1.0 / 4.0, height: 1.0)
+        case .horizontalCenterFourth: .init(x: 3.0 / 8.0, y: 0, width: 1.0 / 4.0, height: 1.0)
         case .leftThreeFourths: .init(x: 0, y: 0, width: 3.0 / 4.0, height: 1.0)
         case .rightThreeFourths: .init(x: 1.0 / 4.0, y: 0, width: 3.0 / 4.0, height: 1.0)
         default: nil

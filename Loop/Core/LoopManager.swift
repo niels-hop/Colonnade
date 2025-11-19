@@ -22,6 +22,7 @@ final class LoopManager: ObservableObject {
     static var lastTargetFrame: CGRect = .zero
 
     private let radialMenuController = RadialMenuController()
+    private let ultrawideDockController = UltrawideDockController()
     private let previewController = PreviewController()
 
     private(set) lazy var keybindObserver = KeybindObserver(
@@ -198,7 +199,15 @@ extension LoopManager {
             )
         }
 
-        if Defaults[.radialMenuVisibility] {
+        if Defaults[.useUltrawideDock] {
+            ultrawideDockController.open(
+                position: initialMousePosition,
+                window: targetWindow,
+                startingAction: startingAction
+            )
+            // Update initialMousePosition to the snapped position (center of dock)
+            initialMousePosition = NSEvent.mouseLocation
+        } else if Defaults[.radialMenuVisibility] {
             radialMenuController.open(
                 position: initialMousePosition,
                 window: targetWindow,
@@ -209,6 +218,7 @@ extension LoopManager {
 
     private func closeWindows() {
         radialMenuController.close()
+        ultrawideDockController.close()
         previewController.close()
     }
 }
@@ -393,6 +403,7 @@ extension LoopManager {
             Task { @MainActor in
                 previewController.setAction(to: newAction)
                 radialMenuController.setAction(to: newAction)
+                ultrawideDockController.setAction(to: newAction)
 
                 if !Defaults[.previewVisibility], let screenToResizeOn, let targetWindow {
                     WindowEngine.resize(
@@ -415,6 +426,7 @@ extension LoopManager {
                         targetWindow = newWindow
                         previewController.setWindow(to: newWindow)
                         radialMenuController.setWindow(to: newWindow)
+                        ultrawideDockController.setWindow(to: newWindow)
 
                         // If the previous window was nil, then the preview may have not opened.
                         // So open them here just in case.
@@ -513,21 +525,51 @@ extension LoopManager {
 
             var resizeDirection: WindowAction = .init(.noAction)
 
-            // If mouse over 50 points away, select half or quarter positions
-            if distanceToMouse > 50 - Defaults[.radialMenuThickness] {
-                switch Int((angleToMouse.normalized().degrees + 22.5) / 45) {
-                case 0, 8: resizeDirection = Defaults[.radialMenuRight]
-                case 1: resizeDirection = Defaults[.radialMenuBottomRight]
-                case 2: resizeDirection = Defaults[.radialMenuBottom]
-                case 3: resizeDirection = Defaults[.radialMenuBottomLeft]
-                case 4: resizeDirection = Defaults[.radialMenuLeft]
-                case 5: resizeDirection = Defaults[.radialMenuTopLeft]
-                case 6: resizeDirection = Defaults[.radialMenuTop]
-                case 7: resizeDirection = Defaults[.radialMenuTopRight]
-                default: break
+            if Defaults[.useUltrawideDock] {
+                // Ultrawide Dock Logic - Divide dock into thirds with cycling
+                if let dockFrame = ultrawideDockController.dockFrame {
+                    let mouseX = currentMouseLocation.x
+                    let dockMinX = dockFrame.minX
+                    let dockMaxX = dockFrame.maxX
+                    let dockWidth = dockFrame.width
+
+                    // Calculate relative position on dock (0.0 = left edge, 1.0 = right edge)
+                    let relativePosition = (mouseX - dockMinX) / dockWidth
+
+                    // Divide into thirds - use cycle actions so users can cycle through options
+                    if relativePosition < 0.33 {
+                        // Left third - cycles through leftHalf, leftThird, leftTwoThirds
+                        resizeDirection = Defaults[.radialMenuLeft]
+                    } else if relativePosition < 0.67 {
+                        // Middle third - cycles through maximize, macOSCenter
+                        resizeDirection = Defaults[.radialMenuCenter]
+                    } else {
+                        // Right third - cycles through rightHalf, rightThird, rightTwoThirds
+                        resizeDirection = Defaults[.radialMenuRight]
+                    }
+                } else {
+                    // Fallback if dock frame is not available
+                    resizeDirection = Defaults[.radialMenuCenter]
                 }
-            } else if distanceToMouse > noActionDistance {
-                resizeDirection = Defaults[.radialMenuCenter]
+
+            } else {
+                // Radial Menu Logic
+                // If mouse over 50 points away, select half or quarter positions
+                if distanceToMouse > 50 - Defaults[.radialMenuThickness] {
+                    switch Int((angleToMouse.normalized().degrees + 22.5) / 45) {
+                    case 0, 8: resizeDirection = Defaults[.radialMenuRight]
+                    case 1: resizeDirection = Defaults[.radialMenuBottomRight]
+                    case 2: resizeDirection = Defaults[.radialMenuBottom]
+                    case 3: resizeDirection = Defaults[.radialMenuBottomLeft]
+                    case 4: resizeDirection = Defaults[.radialMenuLeft]
+                    case 5: resizeDirection = Defaults[.radialMenuTopLeft]
+                    case 6: resizeDirection = Defaults[.radialMenuTop]
+                    case 7: resizeDirection = Defaults[.radialMenuTopRight]
+                    default: break
+                    }
+                } else if distanceToMouse > noActionDistance {
+                    resizeDirection = Defaults[.radialMenuCenter]
+                }
             }
 
             changeAction(resizeDirection, canAdvanceCycle: false)

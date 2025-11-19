@@ -92,6 +92,8 @@ extension WindowDirection {
             String(localized: "Third Fourth", comment: "Window action")
         case .fourthFourth:
             String(localized: "Fourth Fourth", comment: "Window action")
+        case .horizontalCenterFourth:
+            String(localized: "Horizontal Center Fourth", comment: "Window action")
         case .leftThreeFourths:
             String(localized: "Left Three Fourths", comment: "Window action")
         case .rightThreeFourths:

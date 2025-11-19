@@ -33,6 +33,9 @@ extension Defaults.Keys {
     /// Reset with `defaults delete com.MrKai77.Loop lockRadialMenuToCenter`
     static let lockRadialMenuToCenter = Key<Bool>("lockRadialMenuToCenter", default: false, iCloud: true)
 
+    // Ultrawide Dock
+    static let useUltrawideDock = Key<Bool>("useUltrawideDock", default: true, iCloud: true)
+
     // Preview
     static let previewVisibility = Key<Bool>("previewVisibility", default: true, iCloud: true)
     static let previewPadding = Key<CGFloat>("previewPadding", default: 10, iCloud: true)
@@ -176,8 +179,9 @@ extension Defaults.Keys {
     static let radialMenuRight = Key<WindowAction>(
         "radialMenuRight",
         default: .init([
-            .init(.rightHalf),
+            .init(.fourthFourth),
             .init(.rightThird),
+            .init(.rightHalf),
             .init(.rightTwoThirds)
         ]),
         iCloud: true
@@ -196,8 +200,9 @@ extension Defaults.Keys {
     static let radialMenuLeft = Key<WindowAction>(
         "radialMenuLeft",
         default: .init([
-            .init(.leftHalf),
+            .init(.firstFourth),
             .init(.leftThird),
+            .init(.leftHalf),
             .init(.leftTwoThirds)
         ]),
         iCloud: true
@@ -206,8 +211,9 @@ extension Defaults.Keys {
     static let radialMenuCenter = Key<WindowAction>(
         "radialMenuCenter",
         default: .init([
-            .init(.maximize),
-            .init(.macOSCenter)
+            .init(.horizontalCenterFourth),
+            .init(.horizontalCenterThird),
+            .init(.horizontalCenterHalf)
         ]),
         iCloud: true
     )
