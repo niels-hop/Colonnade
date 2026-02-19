@@ -190,6 +190,19 @@ extension LoopManager {
         LoopManager.lastTargetFrame = .zero
     }
 
+    private var shouldUseUltrawideDock: Bool {
+        let triggerMode = Defaults[.ultrawideDockTriggerMode]
+        switch triggerMode {
+        case .alwaysOn:
+            return true
+        case .never:
+            return false
+        case .automatic:
+            guard let screen = screenToResizeOn else { return false }
+            return screen.frame.width / screen.frame.height >= 2.0
+        }
+    }
+
     private func openWindows(startingAction: WindowAction?) {
         if Defaults[.previewVisibility], let targetWindow, let screenToResizeOn {
             previewController.open(
@@ -199,7 +212,7 @@ extension LoopManager {
             )
         }
 
-        if Defaults[.useUltrawideDock] {
+        if shouldUseUltrawideDock {
             ultrawideDockController.open(
                 position: initialMousePosition,
                 window: targetWindow,
@@ -525,7 +538,7 @@ extension LoopManager {
 
             var resizeDirection: WindowAction = .init(.noAction)
 
-            if Defaults[.useUltrawideDock] {
+            if shouldUseUltrawideDock {
                 // Ultrawide Dock Logic - Divide dock into thirds with cycling
                 if let dockFrame = ultrawideDockController.dockFrame {
                     let mouseX = currentMouseLocation.x

@@ -1,0 +1,9 @@
+version: 1
+name: Loop
+description: macOS window management app in Swift
+windows:
+    - name: code
+      cmd: claude
+    - name: git
+      cmd: lazygit
+    - name: shell

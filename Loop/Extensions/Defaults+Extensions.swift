@@ -9,6 +9,22 @@
 import Defaults
 import SwiftUI
 
+public enum UltrawideDockTriggerMode: String, Defaults.Serializable, CaseIterable, Identifiable {
+    case automatic
+    case alwaysOn
+    case never
+
+    public var id: Self { self }
+
+    var label: LocalizedStringKey {
+        switch self {
+        case .automatic: "Automatic"
+        case .alwaysOn: "Always On"
+        case .never: "Never"
+        }
+    }
+}
+
 // MARK: - UI-configurable Settings
 
 extension Defaults.Keys {
@@ -34,6 +50,8 @@ extension Defaults.Keys {
     static let lockRadialMenuToCenter = Key<Bool>("lockRadialMenuToCenter", default: false, iCloud: true)
 
     // Ultrawide Dock
+    static let ultrawideDockTriggerMode = Key<UltrawideDockTriggerMode>("ultrawideDockTriggerMode", default: .automatic, iCloud: true)
+    @available(*, deprecated, message: "Use ultrawideDockTriggerMode instead")
     static let useUltrawideDock = Key<Bool>("useUltrawideDock", default: true, iCloud: true)
 
     // Preview

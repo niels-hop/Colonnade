@@ -33,6 +33,7 @@ struct BehaviorConfigurationView: View {
     @Default(.stashedWindowVisiblePadding) var stashedWindowVisiblePadding
     @Default(.animateStashedWindows) var animateStashedWindows
     @Default(.shiftFocusWhenStashed) var shiftFocusWhenStashed
+    @Default(.ultrawideDockTriggerMode) var ultrawideDockTriggerMode
 
     @State private var isPaddingConfigurationViewPresented = false
 
@@ -40,6 +41,7 @@ struct BehaviorConfigurationView: View {
         Group {
             generalSection
             windowSection
+            ultrawideDockSection
             cursorSection
             windowSnappingSection
             stageManagerSection
@@ -102,6 +104,24 @@ struct BehaviorConfigurationView: View {
                             .frame(width: 400)
                     }
                 }
+            }
+        }
+    }
+
+    private var ultrawideDockSection: some View {
+        LuminareSection("Ultrawide Dock") {
+            LuminareSliderPicker(
+                "Trigger Mode",
+                UltrawideDockTriggerMode.allCases,
+                selection: $ultrawideDockTriggerMode
+            ) { item in
+                Text(item.label)
+            }
+
+            if ultrawideDockTriggerMode == .automatic {
+                Text("The dock will automatically appear on screens with an aspect ratio of 2:1 or wider.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }
