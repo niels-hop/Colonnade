@@ -50,10 +50,11 @@ struct BehaviorConfigurationView: View {
         .animation(
             luminareAnimation,
             value: [
-                enablePadding,
-                resizeWindowUnderCursor,
-                windowSnapping,
-                respectStageManager
+                AnyHashable(enablePadding),
+                AnyHashable(resizeWindowUnderCursor),
+                AnyHashable(windowSnapping),
+                AnyHashable(respectStageManager),
+                AnyHashable(ultrawideDockTriggerMode)
             ]
         )
     }
@@ -109,20 +110,27 @@ struct BehaviorConfigurationView: View {
     }
 
     private var ultrawideDockSection: some View {
-        LuminareSection("Ultrawide Dock") {
+        LuminareSection(String(localized: "Ultrawide Dock", comment: "Section header shown in settings")) {
             LuminareSliderPicker(
-                "Trigger Mode",
                 UltrawideDockTriggerMode.allCases,
                 selection: $ultrawideDockTriggerMode
             ) { item in
                 Text(item.label)
+            } label: {
+                Text("Trigger mode")
+                    .padding(.trailing, 4)
+                    .luminarePopover(attachedTo: .topTrailing) {
+                        Text("Replaces the radial menu with a screen-shaped dock that shows live previews\nof your windows. Best suited for wide and ultrawide displays.")
+                            .padding(6)
+                    }
             }
 
-            if ultrawideDockTriggerMode == .automatic {
-                Text("The dock will automatically appear on screens with an aspect ratio of 2:1 or wider.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(ultrawideDockTriggerMode.caption)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
         }
     }
 

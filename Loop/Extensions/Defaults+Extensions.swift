@@ -23,6 +23,14 @@ public enum UltrawideDockTriggerMode: String, Defaults.Serializable, CaseIterabl
         case .never: "Never"
         }
     }
+
+    var caption: LocalizedStringKey {
+        switch self {
+        case .automatic: "The dock replaces the radial menu on screens with an aspect ratio of 2:1 or wider."
+        case .alwaysOn: "The dock always replaces the radial menu, regardless of the screen's aspect ratio."
+        case .never: "The radial menu is used on every screen."
+        }
+    }
 }
 
 // MARK: - UI-configurable Settings

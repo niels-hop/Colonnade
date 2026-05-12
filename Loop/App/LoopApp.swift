@@ -13,6 +13,7 @@ struct LoopApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State var isMenubarItemPresented: Bool = false
     @Default(.hideMenuBarIcon) var hideMenuBarIcon
+    @Default(.ultrawideDockTriggerMode) var ultrawideDockTriggerMode
 
     var body: some Scene {
         MenuBarExtra(Bundle.main.appName, image: "menubarIcon", isInserted: Binding.constant(!hideMenuBarIcon)) {
@@ -21,6 +22,19 @@ struct LoopApp: App {
                 Text(text)
                     .font(.system(size: 11, weight: .semibold))
             #endif
+
+            Picker(selection: $ultrawideDockTriggerMode) {
+                ForEach(UltrawideDockTriggerMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "rectangle.split.3x1")
+                    Text("Ultrawide Dock")
+                }
+            }
+
+            Divider()
 
             Button {
                 if let url = URL(string: "https://github.com/sponsors/MrKai77") {

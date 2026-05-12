@@ -13,10 +13,21 @@ struct RadialMenuConfigurationView: View {
     @Default(.radialMenuVisibility) private var radialMenuVisibility
     @Default(.radialMenuCornerRadius) private var radialMenuCornerRadius
     @Default(.radialMenuThickness) private var radialMenuThickness
+    @Default(.ultrawideDockTriggerMode) private var ultrawideDockTriggerMode
 
     var body: some View {
         LuminareSection {
-            LuminareToggle("Radial menu", isOn: $radialMenuVisibility)
+            LuminareToggle(isOn: $radialMenuVisibility) {
+                Text("Radial menu")
+                    .padding(.trailing, 4)
+                    .luminarePopover(
+                        attachedTo: .topTrailing,
+                        hidden: ultrawideDockTriggerMode == .never
+                    ) {
+                        Text("The Ultrawide Dock replaces the radial menu when it's active.\nAdjust its behavior under Behavior → Ultrawide Dock.")
+                            .padding(6)
+                    }
+            }
 
             if radialMenuVisibility {
                 LuminareSlider(
