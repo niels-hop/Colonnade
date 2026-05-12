@@ -56,11 +56,7 @@ final class Updater: ObservableObject {
     }
 
     private static func checkIfUpdatesEnabled() -> Bool {
-        if let env = ProcessInfo.processInfo.environment["LOOP_SKIP_UPDATE_CHECK"],
-           env == "1" || env.lowercased() == "true" {
-            return false
-        }
-        return Defaults[.updatesEnabled]
+        false
     }
 
     private func makeUpdateCheckerTask() -> Task<(), Never>? {
