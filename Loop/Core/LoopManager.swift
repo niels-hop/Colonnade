@@ -46,6 +46,11 @@ final class LoopManager: ObservableObject {
         callback: leftMouseDown
     )
 
+    private(set) lazy var scrollWheelMonitor = PassiveEventMonitor(
+        events: [.scrollWheel],
+        callback: scrollWheel
+    )
+
     private var accessibilityCheckerTask: Task<(), Never>?
 
     private(set) var isLoopActive: Bool = false
@@ -130,6 +135,7 @@ extension LoopManager {
         if !Defaults[.disableCursorInteraction] {
             mouseMovedEventMonitor.start()
             leftClickMonitor.start()
+            scrollWheelMonitor.start()
         }
 
         if !Defaults[.hideUntilDirectionIsChosen] {
@@ -160,6 +166,7 @@ extension LoopManager {
 
         mouseMovedEventMonitor.stop()
         leftClickMonitor.stop()
+        scrollWheelMonitor.stop()
 
         // Handle normal actions with a target window
         if let targetWindow,
@@ -539,32 +546,14 @@ extension LoopManager {
             var resizeDirection: WindowAction = .init(.noAction)
 
             if shouldUseUltrawideDock {
-                // Ultrawide Dock Logic - Divide dock into thirds with cycling
-                if let dockFrame = ultrawideDockController.dockFrame {
-                    let mouseX = currentMouseLocation.x
-                    let dockMinX = dockFrame.minX
-                    let dockMaxX = dockFrame.maxX
-                    let dockWidth = dockFrame.width
-
-                    // Calculate relative position on dock (0.0 = left edge, 1.0 = right edge)
-                    let relativePosition = (mouseX - dockMinX) / dockWidth
-
-                    // Divide into thirds - use cycle actions so users can cycle through options
-                    if relativePosition < 0.33 {
-                        // Left third - cycles through leftHalf, leftThird, leftTwoThirds
-                        resizeDirection = Defaults[.radialMenuLeft]
-                    } else if relativePosition < 0.67 {
-                        // Middle third - cycles through maximize, macOSCenter
-                        resizeDirection = Defaults[.radialMenuCenter]
-                    } else {
-                        // Right third - cycles through rightHalf, rightThird, rightTwoThirds
-                        resizeDirection = Defaults[.radialMenuRight]
-                    }
+                // Anchor-snap model: the viewmodel selects the nearest anchor (screen edge,
+                // window-adjacent, or gap-center) and produces a matching custom action.
+                // Click cycles size; scroll wheel fine-tunes. See UltrawideDockViewModel.Anchor.
+                if let action = ultrawideDockController.updateForMouseX(currentMouseLocation.x) {
+                    resizeDirection = action
                 } else {
-                    // Fallback if dock frame is not available
                     resizeDirection = Defaults[.radialMenuCenter]
                 }
-
             } else {
                 // Radial Menu Logic
                 // If mouse over 50 points away, select half or quarter positions
@@ -602,8 +591,39 @@ extension LoopManager {
                 return
             }
 
+            // In ultrawide-dock mode, clicks cycle the size at the active anchor (e.g. 1/2 →
+            // 1/3 → 2/3) instead of cycling through preset radial-menu actions.
+            if shouldUseUltrawideDock, ultrawideDockController.isActive {
+                if let action = ultrawideDockController.cycleSize() {
+                    changeAction(action, disableHapticFeedback: false, canAdvanceCycle: false)
+                }
+                return
+            }
+
             if let parentCycleAction {
                 changeAction(parentCycleAction, disableHapticFeedback: true)
+            }
+        }
+    }
+
+    /// Scroll-wheel fine-tunes the width at the current anchor while the ultrawide dock is open.
+    /// One detent ≈ 4% of the available gap; sign follows the OS's natural-scroll setting.
+    private func scrollWheel(cgEvent event: CGEvent) {
+        Task { @MainActor [weak self] in
+            guard let self, isLoopActive, shouldUseUltrawideDock, ultrawideDockController.isActive else {
+                return
+            }
+
+            // Use the vertical scroll axis: scroll up = grow, scroll down = shrink.
+            // Pixel value gives sub-detent precision on trackpads; clamp so a fast flick can't
+            // overshoot one full step in one event.
+            let dyPixels = event.getDoubleValueField(.scrollWheelEventPointDeltaAxis1)
+            let dyLine = event.getDoubleValueField(.scrollWheelEventDeltaAxis1)
+            let raw = dyPixels != 0 ? dyPixels / 200.0 : dyLine * 0.04
+            let delta = max(-0.1, min(0.1, raw))
+            if delta == 0 { return }
+            if let action = ultrawideDockController.adjustSize(by: delta) {
+                changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
             }
         }
     }

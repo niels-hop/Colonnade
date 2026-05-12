@@ -140,4 +140,32 @@ final class UltrawideDockController {
     var dockFrame: CGRect? {
         controller?.window?.frame
     }
+
+    /// True while the dock panel is open and driving placement.
+    var isActive: Bool {
+        controller != nil
+    }
+
+    /// Hover: maps screen mouse-X to the nearest anchor and returns the resulting action.
+    @discardableResult
+    func updateForMouseX(_ screenMouseX: Double) -> WindowAction? {
+        viewModel?.updateForMouseX(screenMouseX)
+    }
+
+    /// Click on the current anchor cycles through its size stops (e.g. 1/2 → 1/3 → 2/3).
+    @discardableResult
+    func cycleSize() -> WindowAction? {
+        viewModel?.cycleSize()
+    }
+
+    /// Scroll wheel fine-tune. `delta` is in fraction-of-maxSpan units.
+    @discardableResult
+    func adjustSize(by delta: Double) -> WindowAction? {
+        viewModel?.adjustSize(by: delta)
+    }
+
+    /// The currently computed action — source of truth while the dock is open.
+    var currentAction: WindowAction? {
+        viewModel?.currentAction
+    }
 }
