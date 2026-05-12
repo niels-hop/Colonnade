@@ -89,6 +89,30 @@ struct UltrawideDockView: View {
                         .zIndex(Double(-windowFrame.zIndex)) // SwiftUI zIndex (negative so lower values are behind)
                 }
 
+                // Anchor tickmarks — short vertical lines at each snap point along the top
+                // and bottom edges. The active anchor is rendered in the accent color so the
+                // user can see which snap point will commit when releasing the loop trigger.
+                ForEach(viewModel.anchors) { anchor in
+                    let isActive = anchor.id == viewModel.activeAnchorID
+                    let tickColor: Color = isActive
+                        ? accentColorController.color1
+                        : Color.white.opacity(0.35)
+                    let tickHeight: CGFloat = isActive ? 10 : 6
+                    let tickWidth: CGFloat = isActive ? 2 : 1
+
+                    RoundedRectangle(cornerRadius: tickWidth / 2)
+                        .fill(tickColor)
+                        .frame(width: tickWidth, height: tickHeight)
+                        .position(x: anchor.anchorX * width, y: tickHeight / 2)
+                        .zIndex(500)
+
+                    RoundedRectangle(cornerRadius: tickWidth / 2)
+                        .fill(tickColor)
+                        .frame(width: tickWidth, height: tickHeight)
+                        .position(x: anchor.anchorX * width, y: height - tickHeight / 2)
+                        .zIndex(500)
+                }
+
                 // Active Preview Window
                 RoundedRectangle(cornerRadius: 5)
                     .fill(
@@ -126,5 +150,7 @@ struct UltrawideDockView: View {
         .fixedSize()
         .animation(luminareAnimation, value: [accentColorController.color1, accentColorController.color2])
         .animation(luminareAnimation, value: viewModel.existingWindows.count)
+        .animation(luminareAnimation, value: viewModel.anchors.count)
+        .animation(luminareAnimation, value: viewModel.activeAnchorID)
     }
 }
