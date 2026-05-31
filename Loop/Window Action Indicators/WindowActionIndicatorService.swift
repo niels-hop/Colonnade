@@ -25,8 +25,11 @@ final class WindowActionIndicatorService {
         }
 
         // On ultrawide screens the dock replaces the radial menu as the primary placement UI.
-        // It opens once and is then kept in sync via `setWindow`/`setAction`.
+        // It opens once and is then kept in sync via `setWindow`/`setAction`. The screen is only
+        // resolved on a later `openAndUpdate` call, so the radial menu may have opened on the first
+        // (screen-less) call — explicitly close the other indicator so the two can't both show.
         if UltrawideDockController.shouldUseUltrawideDock(for: context.screen) {
+            radialMenuController.close()
             ultrawideDockController.open(
                 screen: context.screen,
                 window: context.window,
@@ -37,6 +40,7 @@ final class WindowActionIndicatorService {
             }
             ultrawideDockController.setAction(to: context.action)
         } else if Defaults[.radialMenuVisibility] {
+            ultrawideDockController.close()
             radialMenuController.open(context: context)
         }
     }

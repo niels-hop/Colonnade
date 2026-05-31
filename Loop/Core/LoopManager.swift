@@ -264,12 +264,6 @@ extension LoopManager {
 
         await changeAction(pendingOpeningAction ?? startingAction, disableHapticFeedback: true)
 
-        // The target screen is resolved during the first `changeAction`, so the indicator service
-        // now knows whether the Ultrawide Dock took over from the radial menu. Mirror that decision
-        // for the (non-isolated) mouse observer's dock branch.
-        let dockActive = indicatorService.isDockActive
-        isDockActiveMirror.withLock { $0 = dockActive }
-
         triggerKeyTimeoutTimer.start()
     }
 
@@ -595,6 +589,12 @@ extension LoopManager {
         }
 
         resizeContext.setScreen(to: targetScreen)
+
+        // The dock-vs-radial decision depends on the screen, which is only known here. Update the
+        // mirror now — before `openAndUpdate` opens the dock and warps the cursor — so the mouse
+        // observer's dock branch is already active when the warp's first mouse event arrives.
+        let dockActive = UltrawideDockController.shouldUseUltrawideDock(for: targetScreen)
+        isDockActiveMirror.withLock { $0 = dockActive }
 
         if !resizeContext.action.direction.isNoOp {
             // If a screen was previously not selected, then the preview needs to be opened.
