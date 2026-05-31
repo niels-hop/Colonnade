@@ -57,7 +57,7 @@ extension AXUIElement {
         return element
     }
 
-    // Only used when experimenting
+    /// Only used when experimenting :)
     func getAttributeNames() -> [String]? {
         var ref: CFArray?
         let error = AXUIElementCopyAttributeNames(self, &ref)
@@ -126,7 +126,7 @@ extension AXUIElement {
         }
     }
 
-    func getPID() throws -> pid_t? {
+    func getPID() throws -> pid_t {
         var pid: pid_t = 0
         let error = AXUIElementGetPid(self, &pid)
 
@@ -139,7 +139,7 @@ extension AXUIElement {
 
     func getWindowID() throws -> CGWindowID {
         var id: CGWindowID = 0
-        let error = _AXUIElementGetWindow(self, &id)
+        let error = AXUIElementGetWindow(self, &id)
 
         guard error == .success else {
             throw error

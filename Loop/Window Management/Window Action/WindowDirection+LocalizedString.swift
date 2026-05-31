@@ -12,13 +12,14 @@ extension WindowDirection {
     var infoText: LocalizedStringKey? {
         switch self {
         case .macOSCenter: "\(name) places windows slightly above the absolute center,\nwhich can be found more ergonomic."
+        case .stash: "A single \(name) action can only track one window. To stash\nmultiple windows, add additional \(name) actions."
         default: nil
         }
     }
 
     var name: String {
         switch self {
-        case .noAction:
+        case .noAction, .noSelection:
             String(localized: "No Action", comment: "Window action: no selection")
         case .maximize:
             String(localized: "Maximize", comment: "Window action")
@@ -28,6 +29,8 @@ extension WindowDirection {
             String(localized: "Maximize Height", comment: "Window action")
         case .maximizeWidth:
             String(localized: "Maximize Width", comment: "Window action")
+        case .fillAvailableSpace:
+            String(localized: "Fill Available Space", comment: "Window action")
         case .fullscreen:
             String(localized: "Fullscreen", comment: "Window action")
         case .undo:
@@ -114,6 +117,10 @@ extension WindowDirection {
             String(localized: "Larger", comment: "Window action")
         case .smaller:
             String(localized: "Smaller", comment: "Window action")
+        case .scaleUp:
+            String(localized: "Larger (Proportional)", comment: "Window action")
+        case .scaleDown:
+            String(localized: "Smaller (Proportional)", comment: "Window action")
         case .shrinkTop:
             String(localized: "Shrink Top", comment: "Window action")
         case .shrinkBottom:
@@ -154,6 +161,8 @@ extension WindowDirection {
             String(localized: "Focus Right", comment: "Window action")
         case .focusLeft:
             String(localized: "Focus Left", comment: "Window action")
+        case .focusNextInStack:
+            String(localized: "Focus Next In Stack", comment: "Window action")
         case .stash:
             String(localized: "Stash", comment: "Window action")
         case .unstash:

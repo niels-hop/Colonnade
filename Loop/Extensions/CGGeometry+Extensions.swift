@@ -14,12 +14,11 @@ extension CGFloat {
 }
 
 extension CGPoint {
-    func angle(to comparisonPoint: CGPoint) -> CGFloat {
+    func angle(to comparisonPoint: CGPoint) -> Angle {
         let originX = comparisonPoint.x - x
         let originY = comparisonPoint.y - y
         let bearingRadians = -atan2f(Float(originY), Float(originX))
-
-        return CGFloat(bearingRadians)
+        return .radians(Double(bearingRadians))
     }
 
     func distance(to comparisonPoint: CGPoint) -> CGFloat {
@@ -61,6 +60,19 @@ extension CGSize {
             width: width,
             height: height
         )
+    }
+
+    func fitting(aspectRatio: CGFloat) -> CGSize {
+        guard width > 0, height > 0, aspectRatio > 0 else {
+            return self
+        }
+
+        let sizeAspectRatio = width / height
+        if sizeAspectRatio > aspectRatio {
+            return CGSize(width: height * aspectRatio, height: height)
+        } else {
+            return CGSize(width: width, height: width / aspectRatio)
+        }
     }
 }
 
@@ -188,17 +200,6 @@ extension CGRect {
         }
 
         return result
-    }
-
-    /// Returns a new rectangle with integer values for the origin and size.
-    /// - Returns: A new rectangle with integer values for the origin and size.
-    func integerRect() -> CGRect {
-        CGRect(
-            x: floor(minX),
-            y: floor(minY),
-            width: floor(width),
-            height: floor(height)
-        )
     }
 
     /// Returns true if the rectangle is finite, false otherwise.

@@ -8,16 +8,24 @@
 import SwiftUI
 
 extension View {
-    // Make it easier to receive notifications SwiftUI views
-    func onReceive(
-        _ name: Notification.Name,
-        center: NotificationCenter = .default,
-        object: AnyObject? = nil,
-        perform action: @escaping (Notification) -> ()
+    @inlinable
+    @ViewBuilder
+    func onChange(
+        of value: some Equatable,
+        initial: Bool,
+        action: @escaping () -> ()
     ) -> some View {
-        onReceive(
-            center.publisher(for: name, object: object),
-            perform: action
-        )
+        if initial {
+            onChange(of: value) { _ in
+                action()
+            }
+            .onAppear {
+                action()
+            }
+        } else {
+            onChange(of: value) { _ in
+                action()
+            }
+        }
     }
 }

@@ -7,7 +7,6 @@
 
 import Foundation
 
-// Returns the current build number
 extension Bundle {
     var appName: String {
         getInfo("CFBundleName") ?? "⚠️"
@@ -31,6 +30,10 @@ extension Bundle {
 
     var appVersion: String? {
         getInfo("CFBundleShortVersionString")
+    }
+
+    var bundleURL: URL {
+        URL(fileURLWithPath: bundlePath)
     }
 
     func getInfo(_ str: String) -> String? {

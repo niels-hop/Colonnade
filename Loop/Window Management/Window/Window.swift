@@ -6,62 +6,82 @@
 //
 
 import Defaults
-import OSLog
+import Scribe
 import SwiftUI
 
-@_silgen_name("_AXUIElementGetWindow") @discardableResult
-func _AXUIElementGetWindow(_ axUiElement: AXUIElement, _ wid: inout CGWindowID) -> AXError
-
-@_silgen_name("GetProcessForPID") @discardableResult
-func GetProcessForPID(_ pid: pid_t, _ psn: inout ProcessSerialNumber) -> OSStatus
-
-@_silgen_name("_SLPSSetFrontProcessWithOptions") @discardableResult
-func _SLPSSetFrontProcessWithOptions(_ psn: inout ProcessSerialNumber, _ wid: UInt32, _ mode: UInt32) -> CGError
-
-@_silgen_name("SLPSPostEventRecordTo") @discardableResult
-func SLPSPostEventRecordTo(_ psn: inout ProcessSerialNumber, _ bytes: inout UInt8) -> CGError
-
-let kCPSUserGenerated: UInt32 = 0x200
-
 enum WindowError: LocalizedError {
-    case invalidWindow
+    case sheetWindow
+    case blockedBundleID
+    case cannotGetWindow
+    case filteredOutFromWindowInfo
+    case invalidWindowLevel(CGWindowLevel)
 
-    var errorDescription: String {
+    var errorDescription: String? {
         switch self {
-        case .invalidWindow:
-            "Invalid window"
+        case .sheetWindow:
+            "Invalid window: sheet"
+        case .blockedBundleID:
+            "Invalid window: blocked bundle ID"
+        case .cannotGetWindow:
+            "Could not get the element's window"
+        case .filteredOutFromWindowInfo:
+            "Filtered out from window info"
+        case let .invalidWindowLevel(level):
+            "Invalid window: level \(level) is outside the manageable range"
         }
     }
 }
 
+@Loggable
 final class Window {
     let axWindow: AXUIElement
     let cgWindowID: CGWindowID
+    let pid: pid_t
     let nsRunningApplication: NSRunningApplication?
 
-    private let logger = Logger(category: "Window")
+    private static let invalidBundleIDs: Set<String> = [
+        "com.apple.PIPAgent", // PIP windows
+        "com.apple.notificationcenterui" // Widgets & Notification Center
+    ]
+
+    var isOwnWindow: Bool {
+        nsRunningApplication?.bundleIdentifier == Bundle.main.bundleIdentifier
+    }
 
     /// Initialize a window from an AXUIElement
     /// - Parameter element: The AXUIElement to initialize the window with. If it is not a window, an error will be thrown
-    init(element: AXUIElement) throws {
+    init(
+        element: AXUIElement,
+        pid: pid_t? = nil,
+        nsRunningApplication: NSRunningApplication? = nil
+    ) throws {
         self.axWindow = element
+        self.cgWindowID = try element.getWindowID()
 
-        let pid = try axWindow.getPID()
-        self.nsRunningApplication = NSWorkspace.shared.runningApplications.first {
-            $0.processIdentifier == pid
+        if let nsRunningApplication {
+            self.pid = nsRunningApplication.processIdentifier
+            self.nsRunningApplication = nsRunningApplication
+        } else if let pid {
+            self.pid = pid
+            self.nsRunningApplication = NSRunningApplication(processIdentifier: pid)
+        } else {
+            let pid = try axWindow.getPID()
+            self.pid = pid
+            self.nsRunningApplication = NSRunningApplication(processIdentifier: pid)
         }
 
-        self.cgWindowID = try axWindow.getWindowID()
-
-        if self.role != .window,
-           self.subrole != .standardWindow {
-            throw WindowError.invalidWindow
+        guard role != .sheet else {
+            throw WindowError.sheetWindow
         }
 
-        // Check if this is a widget
-        if let title = nsRunningApplication?.localizedName,
-           title == "Notification Center" {
-            throw WindowError.invalidWindow
+        if let level = SkyLightToolBelt.getWindowLevel(windowID: cgWindowID),
+           level < kCGNormalWindowLevel || level > kCGDraggingWindowLevel {
+            throw WindowError.invalidWindowLevel(level)
+        }
+
+        if let bundleIdentifier = nsRunningApplication?.bundleIdentifier,
+           Self.invalidBundleIDs.contains(bundleIdentifier) {
+            throw WindowError.blockedBundleID
         }
     }
 
@@ -70,85 +90,110 @@ final class Window {
     convenience init(pid: pid_t) throws {
         let element = AXUIElementCreateApplication(pid)
         guard let window: AXUIElement = try element.getValue(.focusedWindow) else {
-            throw WindowError.invalidWindow
+            throw WindowError.cannotGetWindow
         }
-        try self.init(element: window)
+        try self.init(
+            element: window,
+            pid: pid,
+            nsRunningApplication: nil
+        )
     }
 
-    /// Initialize a window from an entry in a dictionary returned by `CGWindowListCopyWindowInfo`.
+    /// Retrieve a window from a `CGWindowID`.
+    /// - Parameter windowID: The window ID to look up.
+    static func fromWindowID(_ windowID: CGWindowID) throws -> Window {
+        guard let windowInfoList = CGWindowListCopyWindowInfo([.optionIncludingWindow], windowID) as? [[String: AnyObject]],
+              let windowInfo = windowInfoList.first
+        else {
+            throw WindowError.cannotGetWindow
+        }
+
+        return try fromWindowInfo(windowInfo)
+    }
+
+    /// Retrieve a window from an entry in a dictionary returned by `CGWindowListCopyWindowInfo`.
     /// - Parameter windowInfo: The dictionary containing information about the window.
-    convenience init(windowInfo: [String: AnyObject]) throws {
+    static func fromWindowInfo(_ windowInfo: [String: AnyObject]) throws -> Window {
         // First, check if we can initialize a window simply based on its PID.
         guard
             let alpha = windowInfo[kCGWindowAlpha as String] as? Double, alpha > 0.01, // Ignore invisible windows
             let pid = windowInfo[kCGWindowOwnerPID as String] as? pid_t
         else {
-            throw WindowError.invalidWindow
+            throw WindowError.filteredOutFromWindowInfo
         }
 
-        if let level = windowInfo[kCGWindowLayer as String] as? Int,
+        if let level = windowInfo[kCGWindowLayer as String] as? CGWindowLevel,
            level < kCGNormalWindowLevel || level > kCGDraggingWindowLevel {
-            throw WindowError.invalidWindow
+            throw WindowError.invalidWindowLevel(level)
         }
 
         let element = AXUIElementCreateApplication(pid)
-        guard let windows: [AXUIElement] = try element.getValue(.windows),
-              !windows.isEmpty
+        guard let windowElements: [AXUIElement] = try element.getValue(.windows),
+              !windowElements.isEmpty
         else {
-            throw WindowError.invalidWindow
+            throw WindowError.cannotGetWindow
         }
 
         // If there’s only one window, use that as there's no need to grab its frame
-        if windows.count == 1 {
-            try self.init(element: windows[0])
-            return
+        if windowElements.count == 1 {
+            return try Window(element: windowElements[0], pid: pid)
         }
 
-        // Try to match against the frame when there are multiple windows
-        if let boundsDict = windowInfo[kCGWindowBounds as String] as? [String: CGFloat],
-           let frame = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
-           let match = try windows.first(where: { window in
-               let position: CGPoint? = try window.getValue(.position)
-               let size: CGSize? = try window.getValue(.size)
-               return position == frame.origin && size == frame.size
-           }) {
-            try self.init(element: match)
-            return
+        // If we can retrieve bounds, then filter candidates out by their respective frames.
+        let candidates: [AXUIElement] = if let boundsDict = windowInfo[kCGWindowBounds as String] as? [String: CGFloat],
+                                           let frame = CGRect(dictionaryRepresentation: boundsDict as CFDictionary) {
+            windowElements.filter {
+                if let position: CGPoint = try? $0.getValue(.position),
+                   let size: CGSize = try? $0.getValue(.size) {
+                    return position == frame.origin && size == frame.size
+                }
+                return false
+            }
+        } else {
+            windowElements
         }
 
-        // Fallback! initialize from the first available window
-        try self.init(element: windows[0])
+        let windows = candidates.compactMap { try? Window(element: $0, pid: pid) }
+
+        if let windowID = windowInfo[kCGWindowNumber as String] as? CGWindowID,
+           let match = windows.first(where: { $0.cgWindowID == windowID }) {
+            return match
+        } else if let first = windows.first {
+            return first
+        }
+
+        return try Window(element: windowElements[0], pid: pid)
     }
 
     var role: NSAccessibility.Role? {
         do {
-            guard let value: String = try self.axWindow.getValue(.role) else {
+            guard let value: String = try axWindow.getValue(.role) else {
                 return nil
             }
             return NSAccessibility.Role(rawValue: value)
         } catch {
-            logger.error("Failed to get role: \(error.localizedDescription)")
+            log.error("Failed to get role: \(error.localizedDescription)")
             return nil
         }
     }
 
     var subrole: NSAccessibility.Subrole? {
         do {
-            guard let value: String = try self.axWindow.getValue(.subrole) else {
+            guard let value: String = try axWindow.getValue(.subrole) else {
                 return nil
             }
             return NSAccessibility.Subrole(rawValue: value)
         } catch {
-            logger.error("Failed to get subrole: \(error.localizedDescription)")
+            log.error("Failed to get subrole: \(error.localizedDescription)")
             return nil
         }
     }
 
     var title: String? {
         do {
-            return try self.axWindow.getValue(.title)
+            return try axWindow.getValue(.title)
         } catch {
-            logger.error("Failed to get title: \(error.localizedDescription)")
+            log.error("Failed to get title: \(error.localizedDescription)")
             return nil
         }
     }
@@ -156,95 +201,53 @@ final class Window {
     var enhancedUserInterface: Bool {
         get {
             do {
-                guard let pid = try axWindow.getPID() else {
-                    return false
-                }
                 let appWindow = AXUIElementCreateApplication(pid)
                 let result: Bool? = try appWindow.getValue(.enhancedUserInterface)
                 return result ?? false
             } catch {
-                logger.error("Failed to get enhancedUserInterface: \(error.localizedDescription)")
+                log.error("Failed to get enhancedUserInterface: \(error.localizedDescription)")
                 return false
             }
         }
         set {
             do {
-                guard let pid = try axWindow.getPID() else {
-                    return
-                }
                 let appWindow = AXUIElementCreateApplication(pid)
                 try appWindow.setValue(.enhancedUserInterface, value: newValue)
             } catch {
-                logger.error("Failed to set enhancedUserInterface: \(error.localizedDescription)")
+                log.error("Failed to set enhancedUserInterface: \(error.localizedDescription)")
             }
         }
     }
 
-    /// Activate the window. This will bring it to the front and focus it if possible
-    func activate() {
+    /// Focus the window.
+    @MainActor
+    func focus() {
         // First activate the application to ensure proper window management context
-        if let runningApplication = self.nsRunningApplication {
+        if let runningApplication = nsRunningApplication {
             runningApplication.activate(options: .activateIgnoringOtherApps)
         }
 
-        // Then set the window as main after a brief delay to ensure proper ordering
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            try? self.axWindow.setValue(.main, value: true)
+        try? axWindow.performAction(.raise)
+
+        // See:  https://github.com/yresk/alt-tab-macos/blob/5b8a9110dbdb9b4802a8a85ee1469427fbc192e8/alt-tab-macos/api-wrappers/AXUIElement.swift#L60
+        if let pid = try? axWindow.getPID() {
+            _ = SkyLightToolBelt.makeKeyWindow(
+                windowID: cgWindowID,
+                pid: pid
+            )
+
+            _ = SkyLightToolBelt.makeFrontProcess(
+                windowID: cgWindowID,
+                pid: pid
+            )
+
+            _ = SkyLightToolBelt.makeKeyWindow(
+                windowID: cgWindowID,
+                pid: pid
+            )
         }
 
-        focus()
-    }
-
-    ///
-    /// Focuses the window. This will attempt to bring the window to the front and make it the active window.
-    /// Note that this first sets the process as frontmost, *then* sends a left click event to the window itself.
-    ///
-    /// - Returns:
-    /// `true` if the window was successfully focused; `false` otherwise.
-    ///
-    /// - Description:
-    /// This method uses a private API to focus the window.
-    /// The code for this method is derived from the Amethyst source code. Details of its implementation can be found [here](https://github.com/Hammerspoon/hammerspoon/issues/370#issuecomment-545545468)
-    @discardableResult
-    private func focus() -> Bool {
-        guard let pid = try? axWindow.getPID() else { return false }
-
-        var wid = cgWindowID
-        var psn = ProcessSerialNumber()
-        let status = GetProcessForPID(pid, &psn)
-
-        guard status == noErr else {
-            return false
-        }
-
-        var cgStatus = _SLPSSetFrontProcessWithOptions(&psn, wid, kCPSUserGenerated)
-
-        guard cgStatus == .success else {
-            return false
-        }
-
-        /// `0x01` is left click down, `0x02` is left click up (see `CGEventType`)
-        for byte in [0x01, 0x02] {
-            /// Create raw `SLSEvent` data.
-            /// Future consideration: instead of manually creating the bytes here, investigate:
-            /// - Creating a `SLSEvent` (likely analogous to `CGEvent`)
-            /// - Apply an identifier to the event to help Loop differentiate events that originate from itself
-            /// - Converting the `SLSEvent` to data using `SLEventCreateData` in SkyLight
-            var bytes = [UInt8](repeating: 0, count: 0xF8)
-            bytes[0x04] = 0xF8
-            bytes[0x08] = UInt8(byte)
-            bytes[0x3A] = 0x10
-            memcpy(&bytes[0x3C], &wid, MemoryLayout<UInt32>.size)
-            memset(&bytes[0x20], 0xFF, 0x10)
-            cgStatus = bytes.withUnsafeMutableBufferPointer { pointer in
-                SLPSPostEventRecordTo(&psn, &pointer.baseAddress!.pointee)
-            }
-            guard cgStatus == .success else {
-                return false
-            }
-        }
-
-        return true
+        try? axWindow.performAction(.raise)
     }
 
     var isAppExcluded: Bool {
@@ -258,18 +261,18 @@ final class Window {
     var fullscreen: Bool {
         get {
             do {
-                let result: NSNumber? = try self.axWindow.getValue(.fullScreen)
+                let result: NSNumber? = try axWindow.getValue(.fullScreen)
                 return result?.boolValue ?? false
             } catch {
-                logger.error("Failed to get fullscreen: \(error.localizedDescription)")
+                log.error("Failed to get fullscreen: \(error.localizedDescription)")
                 return false
             }
         }
         set {
             do {
-                try self.axWindow.setValue(.fullScreen, value: newValue)
+                try axWindow.setValue(.fullScreen, value: newValue)
             } catch {
-                logger.error("Failed to set fullscreen: \(error.localizedDescription)")
+                log.error("Failed to set fullscreen: \(error.localizedDescription)")
             }
         }
     }
@@ -280,7 +283,7 @@ final class Window {
 
     /// Check with the `NSRunningApplication` if the app is hidden (⌘H).
     var isApplicationHidden: Bool {
-        self.nsRunningApplication?.isHidden ?? false
+        nsRunningApplication?.isHidden ?? false
     }
 
     /// Checks if the app has any visible windows using the `CGWindow` API.
@@ -315,36 +318,36 @@ final class Window {
     func setHidden(_ state: Bool) -> Bool {
         var result = false
         if state {
-            result = self.nsRunningApplication?.hide() ?? false
+            result = nsRunningApplication?.hide() ?? false
         } else {
-            result = self.nsRunningApplication?.unhide() ?? false
+            result = nsRunningApplication?.unhide() ?? false
         }
         return result
     }
 
     @discardableResult
     func toggleHidden() -> Bool {
-        if !self.isApplicationHidden {
-            return self.setHidden(true)
+        if !isApplicationHidden {
+            return setHidden(true)
         }
-        return self.setHidden(false)
+        return setHidden(false)
     }
 
     var minimized: Bool {
         get {
             do {
-                let result: NSNumber? = try self.axWindow.getValue(.minimized)
+                let result: NSNumber? = try axWindow.getValue(.minimized)
                 return result?.boolValue ?? false
             } catch {
-                logger.error("Failed to get minimized: \(error.localizedDescription)")
+                log.error("Failed to get minimized: \(error.localizedDescription)")
                 return false
             }
         }
         set {
             do {
-                try self.axWindow.setValue(.minimized, value: newValue)
+                try axWindow.setValue(.minimized, value: newValue)
             } catch {
-                logger.error("Failed to set minimized: \(error.localizedDescription)")
+                log.error("Failed to set minimized: \(error.localizedDescription)")
             }
         }
     }
@@ -354,116 +357,275 @@ final class Window {
     }
 
     var position: CGPoint {
-        get {
-            do {
-                guard let result: CGPoint = try self.axWindow.getValue(.position) else {
-                    return .zero
-                }
-                return result
-            } catch {
-                logger.error("Failed to get position: \(error.localizedDescription)")
+        do {
+            guard let result: CGPoint = try axWindow.getValue(.position) else {
                 return .zero
             }
+            return result
+        } catch {
+            log.error("Failed to get position: \(error.localizedDescription)")
+            return .zero
         }
-        set {
+    }
+
+    func setPosition(_ point: CGPoint) {
+        if isOwnWindow {
+            Task { @MainActor in
+                guard let win = ownNSWindow() else { return }
+                win.setFrameOrigin(CGRect(origin: point, size: win.frame.size).flipY(screen: .screens[0]).origin)
+            }
+        } else {
             do {
-                try self.axWindow.setValue(.position, value: newValue)
+                try axWindow.setValue(.position, value: point)
             } catch {
-                logger.error("Failed to set position: \(error.localizedDescription)")
+                log.error("Failed to set position: \(error.localizedDescription)")
             }
         }
     }
 
     var size: CGSize {
-        get {
-            do {
-                guard let result: CGSize = try self.axWindow.getValue(.size) else {
-                    return .zero
-                }
-                return result
-            } catch {
-                logger.error("Failed to get size: \(error.localizedDescription)")
+        do {
+            guard let result: CGSize = try axWindow.getValue(.size) else {
                 return .zero
             }
+            return result
+        } catch {
+            log.error("Failed to get size: \(error.localizedDescription)")
+            return .zero
         }
-        set {
+    }
+
+    func setSize(_ size: CGSize) {
+        if isOwnWindow {
+            Task { @MainActor in
+                guard let win = ownNSWindow() else { return }
+                win.setFrame(CGRect(origin: win.frame.origin, size: size), display: false)
+            }
+        } else {
             do {
-                try self.axWindow.setValue(.size, value: newValue)
+                try axWindow.setValue(.size, value: size)
             } catch {
-                logger.error("Failed to set size: \(error.localizedDescription)")
+                log.error("Failed to set size: \(error.localizedDescription)")
             }
         }
     }
 
     var isResizable: Bool {
         do {
-            let result: Bool = try self.axWindow.canSetValue(.size)
+            let result: Bool = try axWindow.canSetValue(.size)
             return result
         } catch {
-            logger.error("Failed to determine if window size can be set: \(error.localizedDescription)")
+            log.error("Failed to determine if window size can be set: \(error.localizedDescription)")
             return true
         }
     }
 
     var frame: CGRect {
-        CGRect(origin: self.position, size: self.size)
+        CGRect(origin: position, size: size)
     }
 
-    /// Set the frame of this Window.
-    /// - Parameters:
-    ///   - rect: The new frame for the window
-    ///   - animate: Whether or not to animate the window resizing
-    ///   - sizeFirst: This will set the size first, which is useful when switching screens. Only does something when window animations are off
-    ///   - bounds: This will prevent the window from going outside the bounds. Only does something when window animations are on
-    ///   - completionHandler: Something to run after the window has been resized. This can include things like moving the cursor to the center of the window
+    /// Returns `true` and applies the frame using AppKit if this window belongs to Loop itself.
+    /// AX APIs are unavailable for our own process, so we delegate to `NSWindow` instead.
+    @MainActor
+    @discardableResult
+    private func applyOwnWindowFrame(_ rect: CGRect) -> Bool {
+        guard isOwnWindow else {
+            return false
+        }
+        guard let window = ownNSWindow() else {
+            log.info("Failed to get own main window to resize")
+            return true
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.33, 1, 0.68, 1)
+            window.animator().setFrame(rect.flipY(screen: .screens[0]), display: false)
+        }
+        return true
+    }
+
+    @MainActor
+    private func ownNSWindow() -> NSWindow? {
+        NSApp.keyWindow ?? NSApp.mainWindow
+    }
+
+    @discardableResult
+    private func applyOwnWindowFrameSynchronously(_ rect: CGRect) -> Bool {
+        guard isOwnWindow else {
+            return false
+        }
+
+        if Thread.isMainThread {
+            MainActor.assumeIsolated {
+                guard let window = ownNSWindow() else {
+                    log.info("Failed to get own main window to resize")
+                    return
+                }
+                window.setFrame(rect.flipY(screen: .screens[0]), display: false)
+            }
+        } else {
+            DispatchQueue.main.sync {
+                MainActor.assumeIsolated {
+                    guard let window = ownNSWindow() else {
+                        log.info("Failed to get own main window to resize")
+                        return
+                    }
+                    window.setFrame(rect.flipY(screen: .screens[0]), display: false)
+                }
+            }
+        }
+
+        return true
+    }
+
     func setFrame(
         _ rect: CGRect,
-        animate: Bool = false,
         sizeFirst: Bool = false,
-        bounds: CGRect = .zero,
-        completionHandler: @escaping (() -> ()) = {}
-    ) {
-        let enhancedUI = self.enhancedUserInterface
+        resolvedProperties: ResolvedProperties? = nil
+    ) async {
+        guard await !MainActor.run(resultType: Bool.self, body: { applyOwnWindowFrame(rect) }) else {
+            return
+        }
+
+        let enhancedUI = resolvedProperties?.isEnhancedUserInterface ?? enhancedUserInterface
+        let shouldSetSize = resolvedProperties?.isResizable ?? true
 
         if enhancedUI {
             let appName = nsRunningApplication?.localizedName
-            logger.info("\(appName ?? "This app")'s enhanced UI will be temporarily disabled while resizing.")
-            self.enhancedUserInterface = false
+            log.info("\(appName ?? "This app")'s enhanced UI will be temporarily disabled while resizing.")
+            enhancedUserInterface = false
         }
 
-        if animate {
+        if sizeFirst, shouldSetSize {
+            setSize(rect.size)
+        }
+
+        setPosition(rect.origin)
+
+        if shouldSetSize {
+            setSize(rect.size)
+        }
+
+        if enhancedUI {
+            enhancedUserInterface = true
+        }
+    }
+
+    func setFrameSynchronously(
+        _ rect: CGRect,
+        sizeFirst: Bool = false,
+        resolvedProperties: ResolvedProperties? = nil
+    ) {
+        guard !applyOwnWindowFrameSynchronously(rect) else {
+            return
+        }
+
+        let enhancedUI = resolvedProperties?.isEnhancedUserInterface ?? enhancedUserInterface
+        let shouldSetSize = resolvedProperties?.isResizable ?? true
+
+        if enhancedUI {
+            let appName = nsRunningApplication?.localizedName
+            log.info("\(appName ?? "This app")'s enhanced UI will be temporarily disabled while resizing.")
+            enhancedUserInterface = false
+        }
+
+        if sizeFirst, shouldSetSize {
+            setSize(rect.size)
+        }
+
+        setPosition(rect.origin)
+
+        if shouldSetSize {
+            setSize(rect.size)
+        }
+
+        if enhancedUI {
+            enhancedUserInterface = true
+        }
+    }
+
+    @MainActor
+    func setFrameAnimated(
+        _ rect: CGRect,
+        bounds: CGRect,
+        resolvedProperties: ResolvedProperties? = nil
+    ) async throws {
+        try Task.checkCancellation()
+
+        guard !applyOwnWindowFrame(rect) else {
+            return
+        }
+
+        let enhancedUI = resolvedProperties?.isEnhancedUserInterface ?? enhancedUserInterface
+        let shouldSetSize = resolvedProperties?.isResizable ?? true
+
+        if enhancedUI {
+            let appName = nsRunningApplication?.localizedName
+            log.info("\(appName ?? "This app")'s enhanced UI will be temporarily disabled while resizing.")
+            enhancedUserInterface = false
+        }
+        defer {
+            if enhancedUI {
+                enhancedUserInterface = true
+            }
+        }
+
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<(), Error>) in
             let animation = WindowTransformAnimation(
                 rect,
                 window: self,
                 bounds: bounds,
-                completionHandler: completionHandler
-            )
-            animation.startInBackground()
-        } else {
-            if sizeFirst {
-                self.size = rect.size
+                shouldSetSize: shouldSetSize
+            ) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: ())
+                }
             }
-            self.position = rect.origin
-            self.size = rect.size
 
-            completionHandler()
-        }
-
-        if enhancedUI {
-            self.enhancedUserInterface = true
+            animation.start()
         }
     }
 }
 
-extension Window: CustomDebugStringConvertible {
-    var debugDescription: String {
-        let name = nsRunningApplication?.localizedName ?? title ?? "<unknown>"
-        return "Window(id: \(cgWindowID), title: \(name))"
+extension Window: CustomStringConvertible {
+    var description: String {
+        "Window(id: \(cgWindowID), app: '\(nsRunningApplication?.localizedName ?? "<unknown>")', title: '\(title ?? "<unknown>"))"
     }
 }
 
 extension Window: Equatable {
     static func == (lhs: Window, rhs: Window) -> Bool {
         lhs.cgWindowID == rhs.cgWindowID
+    }
+}
+
+// MARK: - ResolvedProperties
+
+extension Window {
+    /// Pre-resolved snapshot of a window's AX properties for synchronous access.
+    /// Avoids repeated IPC round-trips when multiple properties are needed.
+    struct ResolvedProperties {
+        let frame: CGRect
+        let isResizable: Bool
+        let isFullscreen: Bool
+        let isEnhancedUserInterface: Bool
+
+        init(from window: Window) {
+            self.frame = window.frame // 2 AX calls (position + size)
+            self.isResizable = window.isResizable // 1 AX call
+            self.isFullscreen = window.fullscreen // 1 AX call
+            self.isEnhancedUserInterface = window.enhancedUserInterface // 1 AX call on app element
+        }
+
+        /// Creates a new snapshot with an updated frame, preserving stable properties.
+        /// Used after a resize to avoid re-reading from AX.
+        /// `isFullscreen` is always false post-resize, as we exited fullscreen to perform the resize.
+        init(updating frame: CGRect, from other: ResolvedProperties) {
+            self.frame = frame
+            self.isResizable = other.isResizable
+            self.isFullscreen = false
+            self.isEnhancedUserInterface = other.isEnhancedUserInterface
+        }
     }
 }

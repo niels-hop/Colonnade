@@ -5,6 +5,7 @@
 //  Created by Kai Azim on 2024-06-03.
 //
 
+import Scribe
 import SwiftUI
 import UserNotifications
 
@@ -22,7 +23,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         completionHandler()
     }
 
-    // Implementation is necessary to show notifications even when the app has focus!
+    /// Implementation is necessary to show notifications even when the app has focus!
     func userNotificationCenter(
         _: UNUserNotificationCenter,
         willPresent _: UNNotification,
@@ -36,11 +37,11 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             options: [.alert]
         ) { accepted, error in
             if !accepted {
-                Self.logger.warning("Notification access denied.")
+                Log.warn("Notification access denied.", category: AppDelegate.logCategory)
             }
 
             if let error {
-                Self.logger.error("Failed to request notification authorization: \(error.localizedDescription)")
+                Log.error("Failed to request notification authorization: \(error.localizedDescription)", category: AppDelegate.logCategory)
             }
         }
     }

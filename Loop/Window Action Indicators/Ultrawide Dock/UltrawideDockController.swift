@@ -6,37 +6,42 @@
 //
 
 import Defaults
-import OSLog
+import Scribe
 import SwiftUI
 
+@MainActor
+@Loggable
 final class UltrawideDockController {
     private var controller: NSWindowController?
     private var viewModel: UltrawideDockViewModel?
-    private let logger = Logger(category: "UltrawideDockController")
+
+    /// Whether the Ultrawide Dock should drive placement for the given screen, based on the
+    /// configured trigger mode. `.automatic` enables it on screens with an aspect ratio ≥ 2.0.
+    static func shouldUseUltrawideDock(for screen: NSScreen?) -> Bool {
+        switch Defaults[.ultrawideDockTriggerMode] {
+        case .alwaysOn:
+            return true
+        case .never:
+            return false
+        case .automatic:
+            guard let screen else { return false }
+            return screen.frame.width / screen.frame.height >= 2.0
+        }
+    }
 
     func open(
-        position _: CGPoint,
+        screen screenOverride: NSScreen?,
         window: Window?,
         startingAction: WindowAction?
     ) {
-        if let windowController = controller {
-            // Refresh window data before re-opening to ensure accuracy
+        // Already open: action/window updates flow through `setAction`/`setWindow`, so don't
+        // re-create the panel or re-warp the cursor (which would fight the user's mouse).
+        if controller != nil {
             viewModel?.refresh()
-
-            windowController.window?.orderFrontRegardless()
-
-            // Snap mouse cursor to center of dock when re-opening
-            if let panelFrame = windowController.window?.frame {
-                let dockCenter = CGPoint(
-                    x: panelFrame.midX,
-                    y: panelFrame.midY
-                )
-                CGWarpMouseCursorPosition(dockCenter)
-            }
             return
         }
 
-        guard let screen = NSApp.keyWindow?.screen ?? NSScreen.main else {
+        guard let screen = screenOverride ?? NSApp.keyWindow?.screen ?? NSScreen.main else {
             return
         }
 
@@ -134,7 +139,7 @@ final class UltrawideDockController {
 
     func setAction(to newAction: WindowAction) {
         viewModel?.setAction(to: newAction)
-        logger.log("UltrawideDockController: Set action to '\(newAction.debugDescription)'")
+        log.info("Set action to '\(newAction.description)'")
     }
 
     var dockFrame: CGRect? {

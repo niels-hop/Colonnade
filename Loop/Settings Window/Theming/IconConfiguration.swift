@@ -69,7 +69,7 @@ final class IconConfigurationModel: ObservableObject {
 
     private func userDisabledNotificationsAlert() {
         Task { @MainActor in
-            guard let window = LuminareManager.shared.window else { return }
+            guard let window = SettingsWindowManager.shared.window else { return }
             let alert = NSAlert()
             alert.messageText = .init(localized: "Notification permits: info", defaultValue: "\(Bundle.main.appName)'s notification permissions are currently disabled.")
             alert.informativeText = .init(localized: "Notification permits: request", defaultValue: "Please turn them on in System Settings.")
@@ -99,54 +99,54 @@ struct IconConfigurationView: View {
     @Environment(\.openURL) var openURL
     @StateObject private var model = IconConfigurationModel()
 
-    let suggestNewIconLink = URL(string: "https://github.com/MrKai77/Loop/issues/new/choose")!
-
     @Default(.currentIcon) var currentIcon
     @Default(.showDockIcon) var showDockIcon
     @Default(.notificationWhenIconUnlocked) var notificationWhenIconUnlocked
 
     var body: some View {
-        LuminareSection {
-            LuminarePicker(
-                elements: Icon.all,
-                selection: Binding(
-                    get: { IconManager.currentAppIcon },
-                    set: {
-                        currentIcon = $0.assetName
+        LuminareForm {
+            LuminareSection {
+                LuminarePicker(
+                    elements: Icon.all,
+                    selection: Binding(
+                        get: { IconManager.currentAppIcon },
+                        set: {
+                            currentIcon = $0.assetName
 
-                        Task {
-                            IconManager.refreshCurrentAppIcon()
+                            Task {
+                                IconManager.refreshCurrentAppIcon()
+                            }
                         }
-                    }
-                )
-            ) { icon in
-                IconVew(model: model, icon: icon)
-                    .aspectRatio(1, contentMode: .fit)
-                    .alert(isPresented: $model.showingLockedAlert) {
-                        Alert(
-                            title: Text(.init(localized: "Locked icon alert title", defaultValue: "Icon Locked")),
-                            message: Text(model.selectedLockedMessage),
-                            dismissButton: .default(Text("OK"))
-                        )
-                    }
+                    )
+                ) { icon in
+                    IconVew(model: model, icon: icon)
+                        .aspectRatio(1, contentMode: .fit)
+                        .alert(isPresented: $model.showingLockedAlert) {
+                            Alert(
+                                title: Text(.init(localized: "Locked icon alert title", defaultValue: "Icon Locked")),
+                                message: Text(model.selectedLockedMessage),
+                                dismissButton: .default(Text("OK"))
+                            )
+                        }
+                }
+                .luminareRoundingBehavior(top: true, bottom: true)
             }
-            .luminarePickerRoundedCorner(.always)
-        }
 
-        LuminareSection(String(localized: "Options", comment: "Section header shown in settings")) {
-            LuminareToggle("Show in dock", isOn: $showDockIcon)
-            LuminareToggle(
-                "Notify when unlocking new icons",
-                isOn: Binding(
-                    get: {
-                        notificationWhenIconUnlocked
-                    },
-                    set: {
-                        notificationWhenIconUnlocked = $0
-                        model.handleNotificationChange()
-                    }
+            LuminareSection(String(localized: "Options", comment: "Section header shown in settings")) {
+                LuminareToggle("Show in dock", isOn: $showDockIcon)
+                LuminareToggle(
+                    "Notify when unlocking new icons",
+                    isOn: Binding(
+                        get: {
+                            notificationWhenIconUnlocked
+                        },
+                        set: {
+                            notificationWhenIconUnlocked = $0
+                            model.handleNotificationChange()
+                        }
+                    )
                 )
-            )
+            }
         }
     }
 }
@@ -163,7 +163,7 @@ struct IconVew: View {
     @State private var loopsLeft: Int = -1
 
     private var showLiquidGlassIndicator: Bool {
-        if #available(macOS 26.0, *), icon == Icon.default {
+        if #available(macOS 26.0, *), icon.isDefault {
             true
         } else {
             false
@@ -179,11 +179,10 @@ struct IconVew: View {
             }
 
             Color.clear
-                .luminarePopover(attachedTo: .topTrailing, hidden: !showLiquidGlassIndicator) {
+                .luminareToolTip(attachedTo: .topTrailing, hidden: !showLiquidGlassIndicator) {
                     Text("Supports macOS Tahoe’s Liquid Glass effects")
                         .padding(6)
                 }
-                .luminareTint(overridingWith: .blue)
                 .padding(8)
         }
         .onAppear {
@@ -218,12 +217,13 @@ struct IconVew: View {
         VStack(alignment: .center) {
             Spacer()
 
-            Image(.lock)
+            Image(systemName: "lock")
                 .foregroundStyle(.secondary)
 
-            Text(nextUnlockCount == icon.unlockTime ?
-                .init(localized: "Loops left to unlock new icon", defaultValue: "\(loopsLeft) Loops left") :
-                .init(localized: "App icon is locked", defaultValue: "Locked")
+            Text(
+                nextUnlockCount == icon.unlockTime ?
+                    .init(localized: "Loops left to unlock new icon", defaultValue: "\(loopsLeft) Loops left") :
+                    .init(localized: "App icon is locked", defaultValue: "Locked")
             )
             .font(.caption)
             .foregroundColor(.secondary)

@@ -15,17 +15,17 @@ jobs:
     runs-on: macos-26
     permissions:
       contents: write
-      pull-requests: read
+      pull-requests: write
     steps:
       - name: ⬇️ Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: 🧪 Set Version and Build number
         run: |
           # CHANGE EVERY RELEASE:
-          APP_VERSION="🧪 1.4.0"
+          APP_VERSION="🧪 1.4.3"
           APP_BUILD=$(git rev-list --count HEAD)
           FROM_TAG=$(git describe --tags --abbrev=0 --exclude='prerelease')
 
@@ -44,7 +44,7 @@ jobs:
           echo "FROM_TAG=$FROM_TAG" >> $GITHUB_ENV
 
       - name: 🔧 Select Xcode
-        run: sudo xcode-select -s "/Applications/Xcode.app"
+        run: sudo xcode-select -s "/Applications/Xcode_26.4.app"
 
       - name: 🎟️ Install Development & Developer ID Certificate
         env:
@@ -81,13 +81,17 @@ jobs:
           
       - name: 🛠️ Build Loop
         run: |
-          xcodebuild \
+          set -o pipefail && xcodebuild \
             archive \
             -project Loop.xcodeproj/ \
             -scheme "Loop (GH ACTIONS)" \
             -destination 'generic/platform=macOS' \
             -archivePath dist/Loop.xcarchive \
-            -allowProvisioningUpdates
+            -allowProvisioningUpdates \
+            -skipMacroValidation \
+            -skipPackagePluginValidation \
+            -showBuildTimingSummary \
+            | xcbeautify
 
       - name: 🥡 Export Loop.app
         run: |
@@ -118,13 +122,52 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "dist/Loop.app" "dist/Loop.zip"
 
       - name: ⬆️ Upload Loop
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Loop
           path: dist/Loop.zip
 
+      - name: 💬 Comment on PR with build link
+        if: "${{ !inputs.release-new-build }}"
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+
+            // Find PRs for this branch
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branch}`
+            });
+
+            if (pulls.length === 0) {
+              console.log(`No open PR found for branch: ${branch}`);
+              return;
+            }
+
+            const pr = pulls[0];
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const body = [
+              '🚧 **Development Build Finished**',
+              '',
+              `- Version: ${process.env.APP_VERSION} (${process.env.APP_BUILD})`,
+              `- Workflow: [View build logs & artifacts](${runUrl})`
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body
+            });
+
+            console.log(`Commented on PR #${pr.number}`);
+
       - name: 🏷️ Create/update tag
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         if: "${{ inputs.release-new-build }}"
         with:
           script: |
@@ -144,7 +187,7 @@ jobs:
             })
 
       - name: 📰 Build Changelog
-        uses: mikepenz/release-changelog-builder-action@v4
+        uses: mikepenz/release-changelog-builder-action@v6
         if: "${{ inputs.release-new-build }}"
         with:
           outputFile: CHANGELOG.md
@@ -152,7 +195,7 @@ jobs:
           toTag: "prerelease"
           configurationJson: |
             {
-              "template": "#{{CHANGELOG}}\n## 💭 Uncategorized\n#{{UNCATEGORIZED}}",
+              "template": "## 📰 Development News\n- 💸 Support Loop by [sponsoring the project](https://github.com/sponsors/MrKai77)!\n- 🌐 Let us know if you are interested in localizing Loop to your language :)\n- 💬 Join our [Discord server](https://discord.gg/2CZ2N6PKjq)!\n#{{CHANGELOG}}\n## 💭 Uncategorized\n#{{UNCATEGORIZED}}\n---\nMinimum macOS version: 13.0",
               "pr_template": "- #{{TITLE}} ##{{NUMBER}}",
               "categories": [
                 {
@@ -164,7 +207,7 @@ jobs:
                     "labels": ["Bug"]
                 },
                 {
-                    "title": "## 🌐 Localization",
+                    "title": "## 🌏 Localization",
                     "labels": ["Localization"]
                 }
               ],
@@ -181,7 +224,7 @@ jobs:
           artifacts: dist/Loop.zip
           commit: develop
           bodyFile: CHANGELOG.md
-          name: "Development Build: ${{ env.APP_VERSION }} (${{ env.APP_BUILD }})"
+          name: "${{ env.APP_VERSION }} (${{ env.APP_BUILD }})"
           prerelease: true
           tag: "prerelease"
 

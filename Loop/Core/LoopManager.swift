@@ -6,63 +6,143 @@
 //
 
 import Defaults
-import OSLog
+import os
+import Scribe
 import SwiftUI
 
-// MARK: - LoopManager
-
-final class LoopManager: ObservableObject {
+@Loggable
+@MainActor
+final class LoopManager {
     static let shared = LoopManager()
     private init() {}
 
-    private let logger = Logger(category: "LoopManager")
+    /// Context for the current resize operation, tracking frame and edge adjustment state.
+    /// Initialized when Loop opens with a target window and screen.
+    private(set) var resizeContext: ResizeContext = .init()
 
-    // Size Adjustment
-    static var sidesToAdjust: Edge.Set?
-    static var lastTargetFrame: CGRect = .zero
-
-    private let radialMenuController = RadialMenuController()
-    private let ultrawideDockController = UltrawideDockController()
-    private let previewController = PreviewController()
-
-    private(set) lazy var keybindObserver = KeybindObserver(
-        openCallback: { [weak self] in self?.openLoop(startingAction: $0) },
-        closeCallback: { [weak self] in self?.closeLoop(forceClose: $0) },
-        checkIfLoopOpen: { [weak self] in self?.isLoopActive ?? false }
-    )
-
-    private(set) lazy var middleClickObserver = MiddleClickObserver(
-        openCallback: { [weak self] in self?.openLoop(startingAction: $0) },
-        closeCallback: { [weak self] in self?.closeLoop(forceClose: $0) }
-    )
-
-    private(set) lazy var mouseMovedEventMonitor = PassiveEventMonitor(
-        events: [.mouseMoved, .otherMouseDragged],
-        callback: mouseMoved
-    )
-
-    private(set) lazy var leftClickMonitor = PassiveEventMonitor(
-        events: [.leftMouseDown],
-        callback: leftMouseDown
-    )
-
-    private(set) lazy var scrollWheelMonitor = PassiveEventMonitor(
-        events: [.scrollWheel],
-        callback: scrollWheel
-    )
+    private let windowActionCache = WindowActionCache()
+    private let indicatorService = WindowActionIndicatorService()
+    private let updater = Updater.shared
 
     private var accessibilityCheckerTask: Task<(), Never>?
 
-    private(set) var isLoopActive: Bool = false
-    private var targetWindow: Window?
-    private var screenToResizeOn: NSScreen?
-    var isShiftKeyPressed: Bool = false
+    /// Opening prepares resizeContext asynchronously. We track that setup separately
+    /// so rapid trigger events cannot act on the previous/default context.
+    private var isLoopOpening: Bool = false
+    private var pendingOpeningAction: WindowAction?
+    private var shouldCancelOpening: Bool = false
 
-    @Published var currentAction: WindowAction = .init(.noAction)
-    private var parentCycleAction: WindowAction?
-    private(set) var initialMousePosition: CGPoint = .init()
-    private var angleToMouse: Angle = .init(degrees: 0)
-    private var distanceToMouse: CGFloat = 0
+    private(set) var isLoopActive: Bool = false {
+        didSet {
+            let value = isLoopActive
+            isLoopActiveMirror.withLock { $0 = value }
+        }
+    }
+
+    private let isLoopActiveMirror = OSAllocatedUnfairLock<Bool>(initialState: false)
+    nonisolated var isLoopActiveAtomic: Bool {
+        isLoopActiveMirror.withLock { $0 }
+    }
+
+    private let hasParentCycleActionMirror = OSAllocatedUnfairLock<Bool>(initialState: false)
+    nonisolated var hasParentCycleActionAtomic: Bool {
+        hasParentCycleActionMirror.withLock { $0 }
+    }
+
+    /// Mirrors whether the Ultrawide Dock is driving placement for the current Loop session,
+    /// so the (non-isolated) mouse observer can branch to dock interaction without hopping actors.
+    private let isDockActiveMirror = OSAllocatedUnfairLock<Bool>(initialState: false)
+    nonisolated var isDockActiveAtomic: Bool {
+        isDockActiveMirror.withLock { $0 }
+    }
+
+    private lazy var triggerKeyTimeoutTimer = TriggerKeyTimeoutTimer(
+        closeCallback: { [weak self] forceClose in
+            Task { await self?.closeLoop(forceClose: forceClose) }
+        }
+    )
+
+    private(set) lazy var keybindTrigger = KeybindTrigger(
+        windowActionCache: windowActionCache,
+        openCallback: { [weak self] action in
+            Task {
+                await self?.openLoop(startingAction: action)
+            }
+        },
+        closeCallback: { [weak self] forceClose in
+            Task {
+                await self?.closeLoop(forceClose: forceClose)
+            }
+        },
+        checkIfLoopOpen: { [weak self] in
+            self?.isLoopActiveAtomic ?? false
+        }
+    )
+
+    private(set) lazy var middleClickTrigger = MiddleClickTrigger(
+        openCallback: { [weak self] action in
+            Task {
+                await self?.openLoop(startingAction: action)
+            }
+        },
+        closeCallback: { [weak self] forceClose in
+            Task {
+                await self?.closeLoop(forceClose: forceClose)
+            }
+        },
+        checkIfLoopOpen: { [weak self] in self?.isLoopActiveAtomic ?? false }
+    )
+
+    private(set) lazy var mouseInteractionObserver = MouseInteractionObserver(
+        windowActionCache: windowActionCache,
+        changeAction: { [weak self] newAction in
+            Task {
+                // If the mouse moved, that means that the keybind trigger should no longer passthrough special events such as the emoji key.
+                self?.keybindTrigger.canPassthroughNextSpecialEvent = false
+                await self?.changeAction(newAction, canAdvanceCycle: false)
+            }
+        },
+        selectNextCycleItem: { [weak self] in
+            Task {
+                if let parent = self?.resizeContext.parentAction {
+                    await self?.changeAction(parent, disableHapticFeedback: true)
+                }
+            }
+        },
+        canSelectNextCycleitem: { [weak self] in
+            self?.hasParentCycleActionAtomic ?? false
+        },
+        checkIfLoopOpen: { [weak self] in self?.isLoopActiveAtomic ?? false },
+        // Ultrawide Dock hooks: when the dock is active it replaces the radial menu. The dock
+        // owns its anchor/size state inside the indicator service, so these closures forward the
+        // raw interaction and apply whatever action the dock computes.
+        isDockActive: { [weak self] in self?.isDockActiveAtomic ?? false },
+        dockMouseMoved: { [weak self] screenMouseX in
+            Task { @MainActor in
+                guard let self else { return }
+                self.keybindTrigger.canPassthroughNextSpecialEvent = false
+                if let action = self.indicatorService.dockActionForMouseX(screenMouseX) {
+                    await self.changeAction(action, canAdvanceCycle: false)
+                }
+            }
+        },
+        cycleDockSize: { [weak self] in
+            Task { @MainActor in
+                guard let self else { return }
+                if let action = self.indicatorService.cycleDockSize() {
+                    await self.changeAction(action, canAdvanceCycle: false)
+                }
+            }
+        },
+        adjustDockSize: { [weak self] delta in
+            Task { @MainActor in
+                guard let self else { return }
+                if let action = self.indicatorService.adjustDockSize(by: delta) {
+                    await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
+                }
+            }
+        }
+    )
 
     func start() {
         accessibilityCheckerTask = Task(priority: .background) { [weak self] in
@@ -72,119 +152,152 @@ final class LoopManager: ObservableObject {
                 }
 
                 if status {
-                    await keybindObserver.start()
-                    await middleClickObserver.start()
+                    await keybindTrigger.start()
+                    middleClickTrigger.start()
                 } else {
-                    await keybindObserver.stop()
-                    await middleClickObserver.stop()
+                    keybindTrigger.stop()
+                    middleClickTrigger.stop()
                 }
             }
         }
+    }
+
+    func shutdown() {
+        accessibilityCheckerTask?.cancel()
+        accessibilityCheckerTask = nil
+
+        indicatorService.closeAll()
+
+        keybindTrigger.stop()
+        middleClickTrigger.stop()
+        mouseInteractionObserver.stop()
+        triggerKeyTimeoutTimer.cancel()
+
+        isLoopOpening = false
+        pendingOpeningAction = nil
+        shouldCancelOpening = false
+        isLoopActive = false
+        hasParentCycleActionMirror.withLock { $0 = false }
     }
 }
 
 // MARK: - Opening/Closing Loop
 
 extension LoopManager {
-    private func openLoop(startingAction: WindowAction?) {
+    private func openLoop(startingAction: WindowAction) async {
         guard AccessibilityManager.shared.isGranted else {
             return
         }
 
-        guard !isLoopActive else {
-            /// If using Karabiner-Elements, TriggerKeybindObserver may call openLoop twice.
-            /// This happens because Karabiner-Elements sends modifier keys and other keys as separate, rapid events.
-            /// As a result, Loop might be opened before the full keybind is pressed.
-            /// In these cases, we can simply update the action instead of reopening the Loop.
-            /// Enabling keybindObserver was considered as a workaround, but it doesn't start quickly enough.
-            /// Although Karabiner-Elements sends key events separately, they arrive in quick succession.
-            if let startingAction {
-                changeAction(startingAction, disableHapticFeedback: true)
+        guard !isLoopOpening else {
+            if startingAction.direction != .noSelection {
+                pendingOpeningAction = startingAction
             }
             return
         }
 
-        logger.info("Opening Loop with starting action: \(startingAction?.debugDescription ?? "none")")
+        guard !isLoopActive else {
+            // If using Karabiner-Elements, TriggerKeybindObserver may call openLoop twice, as key events arrive in quick succession.
+            // This happens because Karabiner-Elements sends modifier keys and other keys as separate, rapid events.
+            // As a result, Loop might be opened before the full keybind is pressed.
+            // In these cases, we can simply update the action instead of reopening the Loop.
+            if startingAction.direction != .noSelection { // Can switch to .noAction still!
+                await changeAction(startingAction, disableHapticFeedback: true)
+            }
 
-        targetWindow = WindowUtility.userDefinedTargetWindow()
+            return
+        }
+
+        let window = WindowUtility.userDefinedTargetWindow()
+
         guard
-            targetWindow?.isAppExcluded != true,
-            (targetWindow?.fullscreen ?? false && Defaults[.ignoreFullscreen]) == false
+            window?.isAppExcluded != true,
+            (window?.fullscreen ?? false && Defaults[.ignoreFullscreen]) == false
         else {
             return
         }
 
-        // Record the first frame in advance if the preview window is disabled
-        if let targetWindow,
-           !WindowRecords.hasBeenRecorded(targetWindow),
-           !Defaults[.previewVisibility] {
-            WindowRecords.recordFirst(for: targetWindow)
+        isLoopOpening = true
+        pendingOpeningAction = nil
+        shouldCancelOpening = false
+        hasParentCycleActionMirror.withLock { $0 = false }
+
+        defer {
+            isLoopOpening = false
+            pendingOpeningAction = nil
+            shouldCancelOpening = false
         }
+
+        log.info("Opening Loop with starting action: \(startingAction.description) and target window: \(window?.description ?? "(none)")")
 
         // Refresh accent colors in case user has enabled the wallpaper processor
         Task {
             await AccentColorController.shared.refresh()
         }
 
-        currentAction = .init(.noAction)
-        parentCycleAction = nil
-        initialMousePosition = NSEvent.mouseLocation
-        screenToResizeOn = Defaults[.useScreenWithCursor] ? NSScreen.screenWithMouse : NSScreen.main
-        isShiftKeyPressed = false
+        let initialFrame: CGRect = if let window {
+            // In case of a stashed window, use the revealed frame instead to prevent issue with frame calculation later.
+            await StashManager.shared.getRevealedFrameForStashedWindow(
+                id: window.cgWindowID
+            ) ?? window.frame
+        } else {
+            .zero
+        }
+
+        resizeContext = ResizeContext(
+            window: window,
+            initialFrame: initialFrame,
+            initialMousePosition: NSEvent.mouseLocation
+        )
+        await resizeContext.refreshResolvedState()
+
+        guard !shouldCancelOpening else {
+            return
+        }
 
         if !Defaults[.disableCursorInteraction] {
-            mouseMovedEventMonitor.start()
-            leftClickMonitor.start()
-            scrollWheelMonitor.start()
-        }
-
-        if !Defaults[.hideUntilDirectionIsChosen] {
-            openWindows(startingAction: startingAction)
-        }
-
-        if let window = targetWindow {
-            // In case of a stashed window, use the revealed frame instead to prevent issue with frame calculation later.
-            if let frame = StashManager.shared.getRevealedFrameForStashedWindow(id: window.cgWindowID) {
-                LoopManager.lastTargetFrame = frame
-            } else {
-                LoopManager.lastTargetFrame = window.frame
-            }
+            mouseInteractionObserver.start(initialMousePosition: resizeContext.initialMousePosition)
         }
 
         isLoopActive = true
+        indicatorService.openAndUpdate(context: resizeContext)
 
-        if let startingAction {
-            changeAction(startingAction, disableHapticFeedback: true)
-        }
+        await changeAction(pendingOpeningAction ?? startingAction, disableHapticFeedback: true)
+
+        // The target screen is resolved during the first `changeAction`, so the indicator service
+        // now knows whether the Ultrawide Dock took over from the radial menu. Mirror that decision
+        // for the (non-isolated) mouse observer's dock branch.
+        let dockActive = indicatorService.isDockActive
+        isDockActiveMirror.withLock { $0 = dockActive }
+
+        triggerKeyTimeoutTimer.start()
     }
 
-    private func closeLoop(forceClose: Bool) {
+    private func closeLoop(forceClose: Bool) async {
+        if isLoopOpening {
+            shouldCancelOpening = true
+        }
+
         guard isLoopActive == true else { return }
-        logger.info("Closing Loop (force closed: \(forceClose))")
+        log.info("Closing Loop (force closed: \(forceClose))")
 
-        closeWindows()
+        indicatorService.closeAll()
+        isLoopActive = false
+        hasParentCycleActionMirror.withLock { $0 = false }
+        isDockActiveMirror.withLock { $0 = false }
 
-        mouseMovedEventMonitor.stop()
-        leftClickMonitor.stop()
-        scrollWheelMonitor.stop()
+        triggerKeyTimeoutTimer.cancel()
+        mouseInteractionObserver.stop()
 
         // Handle normal actions with a target window
-        if let targetWindow,
-           let screenToResizeOn,
-           forceClose == false,
-           currentAction.direction != .noAction, !currentAction.direction.willFocusWindow,
-           isLoopActive {
-            if Defaults[.previewVisibility] {
-                WindowEngine.resize(
-                    targetWindow,
-                    to: currentAction,
-                    on: screenToResizeOn
-                )
-            } else {
-                WindowRecords.record(
-                    targetWindow,
-                    currentAction
-                )
+        if !forceClose {
+            // If the preview was disabled, the window will already be in the specified action's frame.
+            // So only resize the window if the preview is enabled.
+            if Defaults[.previewVisibility],
+               !resizeContext.action.direction.willFocusWindow {
+                Task {
+                    _ = try? await WindowActionEngine.shared.apply(context: resizeContext)
+                }
             }
 
             // Icon stuff
@@ -192,54 +305,11 @@ extension LoopManager {
             IconManager.checkIfUnlockedNewIcon()
         }
 
-        isLoopActive = false
-        LoopManager.sidesToAdjust = nil
-        LoopManager.lastTargetFrame = .zero
-    }
-
-    private var shouldUseUltrawideDock: Bool {
-        let triggerMode = Defaults[.ultrawideDockTriggerMode]
-        switch triggerMode {
-        case .alwaysOn:
-            return true
-        case .never:
-            return false
-        case .automatic:
-            guard let screen = screenToResizeOn else { return false }
-            return screen.frame.width / screen.frame.height >= 2.0
+        Task {
+            if updater.shouldAutoPresentUpdateWindow {
+                await updater.showUpdateWindowIfEligible()
+            }
         }
-    }
-
-    private func openWindows(startingAction: WindowAction?) {
-        if Defaults[.previewVisibility], let targetWindow, let screenToResizeOn {
-            previewController.open(
-                screen: screenToResizeOn,
-                window: targetWindow,
-                startingAction: startingAction
-            )
-        }
-
-        if shouldUseUltrawideDock {
-            ultrawideDockController.open(
-                position: initialMousePosition,
-                window: targetWindow,
-                startingAction: startingAction
-            )
-            // Update initialMousePosition to the snapped position (center of dock)
-            initialMousePosition = NSEvent.mouseLocation
-        } else if Defaults[.radialMenuVisibility] {
-            radialMenuController.open(
-                position: initialMousePosition,
-                window: targetWindow,
-                startingAction: startingAction
-            )
-        }
-    }
-
-    private func closeWindows() {
-        radialMenuController.close()
-        ultrawideDockController.close()
-        previewController.close()
     }
 }
 
@@ -257,36 +327,46 @@ extension LoopManager {
         triggeredFromScreenChange: Bool = false,
         disableHapticFeedback: Bool = false,
         canAdvanceCycle: Bool = true
-    ) {
+    ) async {
         guard
-            !currentAction.isSameManipulation(as: newAction) || newAction.shouldImmediatelyExecuteAction,
             isLoopActive,
-            let currentScreen = screenToResizeOn
+            let currentScreen = resizeContext.screen ?? resolveAndStoreTargetScreen(
+                action: newAction,
+                window: resizeContext.window
+            )
         else {
             return
         }
-
-        var newAction = newAction
 
         if StashManager.shared.handleIfStashed(newAction, screen: currentScreen) {
             return
         }
 
+        guard resizeContext.action.id != newAction.id || newAction.canRepeat else {
+            return
+        }
+
+        var newAction: WindowAction = newAction
+        var newParentAction: WindowAction? = nil
+
+        triggerKeyTimeoutTimer.cancel()
+        triggerKeyTimeoutTimer.start()
+
         if newAction.direction == .cycle {
-            parentCycleAction = newAction
+            newParentAction = newAction
 
             // The ability to advance a cycle is only available when the action is triggered via a keybind or a left click on the mouse.
             // This should be set to false when the mouse is moved to prevent rapid cycling.
             if canAdvanceCycle {
-                newAction = getNextCycleAction(newAction)
+                newAction = await getNextCycleAction(newAction)
             } else {
-                if let cycle = newAction.cycle, !cycle.contains(currentAction) {
+                if let cycle = newAction.cycle, !cycle.contains(resizeContext.action) {
                     newAction = cycle.first ?? .init(.noAction)
                 } else {
-                    newAction = currentAction
+                    newAction = resizeContext.action
                 }
 
-                if newAction == currentAction {
+                if newAction == resizeContext.action {
                     return
                 }
             }
@@ -300,7 +380,7 @@ extension LoopManager {
             }
         } else {
             // By removing the parent cycle action, a left click will not advance the user's previously set cycle.
-            parentCycleAction = nil
+            newParentAction = nil
         }
 
         if newAction.direction.willChangeScreen {
@@ -317,39 +397,41 @@ extension LoopManager {
             }
 
             if newAction.direction == .leftScreen,
-               let leftScreen = ScreenUtility.directionalScreen(from: currentScreen, edge: .leading) {
+               let leftScreen = ScreenUtility.directionalScreen(from: currentScreen, direction: .left) {
                 newScreen = leftScreen
             }
 
             if newAction.direction == .rightScreen,
-               let rightScreen = ScreenUtility.directionalScreen(from: currentScreen, edge: .trailing) {
+               let rightScreen = ScreenUtility.directionalScreen(from: currentScreen, direction: .right) {
                 newScreen = rightScreen
             }
 
             if newAction.direction == .topScreen,
-               let topScreen = ScreenUtility.directionalScreen(from: currentScreen, edge: .top) {
+               let topScreen = ScreenUtility.directionalScreen(from: currentScreen, direction: .top) {
                 newScreen = topScreen
             }
 
             if newAction.direction == .bottomScreen,
-               let bottomScreen = ScreenUtility.directionalScreen(from: currentScreen, edge: .bottom) {
+               let bottomScreen = ScreenUtility.directionalScreen(from: currentScreen, direction: .bottom) {
                 newScreen = bottomScreen
             }
 
-            if currentAction.direction == .noAction {
-                if let targetWindow {
+            // If the current action is either `.noAction`/`.noSelection`, or `.smaller`/`.larger` etc,
+            // then we will preserve the window's proportional frame relative to the current screen on the new screen.
+            if resizeContext.action.direction.isNoOp || resizeContext.action.willManipulateExistingWindowFrame {
+                if let targetWindow = resizeContext.window {
                     let screenSwitchingCustomActionName = "autogenerated_screen_switching_action"
 
-                    if let lastAction = WindowRecords.getCurrentAction(for: targetWindow),
+                    if let lastAction = await WindowRecords.shared.getCurrentAction(for: targetWindow),
                        lastAction.getName() != screenSwitchingCustomActionName,
                        !lastAction.forceProportionalFrameOnScreenChange {
-                        currentAction = lastAction
+                        setResizeAction(to: lastAction, parent: nil)
                     } else {
                         let currentFrame = targetWindow.frame
-                        let currentBounds = currentScreen.safeScreenFrame
 
-                        let usePadding = PaddingSettings.enablePadding && (Defaults[.paddingMinimumScreenSize] == 0 || currentScreen.diagonalSize > Defaults[.paddingMinimumScreenSize])
-                        let adjustedBounds = usePadding ? PaddingSettings.padding.apply(on: currentBounds) : currentBounds
+                        let adjustedBounds = PaddingConfiguration
+                            .getConfiguredPadding(for: currentScreen)
+                            .applyToBounds(currentScreen.cgSafeScreenFrame, screen: currentScreen)
 
                         let proportionalSize = CGRect(
                             x: (currentFrame.minX - adjustedBounds.minX) / adjustedBounds.width,
@@ -358,53 +440,46 @@ extension LoopManager {
                             height: currentFrame.height / adjustedBounds.height
                         )
 
-                        currentAction = .init(
-                            .custom,
-                            keybind: [],
-                            name: screenSwitchingCustomActionName,
-                            unit: .percentage,
-                            width: proportionalSize.width * 100,
-                            height: proportionalSize.height * 100,
-                            xPoint: proportionalSize.minX * 100,
-                            yPoint: proportionalSize.minY * 100,
-                            positionMode: .coordinates,
-                            sizeMode: .custom
+                        setResizeAction(
+                            to: .init(
+                                .custom,
+                                keybind: [],
+                                name: screenSwitchingCustomActionName,
+                                unit: .percentage,
+                                width: proportionalSize.width * 100,
+                                height: proportionalSize.height * 100,
+                                xPoint: proportionalSize.minX * 100,
+                                yPoint: proportionalSize.minY * 100,
+                                positionMode: .coordinates,
+                                sizeMode: .custom
+                            ),
+                            parent: nil
                         )
                     }
                 } else {
-                    currentAction = .init(.center)
+                    setResizeAction(to: .init(.center), parent: nil)
                 }
             }
 
-            screenToResizeOn = newScreen
-            previewController.setScreen(to: newScreen)
+            resizeContext.setScreen(to: newScreen)
+            indicatorService.openAndUpdate(context: resizeContext)
 
-            // This is only needed because if preview window is moved
-            // onto a new screen, it needs to receive a window action
-            previewController.setAction(to: currentAction)
-            radialMenuController.setAction(to: currentAction)
-
-            if let parentCycleAction {
-                currentAction = newAction
-                changeAction(parentCycleAction, triggeredFromScreenChange: true)
+            if let parent = newParentAction {
+                setResizeAction(to: newAction, parent: newParentAction)
+                await changeAction(parent, triggeredFromScreenChange: true)
             } else {
-                if let screenToResizeOn,
-                   let window = targetWindow,
-                   !Defaults[.previewVisibility] {
+                if !Defaults[.previewVisibility] {
                     if !disableHapticFeedback {
                         performHapticFeedback()
                     }
 
-                    WindowEngine.resize(
-                        window,
-                        to: currentAction,
-                        on: screenToResizeOn,
-                        shouldRecord: false
-                    )
+                    Task {
+                        _ = try await WindowActionEngine.shared.apply(context: resizeContext)
+                    }
                 }
             }
 
-            logger.info("Screen changed: \(newScreen.localizedName)")
+            log.info("Screen changed: \(newScreen.localizedName)")
 
             return
         }
@@ -413,53 +488,35 @@ extension LoopManager {
             performHapticFeedback()
         }
 
-        if newAction != currentAction || newAction.shouldImmediatelyExecuteAction {
-            currentAction = newAction
-
-            if Defaults[.hideUntilDirectionIsChosen] {
-                openWindows(startingAction: newAction)
+        if newAction != resizeContext.action || newAction.canRepeat {
+            let previousActionWasNoOp = resizeContext.action.direction.isNoOp
+            setResizeAction(to: newAction, parent: newParentAction)
+            if !Defaults[.previewVisibility], !previousActionWasNoOp {
+                await resizeContext.refreshResolvedState()
             }
+            indicatorService.openAndUpdate(context: resizeContext)
 
-            Task { @MainActor in
-                previewController.setAction(to: newAction)
-                radialMenuController.setAction(to: newAction)
-                ultrawideDockController.setAction(to: newAction)
-
-                if !Defaults[.previewVisibility], let screenToResizeOn, let targetWindow {
-                    WindowEngine.resize(
-                        targetWindow,
-                        to: newAction,
-                        on: screenToResizeOn,
-                        shouldRecord: false
-                    )
+            Task {
+                if !Defaults[.previewVisibility] {
+                    _ = try await WindowActionEngine.shared.apply(context: resizeContext)
                 }
 
                 // If the action is to focus a window in a specific direction, find and activate that window
                 // This can work even without a current window (navigates from screen center)
                 if newAction.direction.willFocusWindow {
-                    guard let focusEdge = newAction.direction.focusEdge else {
-                        logger.error("willFocusWindow is true but focusEdge is nil for \(newAction.direction.debugDescription)")
-                        return
-                    }
+                    let result = try await WindowActionEngine.shared.apply(context: resizeContext)
 
-                    if let newWindow = WindowUtility.focusWindow(from: targetWindow, edge: focusEdge) {
-                        targetWindow = newWindow
-                        previewController.setWindow(to: newWindow)
-                        radialMenuController.setWindow(to: newWindow)
-                        ultrawideDockController.setWindow(to: newWindow)
-
-                        // If the previous window was nil, then the preview may have not opened.
-                        // So open them here just in case.
-                        openWindows(startingAction: newAction)
+                    if let newTargetWindow = result.newTargetWindow {
+                        resizeContext.setWindow(to: newTargetWindow)
                     }
                 }
             }
 
-            logger.info("Window action changed: \(newAction.debugDescription)")
+            log.info("Window action changed: \(newAction.description)")
         }
     }
 
-    private func getNextCycleAction(_ action: WindowAction) -> WindowAction {
+    private func getNextCycleAction(_ action: WindowAction) async -> WindowAction {
         guard let currentCycle = action.cycle else {
             return action
         }
@@ -472,24 +529,23 @@ extension LoopManager {
             && Defaults[.triggerKey].contains(.kVK_Shift) == false
             && Defaults[.cycleBackwardsOnShiftPressed]
 
-        let shouldCycleBackwards = allowReverseCycle && isShiftKeyPressed
+        let shouldCycleBackwards = allowReverseCycle && keybindTrigger.effectiveEventFlags.contains(.maskShift)
         var currentIndex: Int? = nil
 
         if Defaults[.cycleModeRestartEnabled],
-           currentAction.direction == .noAction ||
-           !currentCycle.contains(currentAction) {
+           resizeContext.action.direction == .noSelection || !currentCycle.contains(resizeContext.action) {
             return currentCycle[0]
         }
 
-        // If the current action is noAction, we can preserve the index from the last action.
+        // If the current action is noSelection, we can preserve the index from the last action.
         // This would initially be done by reading the window's records, then would continue by finding the next index from the currentAction.
-        if currentAction.direction == .noAction,
-           !currentCycle.contains(currentAction),
-           let window = targetWindow,
-           let latestRecord = WindowRecords.getCurrentAction(for: window) {
+        if resizeContext.action.direction == .noSelection,
+           !currentCycle.contains(resizeContext.action),
+           let window = resizeContext.window,
+           let latestRecord = await WindowRecords.shared.getCurrentAction(for: window) {
             currentIndex = currentCycle.firstIndex(of: latestRecord)
         } else {
-            currentIndex = currentCycle.firstIndex(of: currentAction)
+            currentIndex = currentCycle.firstIndex(of: resizeContext.action)
         }
 
         guard var nextIndex = currentIndex else {
@@ -512,119 +568,39 @@ extension LoopManager {
 
     private func performHapticFeedback() {
         if Defaults[.hapticFeedback] {
-            NSHapticFeedbackManager.defaultPerformer.perform(
-                NSHapticFeedbackManager.FeedbackPattern.alignment,
-                performanceTime: NSHapticFeedbackManager.PerformanceTime.now
-            )
-        }
-    }
-}
-
-// MARK: - Radial Menu
-
-extension LoopManager {
-    private func mouseMoved(cgEvent _: CGEvent) {
-        Task { @MainActor in
-            guard isLoopActive else { return }
-            keybindObserver.canPassthroughSpecialEvents = false
-
-            let noActionDistance: CGFloat = 10
-
-            let currentMouseLocation = NSEvent.mouseLocation
-            let mouseAngle = Angle(radians: initialMousePosition.angle(to: currentMouseLocation))
-            let mouseDistance = initialMousePosition.distance(to: currentMouseLocation)
-
-            // Return if the mouse didn't move
-            if mouseAngle == angleToMouse, mouseDistance == distanceToMouse {
-                return
-            }
-
-            // Get angle & distance to mouse
-            angleToMouse = mouseAngle
-            distanceToMouse = mouseDistance
-
-            var resizeDirection: WindowAction = .init(.noAction)
-
-            if shouldUseUltrawideDock {
-                // Anchor-snap model: the viewmodel selects the nearest anchor (screen edge,
-                // window-adjacent, or gap-center) and produces a matching custom action.
-                // Click cycles size; scroll wheel fine-tunes. See UltrawideDockViewModel.Anchor.
-                if let action = ultrawideDockController.updateForMouseX(currentMouseLocation.x) {
-                    resizeDirection = action
-                } else {
-                    resizeDirection = Defaults[.radialMenuCenter]
-                }
-            } else {
-                // Radial Menu Logic
-                // If mouse over 50 points away, select half or quarter positions
-                if distanceToMouse > 50 - Defaults[.radialMenuThickness] {
-                    switch Int((angleToMouse.normalized().degrees + 22.5) / 45) {
-                    case 0, 8: resizeDirection = Defaults[.radialMenuRight]
-                    case 1: resizeDirection = Defaults[.radialMenuBottomRight]
-                    case 2: resizeDirection = Defaults[.radialMenuBottom]
-                    case 3: resizeDirection = Defaults[.radialMenuBottomLeft]
-                    case 4: resizeDirection = Defaults[.radialMenuLeft]
-                    case 5: resizeDirection = Defaults[.radialMenuTopLeft]
-                    case 6: resizeDirection = Defaults[.radialMenuTop]
-                    case 7: resizeDirection = Defaults[.radialMenuTopRight]
-                    default: break
-                    }
-                } else if distanceToMouse > noActionDistance {
-                    resizeDirection = Defaults[.radialMenuCenter]
-                }
-            }
-
-            changeAction(resizeDirection, canAdvanceCycle: false)
+            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         }
     }
 
-    private func leftMouseDown(cgEvent event: CGEvent) {
-        /// Ensure that the source originates from the HID state ID.
-        /// Otherwise, this event was likely sent from Loop to focus the frontmost click (see `Window.focus` which sends a `SLSEvent` to the window)
-        let sourceID = CGEventSourceStateID(rawValue: Int32(event.getIntegerValueField(.eventSourceStateID)))
-        guard sourceID == .hidSystemState else {
-            return
-        }
-
-        Task { @MainActor [weak self] in
-            guard let self, isLoopActive, currentAction.direction != .noAction else {
-                return
-            }
-
-            // In ultrawide-dock mode, clicks cycle the size at the active anchor (e.g. 1/2 →
-            // 1/3 → 2/3) instead of cycling through preset radial-menu actions.
-            if shouldUseUltrawideDock, ultrawideDockController.isActive {
-                if let action = ultrawideDockController.cycleSize() {
-                    changeAction(action, disableHapticFeedback: false, canAdvanceCycle: false)
-                }
-                return
-            }
-
-            if let parentCycleAction {
-                changeAction(parentCycleAction, disableHapticFeedback: true)
-            }
-        }
+    private func setResizeAction(to newAction: WindowAction, parent newParentAction: WindowAction?) {
+        resizeContext.setAction(to: newAction, parent: newParentAction)
+        hasParentCycleActionMirror.withLock { $0 = newParentAction != nil }
     }
 
-    /// Scroll-wheel fine-tunes the width at the current anchor while the ultrawide dock is open.
-    /// One detent ≈ 4% of the available gap; sign follows the OS's natural-scroll setting.
-    private func scrollWheel(cgEvent event: CGEvent) {
-        Task { @MainActor [weak self] in
-            guard let self, isLoopActive, shouldUseUltrawideDock, ultrawideDockController.isActive else {
-                return
-            }
+    /// Resolves the target screen for `screenToResizeOn`.
+    ///
+    /// By default, this uses the user's `useScreenWithCursor` setting.
+    /// For actions that move windows between screens, the screen containing the window is preferred to ensure deterministic behavior.
+    /// - Parameters:
+    ///   - action: The window action being performed.
+    ///   - window: The window to be resized, if any.
+    /// - Returns: The screen the window should be on after the action.
+    private func resolveAndStoreTargetScreen(action: WindowAction, window: Window?) -> NSScreen? {
+        var targetScreen = Defaults[.useScreenWithCursor] ? NSScreen.screenWithMouse : NSScreen.main
 
-            // Use the vertical scroll axis: scroll up = grow, scroll down = shrink.
-            // Pixel value gives sub-detent precision on trackpads; clamp so a fast flick can't
-            // overshoot one full step in one event.
-            let dyPixels = event.getDoubleValueField(.scrollWheelEventPointDeltaAxis1)
-            let dyLine = event.getDoubleValueField(.scrollWheelEventDeltaAxis1)
-            let raw = dyPixels != 0 ? dyPixels / 200.0 : dyLine * 0.04
-            let delta = max(-0.1, min(0.1, raw))
-            if delta == 0 { return }
-            if let action = ultrawideDockController.adjustSize(by: delta) {
-                changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
-            }
+        if action.direction.willChangeScreen,
+           let window,
+           let screen = ScreenUtility.screenContaining(window) {
+            targetScreen = screen
         }
+
+        resizeContext.setScreen(to: targetScreen)
+
+        if !resizeContext.action.direction.isNoOp {
+            // If a screen was previously not selected, then the preview needs to be opened.
+            indicatorService.openAndUpdate(context: resizeContext)
+        }
+
+        return targetScreen
     }
 }

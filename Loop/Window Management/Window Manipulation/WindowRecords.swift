@@ -5,126 +5,161 @@
 //  Created by Kai Azim on 2023-09-23.
 //
 
+import Scribe
 import SwiftUI
 
-enum WindowRecords {
-    private static var records: [WindowRecords.Record] = []
+@Loggable
+actor WindowRecords {
+    nonisolated static let shared = WindowRecords()
+
+    private var recordsByWindowID: [CGWindowID: WindowRecords.Record] = [:]
 
     struct Record {
-        var cgWindowID: CGWindowID
-        var initialFrame: CGRect
-        var actionRecords: [WindowAction]
-    }
+        let initialFrame: CGRect
+        var actions: [WindowAction]
 
-    /// Has the window has been previously recorded?
-    /// - Parameter window: The window to check
-    /// - Returns: true or false
-    static func hasBeenRecorded(_ window: Window) -> Bool {
-        WindowRecords.records.contains { record in
-            record.cgWindowID == window.cgWindowID
+        init(initialFrame: CGRect) {
+            self.initialFrame = initialFrame
+            self.actions = [.init(.initialFrame)]
         }
     }
 
-    /// The index of the window's record in the records array
-    /// - Parameter window: Window to check
-    /// - Returns: The index of the window's records
-    private static func findRecordsID(for window: Window) -> Int? {
-        if let id = WindowRecords.records.firstIndex(where: { $0.cgWindowID == window.cgWindowID }) {
-            return id
+    /// Pre-resolved snapshot of a window's records for synchronous access.
+    struct ResolvedRecord {
+        let initialFrame: CGRect?
+        let lastAction: WindowAction?
+
+        init(for window: Window) async {
+            self.initialFrame = await WindowRecords.shared.getInitialFrame(for: window)
+            self.lastAction = await WindowRecords.shared.getLastAction(for: window)
         }
-
-        return nil
-    }
-
-    /// This will erase ALL previous records of the window, and start a fresh new record for the selected window.
-    /// - Parameter window: Window to record
-    static func recordFirst(for window: Window) {
-        WindowRecords.records.removeAll {
-            $0.cgWindowID == window.cgWindowID
-        }
-        let frame = window.frame
-
-        WindowRecords.records.append(
-            WindowRecords.Record(
-                cgWindowID: window.cgWindowID,
-                initialFrame: frame,
-                actionRecords: [.init(.initialFrame)]
-            )
-        )
     }
 
     /// Erase all previous records for a window
     /// - Parameter window: Window to erase
-    static func eraseRecords(for window: Window) {
-        WindowRecords.records.removeAll {
-            $0.cgWindowID == window.cgWindowID
-        }
-    }
-
-    /// Record a window's action in the records array
-    /// - Parameters:
-    ///   - window: Window to record
-    ///   - action: WindowAction to record
-    static func record(_ window: Window, _ action: WindowAction) {
-        /// If the window has not been recorded, record it
-        if !WindowRecords.hasBeenRecorded(window) {
-            WindowRecords.recordFirst(for: window)
-        }
-
-        guard
-            action.direction != .undo, // There is no point in recording undos
-            let id = WindowRecords.findRecordsID(for: window)
-        else {
+    func eraseRecords(for window: Window) {
+        guard recordsByWindowID[window.cgWindowID] != nil else {
+            // Records don't exist
             return
         }
 
-        WindowRecords.records[id].actionRecords.insert(action, at: 0)
+        recordsByWindowID[window.cgWindowID] = nil
+        log.success("Erased records for: \(window)")
+    }
+
+    /// Records the window's initial frame if no record exists yet.
+    /// - Parameters:
+    ///   - window: the window to record.
+    ///   - resolvedProperties: pre-resolved properties to avoid redundant AX calls. Falls back to `window.frame` if nil.
+    func recordFirstIfNeeded(for window: Window, resolvedProperties: Window.ResolvedProperties?) {
+        guard recordsByWindowID[window.cgWindowID] == nil else { return }
+        recordsByWindowID[window.cgWindowID] = Record(initialFrame: resolvedProperties?.frame ?? window.frame)
+        log.info("Recorded first for: \(window)")
+    }
+
+    /// Determines if an action should be recorded using its frame instead of the action applied onto it.
+    /// - Parameter action: the action to apply onto the window.
+    /// - Returns: Whether this action should be recorded with its final frame instead of using the action.
+    nonisolated func shouldStoreAsFinalFrame(_ action: WindowAction) -> Bool {
+        // Actions that are stored as frames need to be recorded *after* resize.
+        // These actions are context-dependent, and cannot simply be called as an action to restore the previous state.
+        let storeAsFrame = action.direction.willChangeScreen || action.willManipulateExistingWindowFrame
+        return storeAsFrame
+    }
+
+    /// Record a window's action in the records array.
+    /// - Parameters:
+    ///   - window: Window to record.
+    ///   - resolvedProperties: pre-resolved properties to avoid redundant AX calls. Falls back to `window.frame` if nil.
+    ///   - action: WindowAction to record.
+    func record(_ window: Window, resolvedProperties: Window.ResolvedProperties?, _ action: WindowAction) {
+        // If the window has not been recorded, record it
+        recordFirstIfNeeded(for: window, resolvedProperties: resolvedProperties)
+
+        // There is no point in recording undo
+        guard action.direction != .undo else {
+            return
+        }
+
+        if shouldStoreAsFinalFrame(action), let screen = ScreenUtility.screenContaining(window) {
+            let customActionName = "autogenerated_record_\(action.getName())"
+            let windowFrame = resolvedProperties?.frame ?? window.frame
+            let adjustedBounds = PaddingConfiguration
+                .getConfiguredPadding(for: screen)
+                .applyToBounds(screen.cgSafeScreenFrame, screen: screen)
+
+            let proportionalSize = CGRect(
+                x: (windowFrame.minX - adjustedBounds.minX) / adjustedBounds.width,
+                y: (windowFrame.minY - adjustedBounds.minY) / adjustedBounds.height,
+                width: windowFrame.width / adjustedBounds.width,
+                height: windowFrame.height / adjustedBounds.height
+            )
+
+            let action = WindowAction(
+                .custom,
+                keybind: [],
+                name: customActionName,
+                unit: .percentage,
+                anchor: nil,
+                width: proportionalSize.width * 100,
+                height: proportionalSize.height * 100,
+                xPoint: proportionalSize.minX * 100,
+                yPoint: proportionalSize.minY * 100,
+                positionMode: .coordinates,
+                sizeMode: .custom
+            )
+
+            recordsByWindowID[window.cgWindowID]?.actions.insert(action, at: 0)
+        } else {
+            recordsByWindowID[window.cgWindowID]?.actions.insert(action, at: 0)
+        }
+
+        log.info("Recorded: \(action) for: \(window)")
+    }
+
+    /// Removes the last action performed on the specified window. This will NOT remove the first action for the specified window.
+    func removeLastAction(for window: Window) {
+        guard let record = recordsByWindowID[window.cgWindowID],
+              record.actions.count > 1
+        else {
+            log.info("Skipped removing last record for: \(window)")
+            return
+        }
+
+        recordsByWindowID[window.cgWindowID]?.actions.removeFirst()
+
+        log.info("Removed last record for: \(window)")
     }
 
     /// This window's last action
     /// - Parameters:
     ///   - window: Window to check
     /// - Returns: The window action
-    static func getLastAction(for window: Window) -> WindowAction? {
-        guard
-            let id = WindowRecords.findRecordsID(for: window),
-            WindowRecords.records[id].actionRecords.count > 1
+    func getLastAction(for window: Window) -> WindowAction? {
+        guard let record = recordsByWindowID[window.cgWindowID],
+              record.actions.count >= 2
         else {
             return nil
         }
-        return WindowRecords.records[id].actionRecords[1]
+
+        return record.actions[1]
     }
 
     /// This window's current recorded action
     /// - Parameters:
     ///   - window: Window to check
     /// - Returns: The window action
-    static func getCurrentAction(for window: Window) -> WindowAction? {
-        guard
-            let id = WindowRecords.findRecordsID(for: window),
-            WindowRecords.records[id].actionRecords.count > 1
+    func getCurrentAction(for window: Window) -> WindowAction? {
+        guard let record = recordsByWindowID[window.cgWindowID],
+              record.actions.count >= 1
         else {
             return nil
         }
-        return WindowRecords.records[id].actionRecords[0]
+
+        return record.actions[0]
     }
 
-    static func removeLastAction(for window: Window) {
-        guard
-            let id = WindowRecords.findRecordsID(for: window),
-            WindowRecords.records[id].actionRecords.count > 1
-        else {
-            return
-        }
-
-        WindowRecords.records[id].actionRecords.removeFirst()
-    }
-
-    static func getInitialFrame(for window: Window) -> CGRect? {
-        guard let id = WindowRecords.findRecordsID(for: window) else {
-            return nil
-        }
-
-        return WindowRecords.records[id].initialFrame
+    func getInitialFrame(for window: Window) -> CGRect? {
+        recordsByWindowID[window.cgWindowID]?.initialFrame
     }
 }

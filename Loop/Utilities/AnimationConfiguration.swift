@@ -11,66 +11,55 @@ import SwiftUI
 enum AnimationConfiguration: Int, Defaults.Serializable, CaseIterable, Identifiable {
     var id: Self { self }
 
-    case smooth = 0
-    case balanced = 1
-    case fast = 2
-    case quick = 3
+    case fluid = 0
+    case relaxed = 1
+    case snappy = 2
+    case brisk = 3
     case instant = 4
 
     var name: LocalizedStringKey {
         switch self {
-        case .smooth:
+        case .fluid:
             "Fluid"
-        case .balanced:
+        case .relaxed:
             "Relaxed"
-        case .fast:
+        case .snappy:
             "Snappy"
-        case .quick:
+        case .brisk:
             "Brisk"
         case .instant:
             "Instant"
         }
     }
 
-    var previewTimingFunction: CAMediaTimingFunction? {
+    // MARK: Preview Window
+
+    var previewWindow: Animation? {
         switch self {
-        case .smooth:
-            CAMediaTimingFunction(controlPoints: 0, 0.26, 0.45, 1)
-        case .balanced:
-            CAMediaTimingFunction(controlPoints: 0.15, 0.8, 0.46, 1)
-        case .fast:
-            CAMediaTimingFunction(controlPoints: 0.22, 1, 0.47, 1)
-        case .quick:
-            CAMediaTimingFunction(controlPoints: 0.25, 1, 0.48, 1)
-        case .instant:
+        case .fluid:
+            .timingCurve(0, 0.26, 0.45, 1, duration: 0.325)
+        case .relaxed:
+            .timingCurve(0.15, 0.8, 0.46, 1, duration: 0.3)
+        case .snappy:
+            .timingCurve(0.22, 1, 0.47, 1, duration: 0.25)
+        case .brisk:
+            .timingCurve(0.25, 1, 0.48, 1, duration: 0.15)
+        default:
             nil
         }
     }
 
-    var previewTimingFunctionSwiftUI: Animation? {
-        switch self {
-        case .smooth:
-            Animation.timingCurve(0, 0.26, 0.45, 1)
-        case .balanced:
-            Animation.timingCurve(0.15, 0.8, 0.46, 1)
-        case .fast:
-            Animation.timingCurve(0.22, 1, 0.47, 1)
-        case .quick:
-            Animation.timingCurve(0.25, 1, 0.48, 1)
-        case .instant:
-            nil
-        }
-    }
+    // MARK: Radial Menu
 
     var radialMenuSize: Animation {
         switch self {
-        case .smooth:
+        case .fluid:
             .easeOut(duration: 0.2)
-        case .balanced:
+        case .relaxed:
             .easeOut(duration: 0.2)
-        case .fast:
+        case .snappy:
             .easeOut(duration: 0.2)
-        case .quick:
+        case .brisk:
             .easeOut(duration: 0.15)
         case .instant:
             .easeOut(duration: 0.1)
@@ -78,6 +67,14 @@ enum AnimationConfiguration: Int, Defaults.Serializable, CaseIterable, Identifia
     }
 
     var radialMenuAngle: Animation {
-        Animation.timingCurve(0.22, 1, 0.36, 1, duration: 0.2)
+        if self == .instant {
+            .linear(duration: 0)
+        } else {
+            .timingCurve(0.22, 1, 0.36, 1, duration: 0.2)
+        }
+    }
+
+    var animateRadialMenuAppearance: Bool {
+        self != .instant
     }
 }

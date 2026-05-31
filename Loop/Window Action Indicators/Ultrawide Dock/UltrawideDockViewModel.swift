@@ -8,6 +8,7 @@
 import Defaults
 import SwiftUI
 
+@MainActor
 final class UltrawideDockViewModel: ObservableObject {
     struct WindowFrame: Identifiable {
         let id: CGWindowID
@@ -89,14 +90,25 @@ final class UltrawideDockViewModel: ObservableObject {
         self.screen = screen
         self.previewMode = previewMode
 
-        loadExistingWindows()
-        rebuildAnchors()
-        // Default to the center anchor so the initial preview is centered, like before.
-        if let center = anchors.first(where: { $0.edge == .center }) {
-            setActiveAnchor(center)
-        } else if let first = anchors.first {
-            setActiveAnchor(first)
+        // Loading existing windows hops to the `WindowRecords` actor, so it runs asynchronously.
+        // The dock opens immediately and the anchors/preview populate a tick later.
+        Task { @MainActor in
+            await loadExistingWindows()
+            rebuildAnchors()
+            // Default to the center anchor so the initial preview is centered, like before.
+            if let center = anchors.first(where: { $0.edge == .center }) {
+                setActiveAnchor(center)
+            } else if let first = anchors.first {
+                setActiveAnchor(first)
+            }
         }
+    }
+
+    /// Reloads the on-screen window set from `WindowRecords` and recomputes anchors + preview.
+    private func reload() async {
+        await loadExistingWindows()
+        rebuildAnchors()
+        recomputePreview()
     }
 
     var invalidWindowSelected: Bool {
@@ -105,9 +117,7 @@ final class UltrawideDockViewModel: ObservableObject {
 
     func setWindow(to newWindow: Window) {
         window = newWindow
-        loadExistingWindows()
-        rebuildAnchors()
-        recomputePreview()
+        Task { @MainActor in await reload() }
     }
 
     /// In live (non-preview) mode the viewmodel is the source of truth for the preview, so we
@@ -116,15 +126,13 @@ final class UltrawideDockViewModel: ObservableObject {
         currentAction = action
         if previewMode {
             let bounds = CGRect(x: 0, y: 0, width: 1, height: 1)
-            let frame = action.getFrame(window: window, bounds: bounds, disablePadding: true)
+            let frame = WindowFrameResolver.getFrame(for: action, bounds: bounds, padding: .zero)
             withAnimation(.snappy) { previewFrame = frame }
         }
     }
 
     func refresh() {
-        loadExistingWindows()
-        rebuildAnchors()
-        recomputePreview()
+        Task { @MainActor in await reload() }
     }
 
     // MARK: - Anchor interaction
@@ -276,7 +284,7 @@ final class UltrawideDockViewModel: ObservableObject {
         }
     }
 
-    private func loadExistingWindows() {
+    private func loadExistingWindows() async {
         guard let screen else {
             existingWindows = []
             return
@@ -289,10 +297,6 @@ final class UltrawideDockViewModel: ObservableObject {
         let allWindows = WindowUtility.windowList()
 
         for (index, win) in allWindows.enumerated() {
-            guard WindowRecords.hasBeenRecorded(win) else {
-                continue
-            }
-
             let isCurrentWindow = window.map { win.cgWindowID == $0.cgWindowID } ?? false
 
             let winFrame = win.frame
@@ -305,13 +309,13 @@ final class UltrawideDockViewModel: ObservableObject {
                 continue
             }
 
-            guard let action = WindowRecords.getCurrentAction(for: win) else {
+            guard let action = await WindowRecords.shared.getCurrentAction(for: win) else {
                 continue
             }
-            let targetFrame = action.getFrame(
-                window: win,
+            let targetFrame = WindowFrameResolver.getFrame(
+                for: action,
                 bounds: safeScreenFrame,
-                screen: screen
+                padding: PaddingConfiguration.getConfiguredPadding(for: screen)
             )
             guard winFrame.approximatelyEqual(to: targetFrame, tolerance: 10) else {
                 continue

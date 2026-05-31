@@ -10,54 +10,54 @@ import Luminare
 import SwiftUI
 
 struct ExcludedAppsConfigurationView: View {
-    @Environment(\.luminareAnimation) private var luminareAnimation
-
     @Default(.excludedApps) private var excludedApps
     @State private var selectedApps = Set<URL>()
 
     var body: some View {
-        LuminareSection {
-            HStack(spacing: 2) {
-                Button("Add") {
-                    showAppChooser()
-                }
-
-                Button("Remove", role: .destructive) {
-                    excludedApps.removeAll { selectedApps.contains($0) }
-                }
-                .disabled(selectedApps.isEmpty)
-                .buttonStyle(.luminareProminent)
-                .keyboardShortcut(.delete)
-            }
-
-            LuminareList(
-                items: $excludedApps,
-                selection: $selectedApps,
-                id: \.self
-            ) { item in
-                ExcludedListAppView(url: item.wrappedValue)
-                    .equatable()
-            } emptyView: {
-                HStack {
-                    Spacer()
-                    VStack {
-                        Text("No excluded applications")
-                            .font(.title3)
-                        Text("Press \"Add\" to add an application")
-                            .font(.caption)
+        LuminareForm {
+            LuminareSection {
+                LuminareButtonRow {
+                    Button("Add") {
+                        showAppChooser()
                     }
-                    Spacer()
+
+                    Button("Remove", role: .destructive) {
+                        excludedApps.removeAll { selectedApps.contains($0) }
+                    }
+                    .disabled(selectedApps.isEmpty)
+                    .keyboardShortcut(.delete)
                 }
-                .foregroundStyle(.secondary)
-                .padding()
+                .luminareRoundingBehavior(top: true)
+
+                LuminareList(
+                    items: $excludedApps,
+                    selection: $selectedApps,
+                    id: \.self
+                ) { item in
+                    ExcludedListAppView(url: item.wrappedValue)
+                        .equatable()
+                } emptyView: {
+                    HStack {
+                        Spacer()
+                        VStack {
+                            Text("No excluded applications")
+                                .font(.title3)
+                            Text("Press \"Add\" to add an application")
+                                .font(.caption)
+                        }
+                        Spacer()
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding()
+                }
+                .luminareRoundingBehavior(bottom: true)
             }
-            .luminareListRoundedCorner(bottom: .always)
         }
     }
 
     func showAppChooser() {
         Task { @MainActor in
-            guard let window = LuminareManager.shared.window else { return }
+            guard let window = SettingsWindowManager.shared.window else { return }
 
             let panel = NSOpenPanel()
             panel.worksWhenModal = true
@@ -116,11 +116,23 @@ struct ExcludedListAppView: View, Equatable {
             Button {
                 NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: app.path)])
             } label: {
-                Image(.finder)
-                    .foregroundStyle(.tertiary)
+                Group {
+                    if #available(macOS 26, *) {
+                        Image(systemName: "finder")
+                    } else {
+                        Image(systemName: "arrow.up.forward")
+                    }
+                }
+                .padding(4)
+                .contentShape(.rect)
             }
-            .buttonStyle(PlainButtonStyle())
-            .padding(4)
+            .luminareContentSize(
+                aspectRatio: 1.0,
+                contentMode: .fit,
+                hasFixedHeight: true
+            )
+            .luminareRoundingBehavior(top: true, bottom: true)
+            .luminareSurfaceStyle(.flat)
         }
         .padding(.horizontal, 12)
         .task {

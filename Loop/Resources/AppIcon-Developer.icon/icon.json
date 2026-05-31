@@ -2,8 +2,8 @@
   "color-space-for-untagged-svg-colors" : "display-p3",
   "fill" : {
     "linear-gradient" : [
-      "display-p3:0.12549,0.61961,0.90588,1.00000",
-      "srgb:0.09804,0.39216,0.70196,1.00000"
+      "display-p3:0.34497,0.74512,0.96094,1.00000",
+      "display-p3:0.20801,0.42456,0.94580,1.00000"
     ]
   },
   "groups" : [
@@ -25,7 +25,7 @@
       }
     },
     {
-      "blur-material" : 0.08,
+      "blur-material" : 0.2,
       "hidden" : false,
       "layers" : [
         {
@@ -35,7 +35,11 @@
           "opacity-specializations" : [
             {
               "appearance" : "dark",
-              "value" : 1
+              "value" : 0.5
+            },
+            {
+              "appearance" : "tinted",
+              "value" : 0.75
             }
           ]
         }
@@ -44,40 +48,40 @@
         "kind" : "neutral",
         "opacity" : 0.75
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.75
-      }
+      "translucency-specializations" : [
+        {
+          "value" : {
+            "enabled" : true,
+            "value" : 0.5
+          }
+        },
+        {
+          "appearance" : "dark",
+          "value" : {
+            "enabled" : true,
+            "value" : 0.5
+          }
+        }
+      ]
     },
     {
-      "hidden" : false,
+      "blur-material" : null,
       "layers" : [
         {
-          "blend-mode-specializations" : [
-            {
-              "appearance" : "dark",
-              "value" : "normal"
-            }
-          ],
           "glass" : true,
-          "image-name" : "Grid.svg",
-          "name" : "Grid",
-          "opacity-specializations" : [
-            {
-              "appearance" : "dark",
-              "value" : 1
-            }
-          ]
+          "image-name" : "1 – Layer 4.svg",
+          "name" : "1 – Layer 4",
+          "opacity" : 0.75
         }
       ],
       "shadow" : {
-        "kind" : "neutral",
+        "kind" : "none",
         "opacity" : 0.5
       },
       "specular" : false,
       "translucency" : {
         "enabled" : true,
-        "value" : 0.5
+        "value" : 0.75
       }
     }
   ],

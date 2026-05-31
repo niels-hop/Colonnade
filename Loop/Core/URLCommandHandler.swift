@@ -31,33 +31,20 @@
     - loop://screen/next          (Move window to next screen)
     - loop://screen/previous      (Move window to previous screen)
 
- 3. Shell Commands:
-    Format: loop://shell/<command>
-    Examples:
-    - loop://shell/open%20-a%20Loop    (Activate Loop app)
-    - loop://shell/osascript%20-e%20%22tell%20application%20%5C%22Loop%5C%22%20to%20activate%22
-    Note: Commands must be URL encoded
-
- 4. AppleScript Commands:
-    Format: loop://applescript/<script>
-    Examples:
-    - loop://applescript/tell%20application%20%22Loop%22%20to%20activate
-    Note: Scripts must be URL encoded
-
- 5. Action Commands:
+ 3. Action Commands:
     Format: loop://action/<action>
     Examples:
     - loop://action/maximize      (Maximize window)
     - loop://action/leftHalf      (Move to left half)
     Note: See 'loop://list/actions' for all available actions
 
- 6. Keybind Commands:
+ 4. Keybind Commands:
     Format: loop://keybind/<name>
     Examples:
     - loop://keybind/myCustomLayout
     Note: See 'loop://list/keybinds' for available keybinds
 
- 7. List Commands:
+ 5. List Commands:
     Format: loop://list/<type>
     Types:
     - actions    (List all window actions)
@@ -67,7 +54,7 @@
  Usage Tips:
  ----------
  1. All commands are case-insensitive
- 2. Scripts and commands with spaces must be URL encoded
+ 2. Parameters with spaces must be URL encoded
  3. Window commands operate on the frontmost non-terminal window
  4. Use list commands to discover available options
 
@@ -75,9 +62,6 @@
  --------
  # Move current window to right half
  open "loop://direction/right"
-
- # Activate Loop via shell command
- open "loop://shell/open%20-a%20Loop"
 
  # List all available actions
  open "loop://list/actions"
@@ -99,10 +83,11 @@
 
 import Defaults
 import Foundation
-import OSLog
+import Scribe
 import SwiftUI
 
 /// Handles URL scheme commands for the Loop application
+@Loggable
 final class URLCommandHandler {
     // MARK: - Types
 
@@ -112,10 +97,6 @@ final class URLCommandHandler {
         case direction
         /// Multi-screen management commands (next, previous)
         case screen
-        /// Shell command execution with URL encoding
-        case shell
-        /// AppleScript execution with URL encoding
-        case applescript
         /// Predefined window actions
         case action
         /// Custom keybind actions
@@ -128,8 +109,6 @@ final class URLCommandHandler {
             switch self {
             case .direction: "Window direction command"
             case .screen: "Screen management"
-            case .shell: "Execute shell command"
-            case .applescript: "Execute AppleScript"
             case .action: "Execute predefined window action"
             case .keybind: "Execute custom keybind action"
             case .list: "List available commands"
@@ -138,9 +117,6 @@ final class URLCommandHandler {
     }
 
     // MARK: - Properties
-
-    /// Logger for debugging and error tracking
-    private let logger = Logger(category: "URLHandler")
 
     /// Tracks the last active window for context preservation
     private var lastActiveWindow: Window?
@@ -167,7 +143,7 @@ final class URLCommandHandler {
             cleanMessage.hasPrefix("Found") ||
             cleanMessage.hasPrefix("Window:") ||
             (cleanMessage.hasPrefix("Processing") && !cleanMessage.contains("command:")) {
-            logger.debug("\(message, privacy: .public)")
+            log.info(cleanMessage)
             return
         }
 
@@ -175,9 +151,9 @@ final class URLCommandHandler {
         if currentCommand?.contains("/list") == true {
             outputBuffer.append(output)
         } else {
-            logger.info("\(output)")
+            log.info("\(output)")
         }
-        logger.debug("\(message, privacy: .public)")
+        log.info(cleanMessage)
     }
 
     /// Writes a titled list of items to output
@@ -196,8 +172,8 @@ final class URLCommandHandler {
             outputBuffer.append(title)
             outputBuffer.append(contentsOf: formattedItems)
         } else {
-            logger.info("\n\(title)")
-            formattedItems.forEach { logger.info("\($0)") }
+            log.info("\n\(title)")
+            formattedItems.forEach { log.info("\($0)") }
         }
     }
 
@@ -224,20 +200,21 @@ final class URLCommandHandler {
 
             // Schedule file deletion after a delay
             // We use a longer delay (60s) to ensure the user has time to read the content
-            DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [tempFile] in
+            Task {
+                try? await Task.sleep(for: .seconds(60))
+
                 do {
                     try FileManager.default.removeItem(at: tempFile)
-                    self.logger.debug("Cleaned up temporary file: \(tempFile.lastPathComponent)")
+                    log.info("Cleaned up temporary file: \(tempFile.lastPathComponent)")
                 } catch {
-                    self.logger.error("Failed to clean up temporary file: \(error.localizedDescription)")
+                    log.error("Failed to clean up temporary file: \(error.localizedDescription)")
                 }
             }
         } catch {
-            logger.error("Failed to write output: \(error.localizedDescription)")
+            log.error("Failed to write output: \(error.localizedDescription)")
 
             // Fallback to direct console output if file operations fail
-            // swiftformat:disable:next redundantSelf
-            logger.info("\(self.outputBuffer.joined(separator: "\n"))")
+            log.info("\(outputBuffer.joined(separator: "\n"))")
         }
 
         outputBuffer.removeAll()
@@ -278,14 +255,12 @@ final class URLCommandHandler {
     ///   - command: The command to process
     ///   - parameters: Array of command parameters
     private func processCommand(_ command: Command, _ parameters: [String]) {
-        logger.debug("\(command.rawValue, privacy: .public)")
-        logger.debug("\(parameters, privacy: .public)")
+        log.info(command.rawValue)
+        log.info(parameters.description)
 
         switch command {
         case .direction: handleDirectionCommand(parameters)
         case .screen: handleScreenCommand(parameters)
-        case .shell: handleShellCommand(parameters)
-        case .applescript: handleAppleScriptCommand(parameters)
         case .action: handleActionCommand(parameters)
         case .keybind: handleKeybindCommand(parameters)
         case .list: handleListCommand(parameters)
@@ -393,63 +368,6 @@ final class URLCommandHandler {
 
         let direction: WindowDirection = command == "next" ? .nextScreen : .previousScreen
         moveWindowToScreen(window, direction)
-    }
-
-    /// Handles shell command execution
-    /// - Parameter parameters: Shell command parameters
-    private func handleShellCommand(_ parameters: [String]) {
-        guard !parameters.isEmpty else {
-            writeToOutput("[URLHandler] No shell command specified")
-            return
-        }
-
-        let command = parameters.joined(separator: " ")
-        writeToOutput("[URLHandler] Executing shell command: \(command)")
-
-        let task = Process()
-        task.launchPath = "/bin/sh"
-        task.arguments = ["-c", command]
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = pipe
-
-        do {
-            try task.run()
-            if let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) {
-                writeToOutput("[URLHandler] Shell output: \(output)")
-            }
-            task.waitUntilExit()
-            writeToOutput("[URLHandler] Shell command completed with status: \(task.terminationStatus)")
-        } catch {
-            writeToOutput("[URLHandler] Error executing shell command: \(error)")
-        }
-    }
-
-    /// Handles AppleScript execution
-    /// - Parameter parameters: AppleScript parameters
-    private func handleAppleScriptCommand(_ parameters: [String]) {
-        guard !parameters.isEmpty else {
-            writeToOutput("[URLHandler] No AppleScript specified")
-            return
-        }
-
-        let script = parameters.joined(separator: " ")
-        writeToOutput("[URLHandler] Executing AppleScript: \(script)")
-
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            var error: NSDictionary?
-            let result = NSAppleScript(source: script)?.executeAndReturnError(&error)
-
-            DispatchQueue.main.async {
-                if let error {
-                    self?.writeToOutput("[URLHandler] Error executing AppleScript: \(error)")
-                } else if let result {
-                    self?.writeToOutput("[URLHandler] AppleScript executed successfully")
-                    self?.writeToOutput("[URLHandler] Result: \(result.stringValue ?? "no output")")
-                }
-            }
-        }
     }
 
     /// Handles predefined window actions
@@ -568,7 +486,13 @@ final class URLCommandHandler {
             writeToOutput("[URLHandler] Executing keybind: \(keybind.name ?? "unnamed")")
             if let window = WindowUtility.userDefinedTargetWindow(),
                let screen = NSScreen.main {
-                WindowEngine.resize(window, to: keybind, on: screen)
+                Task {
+                    _ = try await WindowActionEngine.shared.apply(
+                        keybind,
+                        window: window,
+                        screen: screen
+                    )
+                }
             }
         } else {
             writeToOutput("[URLHandler] Keybind not found: \(keybindName)")
@@ -733,10 +657,16 @@ final class URLCommandHandler {
             app.activate(options: .activateIgnoringOtherApps)
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.writeToOutput("[URLHandler] Executing resize operation")
-            WindowEngine.resize(window, to: action, on: screen)
-            self?.writeToOutput("[URLHandler] New window frame: \(window.frame)")
+        Task {
+            try? await Task.sleep(for: .seconds(0.1))
+
+            writeToOutput("[URLHandler] Executing resize operation")
+            _ = try await WindowActionEngine.shared.apply(
+                action,
+                window: window,
+                screen: screen
+            )
+            writeToOutput("[URLHandler] New window frame: \(window.frame)")
         }
     }
 
@@ -747,8 +677,12 @@ final class URLCommandHandler {
            ScreenUtility.nextScreen(from: currentScreen) :
            ScreenUtility.previousScreen(from: currentScreen) {
             writeToOutput("[URLHandler] Moving window to screen: \(targetScreen.localizedName)")
-            DispatchQueue.main.async {
-                WindowEngine.resize(window, to: .init(direction), on: targetScreen)
+            Task {
+                _ = try await WindowActionEngine.shared.apply(
+                    .init(direction),
+                    window: window,
+                    screen: targetScreen
+                )
             }
         } else {
             writeToOutput("[URLHandler] Failed to find target screen")

@@ -6,52 +6,49 @@
 //
 
 import Defaults
-import OSLog
+import Scribe
 import SwiftUI
 
-final class RadialMenuController {
+@Loggable
+@MainActor
+final class RadialMenuController: WindowActionIndicator {
+    private var viewModel: RadialMenuViewModel = .init(isSettingsPreview: false)
     private var controller: NSWindowController?
-    private var viewModel: RadialMenuViewModel?
-    private let logger = Logger(category: "RadialMenuController")
+    private var closeTask: Task<(), Never>?
 
-    func open(
-        position: CGPoint,
-        window: Window?,
-        startingAction: WindowAction?
-    ) {
-        if let windowController = controller {
-            windowController.window?.orderFrontRegardless()
+    func open(context: ResizeContext) {
+        defer { viewModel.updateContext(with: context) }
+
+        closeTask?.cancel()
+        closeTask = nil
+
+        if let window = controller?.window {
+            viewModel.setIsShown(true, animationDuration: 0.1)
+            window.orderFrontRegardless()
             return
         }
 
-        let viewModel = RadialMenuViewModel(
-            startingAction: startingAction,
-            window: window,
-            previewMode: false
-        )
-        self.viewModel = viewModel
-
-        let mouseX: CGFloat = position.x
-        let mouseY: CGFloat = position.y
-        let windowSize: CGFloat = 100 + 40
+        let mouseX: CGFloat = context.initialMousePosition.x
+        let mouseY: CGFloat = context.initialMousePosition.y
+        let windowSize: CGFloat = 100 + 80
 
         let panel = ActivePanel(
             contentRect: .zero,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
-            defer: true,
-            screen: NSApp.keyWindow?.screen
+            defer: true
         )
+        controller = .init(window: panel)
 
+        panel.ignoresMouseEvents = true
         panel.collectionBehavior = .canJoinAllSpaces
         panel.hasShadow = false
         panel.backgroundColor = .clear
         panel.level = .screenSaver
         panel.contentView = NSHostingView(rootView: RadialMenuView(viewModel: viewModel))
-        panel.alphaValue = 0
 
         // Position the panel
-        if Defaults[.lockRadialMenuToCenter], let screen = NSApp.keyWindow?.screen ?? NSScreen.main {
+        if Defaults[.lockRadialMenuToCenter], let screen = NSScreen.main {
             // Position at the center of the screen
             let screenFrame = screen.frame
             panel.setFrameOrigin(
@@ -72,34 +69,22 @@ final class RadialMenuController {
 
         panel.orderFrontRegardless()
 
-        controller = .init(window: panel)
-
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.15
-            panel.animator().alphaValue = 1
-        }
+        log.ui("Initialized controller")
     }
 
     func close() {
-        guard let windowController = controller else { return }
-        controller = nil
-
-        windowController.window?.animator().alphaValue = 1
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.15
-            windowController.window?.animator().alphaValue = 0
-        } completionHandler: {
-            windowController.close()
+        guard controller != nil else { return }
+        closeTask?.cancel()
+        closeTask = Task { [weak self] in
+            guard let self else { return }
+            viewModel.setIsShown(false, animationDuration: 0.15)
+            try? await Task.sleep(for: .seconds(0.15))
+            guard !Task.isCancelled else { return }
+            controller?.window?.orderOut(nil)
+            controller?.close()
+            controller = nil
+            closeTask = nil
+            log.ui("Controller closed")
         }
-    }
-
-    func setWindow(to newWindow: Window) {
-        viewModel?.setWindow(to: newWindow)
-    }
-
-    func setAction(to newAction: WindowAction) {
-        viewModel?.setAction(to: newAction)
-
-        logger.log("RadialMenuController: Set action to '\(newAction.debugDescription)'")
     }
 }

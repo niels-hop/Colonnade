@@ -6,6 +6,7 @@
 //
 
 import CoreGraphics
+import Scribe
 
 /// Passive monitor that only listens to events.
 /// Callback will be called on a separate thread to keep the CFMachPort's callback fast.
@@ -14,11 +15,13 @@ final class PassiveEventMonitor: BaseEventTapMonitor {
 
     ///  Initializes a `PassiveEventMonitor`.
     /// - Parameters:
+    ///   - name: a human-readable identifier used in log messages.
     ///   - tapLocation: the location at which this event tap will be placed.
     ///   - placement:  whether to add this monitor as a head or tail relative to other event monitors within this tap.
     ///   - events:  the events to capture within this event monitor.
     ///   - callback:  a callback to process the received event.
     init(
+        _ name: String,
         tapLocation: CGEventTapLocation = .cgSessionEventTap,
         placement: CGEventTapPlacement = .tailAppendEventTap,
         events: [CGEventType],
@@ -35,16 +38,28 @@ final class PassiveEventMonitor: BaseEventTapMonitor {
             }
             let observer = Unmanaged<PassiveEventMonitor>.fromOpaque(refcon).takeUnretainedValue()
 
-            // If disabled, attempt to restart the event tap
-            if event.type == .tapDisabledByTimeout || event.type == .tapDisabledByUserInput {
-                observer.start()
+            if event.type == .tapDisabledByTimeout {
+                // Tap timed out, schedule a restart on the tap thread so the circuit breaker can run
+                if observer.isEnabled {
+                    let tapRunLoop = EventTapThread.shared.runLoop
+                    CFRunLoopPerformBlock(tapRunLoop, CFRunLoopMode.commonModes as CFTypeRef) {
+                        observer.attemptRestart()
+                    }
+                    CFRunLoopWakeUp(tapRunLoop)
+                }
+                return Unmanaged.passUnretained(event)
+            }
+
+            if event.type == .tapDisabledByUserInput {
+                // Explicitly disabled by the user/system, don't auto-restart
                 return Unmanaged.passUnretained(event)
             }
 
             // Call the callback but always pass the unmodified event through
-            observer.handleEvent(event: event)
+            observer.eventCallback(event)
             return Unmanaged.passUnretained(event)
         }
+
         let userInfo = Unmanaged.passUnretained(self).toOpaque()
 
         if let eventTap = CGEvent.tapCreate(
@@ -55,15 +70,9 @@ final class PassiveEventMonitor: BaseEventTapMonitor {
             callback: callback,
             userInfo: userInfo
         ) {
-            setupRunLoopSource(eventTap: eventTap, runLoop: CFRunLoopGetCurrent())
+            setupRunLoopSource(eventTap: eventTap, readableIdentifier: name)
         } else {
-            super.logger.info("Failed to create event tap")
-        }
-    }
-
-    private func handleEvent(event: CGEvent) {
-        Task {
-            eventCallback(event)
+            log.info("Failed to create event tap")
         }
     }
 }

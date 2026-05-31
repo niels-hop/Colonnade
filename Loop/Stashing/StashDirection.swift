@@ -11,9 +11,14 @@ import Foundation
 enum StashEdge: String, CustomDebugStringConvertible {
     case left
     case right
+    case bottom
 
     var debugDescription: String {
         rawValue
+    }
+
+    var isHorizontal: Bool {
+        self == .left || self == .right
     }
 }
 
@@ -22,9 +27,19 @@ enum StashEdge: String, CustomDebugStringConvertible {
 extension WindowAction {
     var stashEdge: StashEdge? {
         switch direction {
-        case .stash where [.left, .topLeft, .bottomLeft].contains(anchor):
+        case .stash where anchor == .left:
             .left
-        case .stash where [.right, .topRight, .bottomRight].contains(anchor):
+        case .stash where anchor == .right:
+            .right
+        case .stash where anchor == .bottom:
+            .bottom
+        case .stash where anchor == .topLeft:
+            .left
+        case .stash where anchor == .topRight:
+            .right
+        case .stash where anchor == .bottomLeft:
+            .left
+        case .stash where anchor == .bottomRight:
             .right
         default:
             nil

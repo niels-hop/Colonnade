@@ -7,14 +7,17 @@
 
 import AppKit
 import Defaults
-import OSLog
+import Scribe
 
 /// Caches the user's actions in a dictionary keyed by its keybind.
 /// This is called from `KeybindObserver`, to retrieve the user's actions in an efficient manner.
+@Loggable
 final class WindowActionCache {
-    private var actionsByKeybind: [Set<CGKeyCode>: WindowAction] = [:]
+    private(set) var actionsByKeybind: [Set<CGKeyCode>: WindowAction] = [:]
+    private(set) var bypassedActionsByKeybind: [Set<CGKeyCode>: WindowAction] = [:]
+    private(set) var actionsByIdentifier: [UUID: WindowAction] = [:]
+
     private var observationTask: Task<(), Never>?
-    private let logger = Logger(category: "WindowActionCache")
 
     /// Initializes a new instance of `WindowActionCache`.
     /// Will automatically build cache, and update according to changes the user makes to Loop's keybinds.
@@ -38,29 +41,47 @@ final class WindowActionCache {
         }
     }
 
-    subscript(_ keybind: Set<CGKeyCode>) -> WindowAction? {
-        actionsByKeybind[keybind]
-    }
-
     /// Rebuilds the cache and includes extra entries for cycle actions with shift keys if the user has enabled `cycleBackwardsOnShiftPressed`.
     private func regenerateCache() {
         let keybinds: [WindowAction] = Defaults[.keybinds].filter { !$0.keybind.isEmpty }
+
+        regenerateActionsByKeybind(from: keybinds)
+        regenerateActionsByIdentifier(from: keybinds)
+
+        log.info("Regenerated cache; normal: \(actionsByKeybind.count), bypassed: \(bypassedActionsByKeybind.count)")
+    }
+
+    private func regenerateActionsByKeybind(from keybinds: [WindowAction]) {
         let cycleBackwardsOnShiftPressed: Bool = Defaults[.cycleBackwardsOnShiftPressed]
 
+        let normalActions = keybinds.filter { $0.bypassTriggerKey != true }
+        let bypassedActions = keybinds.filter { $0.bypassTriggerKey == true }
+
+        // Normal actions: keybind is action-key only (without trigger key)
         actionsByKeybind = Dictionary(
-            keybinds.map { ($0.keybind, $0) },
+            normalActions.map { ($0.keybind, $0) },
             uniquingKeysWith: { first, _ in first }
         )
 
         if cycleBackwardsOnShiftPressed {
             actionsByKeybind.merge(
-                keybinds
+                normalActions
                     .filter { $0.direction == .cycle }
                     .map { ($0.keybind.union([.kVK_Shift]), $0) },
                 uniquingKeysWith: { first, _ in first }
             )
         }
 
-        logger.info("Finished regenerating keybinds -> action dictionary")
+        bypassedActionsByKeybind = Dictionary(
+            bypassedActions.map { ($0.keybind, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+    }
+
+    private func regenerateActionsByIdentifier(from keybinds: [WindowAction]) {
+        actionsByIdentifier = Dictionary(
+            keybinds.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
     }
 }

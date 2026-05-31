@@ -7,13 +7,12 @@
 
 import Defaults
 import Luminare
-import OSLog
+import Scribe
 import SwiftUI
 import UserNotifications
 
+@Loggable(style: .static)
 enum IconManager {
-    private static let logger = Logger(category: "IconManager")
-
     static func returnUnlockedIcons() -> [Icon] {
         var returnValue: [Icon] = []
         for icon in Icon.all where icon.unlockTime <= Defaults[.timesLooped] {
@@ -26,7 +25,6 @@ enum IconManager {
     static func setAppIcon(to icon: Icon) {
         Defaults[.currentIcon] = icon.assetName
         refreshCurrentAppIcon()
-        logger.info("Setting app icon to: \(icon.name)")
     }
 
     static func setAppIcon(to assetName: String) {
@@ -35,24 +33,41 @@ enum IconManager {
         }
     }
 
-    // This function is run at startup to set the current icon to the user's set icon.
+    /// This function is run at startup to set the current icon to the user's set icon.
     static func refreshCurrentAppIcon() {
-        guard let image = NSImage(named: Defaults[.currentIcon]) else {
-            logger.error("Failed to load icon: \(Defaults[.currentIcon])")
+        let iconName = Defaults[.currentIcon]
+
+        guard let image = NSImage(named: iconName) else {
+            log.error("Failed to load icon: \(iconName)")
             return
         }
+
+        let isDefault = IconManager.currentAppIcon.isDefault
+
+        // Notify the dock tile plugin first so it updates immediately
+        DistributedNotificationCenter.default().post(
+            name: .init("com.MrKai77.Loop.iconChanged"),
+            object: nil,
+            userInfo: [
+                "iconName": iconName,
+                "isDefault": isDefault
+            ]
+        )
 
         #if !DEBUG
             // Changing the app's actual icon on a developer build can cause Xcode to have incremental codesign issues.
             // To prevent this, we only change the icon on release builds.
-            NSWorkspace.shared.setIcon(image, forFile: Bundle.main.bundlePath, options: [])
+            if isDefault {
+                NSWorkspace.shared.setIcon(nil, forFile: Bundle.main.bundlePath, options: [])
+            } else {
+                NSWorkspace.shared.setIcon(image, forFile: Bundle.main.bundlePath, options: [])
+            }
+
+            deleteDockIconCache()
+            SkyLightToolBelt.refreshIconAppearanceCache()
         #endif
 
-        if Defaults[.currentIcon] == Icon.default.assetName {
-            NSApp.applicationIconImage = nil
-        } else {
-            NSApp.applicationIconImage = image
-        }
+        log.info("Set app icon to: \(iconName)")
     }
 
     static func checkIfUnlockedNewIcon() {
@@ -82,6 +97,21 @@ enum IconManager {
             content.categoryIdentifier = "icon_unlocked"
 
             AppDelegate.sendNotification(content)
+        }
+    }
+
+    /// Best-effort deletion of the Dock's icon cache file, forcing it to rebuild on next access.
+    private static func deleteDockIconCache() {
+        // The cache lives in the per-user cache dir (/C/), sibling to the temp dir (/T/)
+        let cacheURL = FileManager.default.temporaryDirectory
+            .deletingLastPathComponent()
+            .appendingPathComponent("C/com.apple.dock.iconcache")
+
+        do {
+            try FileManager.default.removeItem(at: cacheURL)
+            log.debug("Deleted dock icon cache")
+        } catch {
+            log.debug("Failed to delete dock icon cache: \(error.localizedDescription)")
         }
     }
 

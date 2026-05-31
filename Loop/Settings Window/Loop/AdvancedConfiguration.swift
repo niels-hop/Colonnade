@@ -8,15 +8,16 @@
 import Combine
 import Defaults
 import Luminare
-import OSLog
+import Scribe
 import SwiftUI
 
+@Loggable
+@MainActor
 final class AdvancedConfigurationModel: ObservableObject {
-    private let logger = Logger(category: "AdvancedConfigurationModel")
-
-    @Published private(set) var didImportSuccessfullyAlert = false
-    @Published private(set) var didExportSuccessfullyAlert = false
-    @Published private(set) var didResetSuccessfullyAlert = false
+    @Published private(set) var showResetRadialMenuActionsSuccessIndicator = false
+    @Published private(set) var showImportKeybindsSuccessIndicator = false
+    @Published private(set) var showExportKeybindsSuccessIndicator = false
+    @Published private(set) var showResetKeybindsSuccessIndicator = false
 
     @Published private(set) var isLowPowerModeEnabled: Bool = ProcessInfo.processInfo.isLowPowerModeEnabled
     @Published private(set) var isAccessibilityAccessGranted = AccessibilityManager.shared.isGranted
@@ -68,9 +69,11 @@ final class AdvancedConfigurationModel: ObservableObject {
     func importPrompt() {
         Task {
             do {
-                try await Migrator.importPrompt(onSuccess: importedSuccessfully)
+                try await Migrator.importPrompt {
+                    showSuccessIndicator(\.showImportKeybindsSuccessIndicator)
+                }
             } catch {
-                logger.error("Error importing keybinds: \(error)")
+                log.error("Error importing keybinds: \(error)")
             }
         }
     }
@@ -79,64 +82,43 @@ final class AdvancedConfigurationModel: ObservableObject {
     func exportPrompt() {
         Task {
             do {
-                try await Migrator.exportPrompt(onSuccess: exportedSuccessfully)
+                try await Migrator.exportPrompt {
+                    showSuccessIndicator(\.showExportKeybindsSuccessIndicator)
+                }
             } catch {
-                logger.error("Error exporting keybinds: \(error)")
+                log.error("Error exporting keybinds: \(error)")
             }
         }
     }
 
     /// Resets keybinds to default values.
-    func reset() {
+    func resetKeybinds() {
         Defaults.reset(.keybinds)
-        resetSuccessfully()
+        showSuccessIndicator(\.showResetKeybindsSuccessIndicator)
     }
 
-    private func importedSuccessfully() {
-        DispatchQueue.main.async { [weak self] in
-            withAnimation(.smooth(duration: 0.5)) {
-                self?.didImportSuccessfullyAlert = true
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            withAnimation(.smooth(duration: 0.5)) {
-                self?.didImportSuccessfullyAlert = false
-            }
-        }
+    func resetRadialMenuActions() {
+        Defaults.reset(.radialMenuActions)
+        showSuccessIndicator(\.showResetRadialMenuActionsSuccessIndicator)
     }
 
-    private func exportedSuccessfully() {
-        DispatchQueue.main.async { [weak self] in
+    private func showSuccessIndicator(_ keyPath: ReferenceWritableKeyPath<AdvancedConfigurationModel, Bool>) {
+        Task {
             withAnimation(.smooth(duration: 0.5)) {
-                self?.didExportSuccessfullyAlert = true
+                self[keyPath: keyPath] = true
             }
-        }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            withAnimation(.smooth(duration: 0.5)) {
-                self?.didExportSuccessfullyAlert = false
-            }
-        }
-    }
+            try? await Task.sleep(for: .seconds(2))
 
-    private func resetSuccessfully() {
-        DispatchQueue.main.async { [weak self] in
             withAnimation(.smooth(duration: 0.5)) {
-                self?.didResetSuccessfullyAlert = true
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            withAnimation(.smooth(duration: 0.5)) {
-                self?.didResetSuccessfullyAlert = false
+                self[keyPath: keyPath] = false
             }
         }
     }
 }
 
 struct AdvancedConfigurationView: View {
-    @Environment(\.luminareTintColor) var tint
+    @EnvironmentObject private var windowModel: SettingsWindowManager
     @Environment(\.luminareAnimation) var luminareAnimation
     @Environment(\.openURL) private var openURL
 
@@ -145,26 +127,34 @@ struct AdvancedConfigurationView: View {
     @Default(.useSystemWindowManagerWhenAvailable) var useSystemWindowManagerWhenAvailable
     @Default(.ignoreLowPowerMode) var ignoreLowPowerMode
     @Default(.animateWindowResizes) var animateWindowResizes
-    @Default(.hideUntilDirectionIsChosen) var hideUntilDirectionIsChosen
+    @Default(.hideOnNoSelection) var hideOnNoSelection
     @Default(.disableCursorInteraction) var disableCursorInteraction
     @Default(.ignoreFullscreen) var ignoreFullscreen
     @Default(.hapticFeedback) var hapticFeedback
     @Default(.sizeIncrement) var sizeIncrement
+    @Default(.enableRadialMenuCustomization) var enableRadialMenuCustomization
+
+    @State private var isConfirmingResetKeybinds: Bool = false
+    @State private var isConfirmingResetRadialMenuActions: Bool = false
 
     private var showLowPowerModeWarning: Bool {
         animateWindowResizes && !ignoreLowPowerMode && model.isLowPowerModeEnabled
     }
 
     var body: some View {
-        generalSection
-        keybindsSection
-        permissionsSection
-            .onAppear(perform: model.startTracking)
-            .onDisappear(perform: model.stopTracking)
+        LuminareForm {
+            generalSection
+            radialMenuSection
+            keybindsSection
+            permissionsSection
+                .onAppear(perform: model.startTracking)
+                .onDisappear(perform: model.stopTracking)
+        }
+        .animation(luminareAnimation, value: enableRadialMenuCustomization)
     }
 
     private var generalSection: some View {
-        LuminareSection(String(localized: "General", comment: "Section header shown in settings")) {
+        LuminareSection {
             if #available(macOS 15.0, *) {
                 LuminareToggle("Use macOS window manager when available", isOn: $useSystemWindowManagerWhenAvailable)
             }
@@ -172,7 +162,7 @@ struct AdvancedConfigurationView: View {
             LuminareToggle(isOn: $animateWindowResizes) {
                 Text("Animate window resize")
                     .padding(.trailing, 4)
-                    .luminarePopover(attachedTo: .topTrailing, hidden: !showLowPowerModeWarning) {
+                    .luminareToolTip(attachedTo: .topTrailing, hidden: !showLowPowerModeWarning) {
                         HStack(spacing: 4) {
                             Text("To save power, window animations are\nunavailable in Low Power Mode.")
                                 .multilineTextAlignment(.leading)
@@ -181,7 +171,7 @@ struct AdvancedConfigurationView: View {
                                 Button {
                                     openURL(url)
                                 } label: {
-                                    Image(.shareUpRight)
+                                    Image(systemName: "arrow.up.forward")
                                         .foregroundStyle(.secondary)
                                         .padding(4)
                                 }
@@ -190,20 +180,18 @@ struct AdvancedConfigurationView: View {
                         }
                         .padding(6)
                     }
-                    .luminareTint(overridingWith: .yellow)
                     .animation(luminareAnimation, value: showLowPowerModeWarning)
             }
 
             LuminareToggle("Disable cursor interaction", isOn: $disableCursorInteraction)
             LuminareToggle("Ignore fullscreen windows", isOn: $ignoreFullscreen)
-            LuminareToggle("Hide until direction is chosen", isOn: $hideUntilDirectionIsChosen)
             LuminareToggle("Haptic feedback", isOn: $hapticFeedback)
 
             LuminareSlider(
                 "Size increment",
                 value: $sizeIncrement.doubleBinding,
                 in: 5...50,
-                step: 4.5,
+                step: 5,
                 format: .number.precision(.fractionLength(0...0)),
                 clampsUpper: false,
                 suffix: Text("px", comment: "Unit symbol: pixels")
@@ -211,16 +199,61 @@ struct AdvancedConfigurationView: View {
         }
     }
 
+    private var radialMenuSection: some View {
+        LuminareSection(String(localized: "Radial Menu", comment: "Section header shown in settings")) {
+            LuminareToggle("Hide when no action is selected", isOn: $hideOnNoSelection)
+
+            LuminareToggle(isOn: $enableRadialMenuCustomization) {
+                HStack {
+                    Text("Allow radial menu customization")
+
+                    if enableRadialMenuCustomization {
+                        Button {
+                            windowModel.currentTab = .radialMenu
+                        } label: {
+                            Image(systemName: "arrow.up.right.square.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+
+            if enableRadialMenuCustomization {
+                Button(role: .destructive) {
+                    isConfirmingResetRadialMenuActions = true
+                } label: {
+                    HStack {
+                        Text("Reset radial menu actions")
+
+                        if model.showResetRadialMenuActionsSuccessIndicator {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(.green)
+                                .bold()
+                        }
+                    }
+                }
+                .luminareRoundingBehavior(bottom: true)
+                .alert("Reset radial menu actions?", isPresented: $isConfirmingResetRadialMenuActions) {
+                    Button("Cancel", role: .cancel) {}
+                    Button("Reset", role: .destructive, action: model.resetRadialMenuActions)
+                } message: {
+                    Text("This will reset all radial menu actions to their default configuration.")
+                }
+            }
+        }
+    }
+
     private var keybindsSection: some View {
         LuminareSection(String(localized: "Keybinds", comment: "Section header shown in settings")) {
-            HStack(spacing: 2) {
+            LuminareButtonRow {
                 Button(action: model.importPrompt) {
                     HStack {
                         Text("Import")
 
-                        if model.didImportSuccessfullyAlert {
+                        if model.showImportKeybindsSuccessIndicator {
                             Image(systemName: "checkmark")
-                                .foregroundStyle(tint)
+                                .foregroundStyle(.green)
                                 .bold()
                         }
                     }
@@ -230,27 +263,35 @@ struct AdvancedConfigurationView: View {
                     HStack {
                         Text("Export")
 
-                        if model.didExportSuccessfullyAlert {
+                        if model.showExportKeybindsSuccessIndicator {
                             Image(systemName: "checkmark")
-                                .foregroundStyle(tint)
+                                .foregroundStyle(.green)
                                 .bold()
                         }
                     }
                 }
 
-                Button(role: .destructive, action: model.reset) {
+                Button(role: .destructive) {
+                    isConfirmingResetKeybinds = true
+                } label: {
                     HStack {
                         Text("Reset")
 
-                        if model.didResetSuccessfullyAlert {
+                        if model.showResetKeybindsSuccessIndicator {
                             Image(systemName: "checkmark")
-                                .foregroundStyle(tint)
+                                .foregroundStyle(.green)
                                 .bold()
                         }
                     }
                 }
-                .buttonStyle(.luminareProminent)
+                .alert("Reset keybinds?", isPresented: $isConfirmingResetKeybinds) {
+                    Button("Cancel", role: .cancel) {}
+                    Button("Reset", role: .destructive, action: model.resetKeybinds)
+                } message: {
+                    Text("This will reset all keybinds to their original defaults.")
+                }
             }
+            .luminareRoundingBehavior(top: true, bottom: true)
         }
     }
 
@@ -262,25 +303,20 @@ struct AdvancedConfigurationView: View {
     }
 
     private func accessibilityComponent() -> some View {
-        LuminareCompose {
-            Button {
-                AccessibilityManager.requestAccess()
-            } label: {
-                Text("Request…", comment: "Button to request accessibility access")
-            }
-            .buttonStyle(.luminareCompact)
-            .luminareComposeIgnoreSafeArea(edges: .trailing)
-            .disabled(model.isAccessibilityAccessGranted)
-        } label: {
+        LuminareButton {
             HStack {
                 if model.isAccessibilityAccessGranted {
-                    Image(.badgeCheck2)
-                        .foregroundStyle(tint)
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(.green)
                 }
 
                 Text("Accessibility access")
             }
+        } content: {
+            Text("Request…", comment: "Button to request accessibility access")
+        } action: {
+            AccessibilityManager.requestAccess()
         }
-        .luminareComposeStyle(.inline)
+        .disabled(model.isAccessibilityAccessGranted)
     }
 }

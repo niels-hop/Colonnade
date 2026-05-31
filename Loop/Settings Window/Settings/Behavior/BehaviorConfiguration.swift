@@ -7,22 +7,19 @@
 
 import Defaults
 import Luminare
-import OSLog
-import ServiceManagement
 import SwiftUI
 
 struct BehaviorConfigurationView: View {
     @Environment(\.luminareAnimation) private var luminareAnimation
-    private static let logger = Logger(category: "BehaviorConfigurationView")
 
     @Default(.launchAtLogin) var launchAtLogin
+    @Default(.startHidden) var startHidden
     @Default(.hideMenuBarIcon) var hideMenuBarIcon
     @Default(.animationConfiguration) var animationConfiguration
     @Default(.windowSnapping) var windowSnapping
     @Default(.suppressMissionControlOnTopDrag) var suppressMissionControlOnTopDrag
     @Default(.restoreWindowFrameOnDrag) var restoreWindowFrameOnDrag
     @Default(.useSystemWindowManagerWhenAvailable) var useSystemWindowManagerWhenAvailable
-    @Default(.enablePadding) var enablePadding
     @Default(.useScreenWithCursor) var useScreenWithCursor
     @Default(.moveCursorWithWindow) var moveCursorWithWindow
     @Default(.resizeWindowUnderCursor) var resizeWindowUnderCursor
@@ -38,7 +35,7 @@ struct BehaviorConfigurationView: View {
     @State private var isPaddingConfigurationViewPresented = false
 
     var body: some View {
-        Group {
+        LuminareForm {
             generalSection
             windowSection
             ultrawideDockSection
@@ -50,7 +47,6 @@ struct BehaviorConfigurationView: View {
         .animation(
             luminareAnimation,
             value: [
-                AnyHashable(enablePadding),
                 AnyHashable(resizeWindowUnderCursor),
                 AnyHashable(windowSnapping),
                 AnyHashable(respectStageManager),
@@ -62,17 +58,8 @@ struct BehaviorConfigurationView: View {
     private var generalSection: some View {
         LuminareSection(String(localized: "General", comment: "Section header shown in settings")) {
             LuminareToggle("Launch at login", isOn: $launchAtLogin)
-                .onChange(of: launchAtLogin) { _ in
-                    do {
-                        if launchAtLogin {
-                            try SMAppService().register()
-                        } else {
-                            try SMAppService().unregister()
-                        }
-                    } catch {
-                        Self.logger.error("Failed to \(launchAtLogin ? "register" : "unregister") login item: \(error.localizedDescription)")
-                    }
-                }
+
+            LuminareToggle("Start hidden", isOn: $startHidden)
 
             LuminareToggle("Hide menu bar icon", isOn: $hideMenuBarIcon)
 
@@ -94,17 +81,14 @@ struct BehaviorConfigurationView: View {
             // Enabling the system window manager will override these options.
             if !useSystemWindowManagerWhenAvailable {
                 LuminareToggle("Restore window frame on drag", isOn: $restoreWindowFrameOnDrag)
-                LuminareToggle("Apply padding", isOn: $enablePadding)
-
-                if enablePadding {
-                    Button("Configure padding…") {
-                        isPaddingConfigurationViewPresented = true
-                    }
-                    .luminareModalWithPredefinedSheetStyle(isPresented: $isPaddingConfigurationViewPresented, isCompact: false) {
-                        PaddingConfigurationView(isPresented: $isPaddingConfigurationViewPresented)
-                            .frame(width: 400)
-                    }
+                LuminareButton("Padding", "Configure…") {
+                    isPaddingConfigurationViewPresented = true
                 }
+                .luminareModal(isPresented: $isPaddingConfigurationViewPresented) {
+                    PaddingConfigurationView(isPresented: $isPaddingConfigurationViewPresented)
+                        .frame(width: 400)
+                }
+                .luminareModalCornerRadius(24)
             }
         }
     }
@@ -118,11 +102,6 @@ struct BehaviorConfigurationView: View {
                 Text(item.label)
             } label: {
                 Text("Trigger mode")
-                    .padding(.trailing, 4)
-                    .luminarePopover(attachedTo: .topTrailing) {
-                        Text("Replaces the radial menu with a screen-shaped dock that shows live previews\nof your windows. Best suited for wide and ultrawide displays.")
-                            .padding(6)
-                    }
             }
 
             Text(ultrawideDockTriggerMode.caption)
@@ -145,7 +124,8 @@ struct BehaviorConfigurationView: View {
 
             LuminareToggle("Resize window under cursor", isOn: $resizeWindowUnderCursor)
 
-            if resizeWindowUnderCursor {
+            // If the system WM is enabled, the window under the cursor requires focus.
+            if resizeWindowUnderCursor, !useSystemWindowManagerWhenAvailable {
                 LuminareToggle("Focus window on resize", isOn: $focusWindowOnResize)
             }
         }
@@ -158,7 +138,7 @@ struct BehaviorConfigurationView: View {
                     if SystemWindowManager.MoveAndResize.snappingEnabled {
                         Text("Enable window snapping")
                             .padding(.trailing, 4)
-                            .luminarePopover(attachedTo: .topTrailing) {
+                            .luminareToolTip(attachedTo: .topTrailing) {
                                 Text("macOS's \"Tile by dragging windows to screen edges\" feature is currently\nenabled, which will conflict with Loop's window snapping functionality.")
                                     .padding(6)
                             }
@@ -174,7 +154,7 @@ struct BehaviorConfigurationView: View {
                 LuminareToggle(isOn: $suppressMissionControlOnTopDrag) {
                     Text("Suppress Mission Control")
                         .padding(.trailing, 4)
-                        .luminarePopover(attachedTo: .topTrailing) {
+                        .luminareToolTip(attachedTo: .topTrailing) {
                             Text("Whether to allow Mission Control to open when windows\nare dragged to the top of the screen.")
                                 .padding(6)
                         }
@@ -207,7 +187,7 @@ struct BehaviorConfigurationView: View {
             LuminareSlider(
                 String(localized: "Peek size", comment: "Thickness of the visible portion of the window when stashed"),
                 value: $stashedWindowVisiblePadding.doubleBinding,
-                in: 1...200,
+                in: 1...100,
                 format: .number.precision(.fractionLength(0...0)),
                 clampsUpper: false,
                 suffix: Text("px", comment: "Unit symbol: pixels")
@@ -216,7 +196,7 @@ struct BehaviorConfigurationView: View {
             LuminareToggle("Shift focus when stashed", isOn: $shiftFocusWhenStashed)
         }
         .onChange(of: stashedWindowVisiblePadding) { _ in
-            StashManager.shared.onConfigurationChanged()
+            Task { await StashManager.shared.onConfigurationChanged() }
         }
     }
 }

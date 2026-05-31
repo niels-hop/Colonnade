@@ -6,11 +6,12 @@
 //
 
 import Defaults
-import OSLog
+import Scribe
 import SwiftUI
 
 /// In charge of processing and storing an up-to-date version of the user's accent color(s), according to their settings.
 /// Automatically refreshes when the user updates the following preferences: `accentColorMode`, `customAccentColor`, `useGradient` and `gradientColor`.
+@Loggable
 @MainActor
 final class AccentColorController: ObservableObject {
     static let shared = AccentColorController()
@@ -20,7 +21,6 @@ final class AccentColorController: ObservableObject {
 
     private let wallpaperProcessor = WallpaperProcessor()
     private var observationTask: Task<(), Never>?
-    private let logger = Logger(category: "AccentColorController")
 
     private init() {
         self.observationTask = Task { [weak self] in
@@ -47,19 +47,19 @@ final class AccentColorController: ObservableObject {
         observationTask?.cancel()
     }
 
-    func refresh() async {
+    func refresh(ignoreThrottle: Bool = false) async {
         switch Defaults[.accentColorMode] {
         case .system:
-            logger.log("AccentColorController: Refreshing accent color based on system")
+            log.info("Refreshing accent color based on system accent setting")
             color1 = Color.accentColor
             color2 = Defaults[.useGradient] ? Color(nsColor: NSColor.controlAccentColor.blended(withFraction: 0.5, of: .black)!) : Color.accentColor
         case .wallpaper:
-            logger.log("AccentColorController: Refreshing accent color based on wallpaper")
-            let colors = await wallpaperProcessor.fetchLatest()
+            log.info("Refreshing accent color based on wallpaper analysis")
+            let colors = await wallpaperProcessor.fetchLatest(ignoreThrottle: ignoreThrottle)
             color1 = colors.primary
             color2 = Defaults[.useGradient] ? colors.secondary : colors.primary
         case .custom:
-            logger.log("AccentColorController: Refreshing accent color based on custom colors")
+            log.info("Refreshing accent color based on custom selection")
             color1 = Defaults[.customAccentColor]
             color2 = Defaults[.useGradient] ? Defaults[.gradientColor] : Defaults[.customAccentColor]
         }

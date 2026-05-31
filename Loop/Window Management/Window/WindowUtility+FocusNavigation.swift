@@ -6,12 +6,13 @@
 //
 
 import AppKit
-import OSLog
+import Scribe
 import SwiftUI
 
 extension WindowUtility {
     private static var navigationUtility = DirectionalNavigationUtility<Window>(
-        minimumSharedSpan: .percentage(10),
+        minDirectionalSpan: .percentage(10),
+        minStackedArea: .percentage(50),
         frameProvider: \.frame
     )
 
@@ -19,16 +20,36 @@ extension WindowUtility {
     /// - Parameters:
     ///   - currentWindow: The currently focused window to navigate from, or nil to navigate from screen center
     ///   - direction: The direction to search for the next window (focusUp, focusDown, focusLeft, focusRight)
-    static func focusWindow(from currentWindow: Window?, edge: Edge) -> Window? {
-        guard let directionalWindow = WindowUtility.directionalWindow(from: currentWindow, edge: edge) else {
-            logger.info("[FocusNavigation] No window found to focus in direction \(String(describing: edge))")
+    static func focusWindow(from currentWindow: Window?, direction: NavigationDirection) -> Window? {
+        guard let directionalWindow = WindowUtility.directionalWindow(
+            from: currentWindow,
+            direction: direction
+        ) else {
+            log.info("No window found to focus in direction \(direction)")
             return nil
         }
 
         let nextWindowTitle = directionalWindow.nsRunningApplication?.localizedName ?? directionalWindow.title ?? "<unknown>"
-        logger.info("[FocusNavigation] Focusing window: \(nextWindowTitle)")
+        log.info("Focusing window: \(nextWindowTitle)")
 
-        directionalWindow.activate()
+        Task { @MainActor in
+            directionalWindow.focus()
+        }
+
+        return directionalWindow
+    }
+
+    static func focusNextWindowInStack(from currentWindow: Window?) -> Window? {
+        guard let directionalWindow = WindowUtility.nextStackedWindow(from: currentWindow) else {
+            return nil
+        }
+
+        let nextWindowTitle = directionalWindow.nsRunningApplication?.localizedName ?? directionalWindow.title ?? "<unknown>"
+        log.info("Focusing window: \(nextWindowTitle)")
+
+        Task { @MainActor in
+            directionalWindow.focus()
+        }
 
         return directionalWindow
     }
@@ -40,7 +61,7 @@ extension WindowUtility {
     /// - Returns: The next window in the specified direction, or `nil` if no suitable window is found
     private static func directionalWindow(
         from currentWindow: Window?,
-        edge: Edge
+        direction: NavigationDirection
     ) -> Window? {
         let allWindows = windowList()
 
@@ -52,11 +73,9 @@ extension WindowUtility {
             }
 
         guard !availableWindows.isEmpty else {
-            logger.info("[FocusNavigation] No windows available to focus")
+            log.info("No windows available to focus")
             return nil
         }
-
-        let edgeString = String(describing: edge)
 
         if let currentWindow {
             // Filter out the current window and get only visible, non-minimized, non-excluded windows
@@ -64,44 +83,96 @@ extension WindowUtility {
                 .filter { $0.cgWindowID != currentWindow.cgWindowID }
 
             guard !otherWindows.isEmpty else {
-                logger.info("[FocusNavigation] No other windows available to focus")
+                log.info("No other windows available to focus")
                 return nil
             }
 
             // Use the generic directional navigation from DirectionalNavigationUtility
             if let nextWindow = navigationUtility.directionalItem(
                 from: currentWindow,
-                in: otherWindows,
-                edge: edge,
+                others: otherWindows,
+                direction: direction,
                 canWrap: true
             ) {
-                logger.info("[FocusNavigation] Found window to focus in direction \(edgeString): \(nextWindow.debugDescription)")
+                log.info("Found window to focus in direction \(direction): \(nextWindow.description)")
                 return nextWindow
             } else {
-                logger.info("[FocusNavigation] No window found in direction \(edgeString)")
+                log.info("No window found in direction \(direction)")
                 return nil
             }
         } else {
             guard let screen = NSScreen.screenWithMouse ?? NSScreen.main else {
-                logger.error("[FocusNavigation] Could not determine active screen")
+                log.error("Could not determine active screen")
                 return nil
             }
 
-            let screenCenter = screen.safeScreenFrame.center
-            logger.info("[FocusNavigation] Navigating from screen center: \(screenCenter.debugDescription)")
+            let screenCenter = screen.cgSafeScreenFrame.center
+            log.info("Navigating from screen center: \(screenCenter.debugDescription)")
 
             // Find the closest window in the specified direction from screen center
             let nextWindow = availableWindows
-                .filter { isInDirection($0.frame, from: screenCenter, edge: edge) }
+                .filter { isInDirection($0.frame, from: screenCenter, direction: direction) }
                 .min { screenCenter.distance(to: $0.frame.center) < screenCenter.distance(to: $1.frame.center) }
 
             if let nextWindow {
-                logger.info("[FocusNavigation] Found window to focus in direction \(edgeString): \(nextWindow.debugDescription)")
+                log.info("Found window to focus in direction \(direction): \(nextWindow.description)")
             } else {
-                logger.info("[FocusNavigation] No window found in direction \(edgeString) from screen center")
+                log.info("No window found in direction \(direction) from screen center")
             }
 
             return nextWindow
+        }
+    }
+
+    /// Finds the next window to focus in a stack cycle.
+    /// - Parameters:
+    ///   - currentWindow: The currently focused window to cycle from
+    /// - Returns: The next window in the stack cycle, or `nil` if no suitable window is found
+    private static func nextStackedWindow(
+        from currentWindow: Window?
+    ) -> Window? {
+        let allWindows = windowList()
+
+        let availableWindows = allWindows
+            .filter { window in
+                !window.minimized &&
+                    !window.isWindowHidden &&
+                    !window.isAppExcluded
+            }
+
+        guard !availableWindows.isEmpty else {
+            log.info("No windows available to focus")
+            return nil
+        }
+
+        guard let currentWindow else {
+            // If no current window, return the last available window
+            let targetWindow = availableWindows.last
+            if let targetWindow {
+                log.info("No current window, selecting last window: \(targetWindow.description)")
+            }
+            return targetWindow
+        }
+
+        // Filter out the current window
+        let otherWindows = availableWindows
+            .filter { $0.cgWindowID != currentWindow.cgWindowID }
+
+        guard !otherWindows.isEmpty else {
+            log.info("No other windows available to focus in stack")
+            return nil
+        }
+
+        // Use the generic stack cycling from DirectionalNavigationUtility
+        if let nextWindow = navigationUtility.cycleInStack(
+            from: currentWindow,
+            others: otherWindows
+        ) {
+            log.info("Found window to focus in stack: \(nextWindow.description)")
+            return nextWindow
+        } else {
+            log.info("No window found in stack")
+            return nil
         }
     }
 
@@ -109,19 +180,23 @@ extension WindowUtility {
     /// - Parameters:
     ///   - frame: The window frame to check
     ///   - point: The reference point (screen center)
-    ///   - edge: The direction to check
+    ///   - direction: The direction to check
     /// - Returns: `true` if the window is in the specified direction
-    private static func isInDirection(_ frame: CGRect, from point: CGPoint, edge: Edge) -> Bool {
+    private static func isInDirection(
+        _ frame: CGRect,
+        from point: CGPoint,
+        direction: NavigationDirection
+    ) -> Bool {
         let windowCenter = frame.center
 
-        switch edge {
-        case .leading: // Left
+        switch direction {
+        case .left:
             return windowCenter.x < point.x
-        case .trailing: // Right
+        case .right:
             return windowCenter.x > point.x
-        case .top: // Up
+        case .top:
             return windowCenter.y > point.y
-        case .bottom: // Down
+        case .bottom:
             return windowCenter.y < point.y
         }
     }

@@ -10,12 +10,12 @@ import Defaults
 import Luminare
 import SwiftUI
 
+@MainActor
 final class AboutConfigurationModel: ObservableObject {
     @Published var isHoveringOverVersionCopier = false
-    @Published var updateButtonTitle: String = .init(localized: "Check for updates…")
-
+    @Published var isHoveringOverUpdateButton = false
     @Published var didCompleteCopyToClipboard: Bool = false
-    @Published var didCompleteCopyToClipboardDebounced: Bool = false
+    @Published private(set) var updateButtonMessage: String?
 
     let credits: [CreditItem] = [
         .init(
@@ -44,8 +44,8 @@ final class AboutConfigurationModel: ObservableObject {
         )
     ]
 
-    // A max of 28 W's can fit in here :)
-    var upToDateText: [String] = [
+    /// A max of 28 W's can fit in here :)
+    private let upToDateText: [String] = [
         .init(localized: "No updates available message 01", defaultValue: "Engage! …in the current version, it's the latest."),
         .init(localized: "No updates available message 02", defaultValue: "This app is more up to date than my diary entries!"),
         .init(localized: "No updates available message 03", defaultValue: "You're in the clear, no updates in the atmosphere!"),
@@ -93,7 +93,7 @@ final class AboutConfigurationModel: ObservableObject {
     ]
     private var shuffledTexts: [String] = []
 
-    func getNextUpToDateText() -> String {
+    private func getNextUpToDateText() -> String {
         // If shuffledTexts is empty, fill it with a shuffled version of upToDateText
         if shuffledTexts.isEmpty {
             shuffledTexts = upToDateText.filter { $0 != "-" }.shuffled()
@@ -102,11 +102,22 @@ final class AboutConfigurationModel: ObservableObject {
         return shuffledTexts.popLast() ?? upToDateText[0] // Fallback string
     }
 
+    func showUpdatesUnavailableText() async {
+        updateButtonMessage = getNextUpToDateText()
+        let currentTitle = updateButtonMessage
+
+        try? await Task.sleep(for: .seconds(2))
+
+        if updateButtonMessage == currentTitle {
+            updateButtonMessage = nil
+        }
+    }
+
     func copyVersionToClipboard() {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(
-            "Version \(Bundle.main.appVersion ?? "Unknown") (\(Bundle.main.appBuild ?? 0))",
+            "Version \(VersionDisplay.current.fullDisplay)",
             forType: NSPasteboard.PasteboardType.string
         )
 
@@ -119,7 +130,7 @@ final class AboutConfigurationModel: ObservableObject {
     }
 }
 
-struct CreditItem: Identifiable {
+struct CreditItem: Identifiable, Equatable {
     var id: String { name }
 
     let name: String
@@ -137,6 +148,7 @@ struct CreditItem: Identifiable {
 
 struct AboutConfigurationView: View {
     @Environment(\.luminareAnimation) private var luminareAnimation
+    @Environment(\.luminareAnimationFast) private var luminareAnimationFast
     @Environment(\.openURL) private var openURL
 
     @StateObject private var model = AboutConfigurationModel()
@@ -145,129 +157,129 @@ struct AboutConfigurationView: View {
     @Default(.timesLooped) private var timesLooped
     @Default(.currentIcon) private var currentIcon
     @Default(.includeDevelopmentVersions) private var includeDevelopmentVersions
-
-    @State private var isHoveringOverUpdateButton = false
+    @Default(.automaticallyUpdate) private var automaticallyUpdate
 
     private var updateButtonEnabled: Bool {
-        isHoveringOverUpdateButton || updater.updatesEnabled
+        updater.updatesEnabled || model.isHoveringOverUpdateButton
+    }
+
+    private var updateButtonDefaultText: String {
+        if updater.updatesEnabled {
+            updater.updateState.text
+        } else {
+            model.isHoveringOverUpdateButton ? "`sudo upgrade loop`" : String(localized: "Updates are disabled")
+        }
+    }
+
+    private var updateButtonText: String {
+        model.updateButtonMessage ?? updateButtonDefaultText
     }
 
     var body: some View {
-        iconHeader
-        updateSection
-        communitySection
-        creditsSection
+        LuminareForm {
+            iconHeader
+            updateSection
+            communitySection
+            creditsSection
+        }
     }
 
     private var iconHeader: some View {
         LuminareSection {
-            Button {
-                model.copyVersionToClipboard()
-            } label: {
-                HStack {
-                    if let image = NSImage(named: currentIcon) {
-                        Image(nsImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 60)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(Bundle.main.appName)
-                            .fontWeight(.medium)
-
-                        Text(
-                            model.isHoveringOverVersionCopier
-                                ? "Version \(Bundle.main.appVersion ?? "Unknown") (\(Bundle.main.appBuild ?? 0))"
-                                : (timesLooped >= 1_000_000 ? "You've looped… uhh… I… lost count…" : "You've looped \(timesLooped) times!")
-                        )
-                        .contentTransition(.numericText(countsDown: !model.isHoveringOverVersionCopier))
-                        .animation(luminareAnimation, value: model.isHoveringOverVersionCopier)
-                        .animation(luminareAnimation, value: timesLooped)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
+            HStack {
+                if let image = NSImage(named: currentIcon) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 60)
                 }
-                .padding(4)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(Bundle.main.appName)
+                        .fontWeight(.medium)
+
+                    Text(
+                        model.isHoveringOverVersionCopier
+                            ? "Version \(Text(VersionDisplay.current.fullDisplay))"
+                            : (timesLooped >= 1_000_000 ? "You've looped… uhh… I… lost count…" : "You've looped \(timesLooped) times!")
+                    )
+                    .contentTransition(.numericText(countsDown: !model.isHoveringOverVersionCopier))
+                    .animation(luminareAnimation, value: timesLooped)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if model.isHoveringOverVersionCopier {
+                    Button {
+                        model.copyVersionToClipboard()
+                    } label: {
+                        Image(systemName: "document.on.clipboard")
+                            .padding(4)
+                            .contentShape(.rect)
+                    }
+                    .luminareContentSize(
+                        aspectRatio: 1.0,
+                        contentMode: .fit,
+                        hasFixedHeight: true
+                    )
+                    .luminareRoundingBehavior(top: true, bottom: true)
+                    .luminareSurfaceStyle(.flat)
+                    .luminarePopover(
+                        isPresented: $model.didCompleteCopyToClipboard,
+                        arrowEdge: .bottom,
+                        shouldHideAnchor: true
+                    ) {
+                        Text("Copied!")
+                            .padding(6)
+                    }
+                }
             }
-            .buttonStyle(.luminareCosmetic(icon: Image(.clipboard)))
-            .onHover {
-                model.isHoveringOverVersionCopier = $0
-            }
-            .booleanThrottleDebounced(model.didCompleteCopyToClipboard) {
-                model.didCompleteCopyToClipboardDebounced = $0
-            }
-            .popover(isPresented: $model.didCompleteCopyToClipboardDebounced) {
-                Text("Copied!")
-                    .padding(4)
-            }
+            .padding(.trailing, 8)
+            .padding(4)
+            .onHover { model.isHoveringOverVersionCopier = $0 }
+            .animation(luminareAnimationFast, value: model.isHoveringOverVersionCopier)
         }
     }
 
     private var updateSection: some View {
         LuminareSection {
-            Button {
-                Task {
-                    // Pass force=true to bypass the guard check
-                    await updater.fetchLatestInfo(force: true)
+            LuminareButtonRow {
+                Button {
+                    Task {
+                        await updater.fetchLatestInfo(bypassUpdatesEnabled: true)
 
-                    if updater.updateState == .available {
-                        await updater.showUpdateWindow()
-                    } else {
-                        model.updateButtonTitle = model.getNextUpToDateText()
-
-                        let currentTitle = model.updateButtonTitle
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            if model.updateButtonTitle == currentTitle {
-                                if updater.updatesEnabled {
-                                    model.updateButtonTitle = .init(localized: "Check for updates…")
-                                } else {
-                                    model.updateButtonTitle = .init(localized: "Updates are disabled")
-                                }
-                            }
+                        switch updater.updateState {
+                        case .available:
+                            await updater.showUpdateWindowIfEligible()
+                        case .unavailable:
+                            await model.showUpdatesUnavailableText()
+                        case .osNotSupported:
+                            break
                         }
                     }
+                } label: {
+                    Text(.init(updateButtonText))
+                        .contentTransition(.numericText())
+                        .animation(luminareAnimation, value: updateButtonText)
                 }
-            } label: {
-                Text(.init(model.updateButtonTitle))
-                    .contentTransition(.numericText())
-                    .animation(luminareAnimation, value: model.updateButtonTitle)
+                .disabled(!updateButtonEnabled)
+                .onHover { model.isHoveringOverUpdateButton = $0 }
             }
-            .disabled(!updateButtonEnabled)
-            .onHover { hovering in
-                isHoveringOverUpdateButton = hovering
-
-                if !updater.updatesEnabled {
-                    if hovering {
-                        model.updateButtonTitle = "`sudo upgrade loop`"
-                    } else {
-                        model.updateButtonTitle = .init(localized: "Updates are disabled")
-                    }
-                }
-            }
-            .onAppear {
-                if updater.updateState == .available {
-                    model.updateButtonTitle = .init(localized: "Update…")
-                } else if !updater.updatesEnabled {
-                    model.updateButtonTitle = .init(localized: "Updates are disabled")
-                }
-            }
-            .onChange(of: updater.updateState) { _ in
-                if updater.updateState == .available {
-                    model.updateButtonTitle = .init(localized: "Update…")
-                }
-            }
-            .onChange(of: updater.updatesEnabled) { enabled in
-                if !enabled {
-                    model.updateButtonTitle = .init(localized: "Updates are disabled")
-                } else {
-                    model.updateButtonTitle = .init(localized: "Check for updates…")
-                }
-            }
+            .luminareRoundingBehavior(top: true)
 
             LuminareToggle("Include development versions", isOn: $includeDevelopmentVersions)
+
+            LuminareToggle(isOn: $automaticallyUpdate) {
+                Text("Automatically install updates")
+                    .padding(.trailing, automaticallyUpdate ? 4 : 0)
+                    .luminareToolTip(attachedTo: .topTrailing, hidden: !automaticallyUpdate) {
+                        Text("Updates will only be installed when \(Bundle.main.appName) is in the background.")
+                            .padding(6)
+                    }
+                    .animation(luminareAnimation, value: automaticallyUpdate)
+            }
         }
     }
 
@@ -278,7 +290,7 @@ struct AboutConfigurationView: View {
             )
             .padding(8)
 
-            HStack(spacing: 2) {
+            LuminareButtonRow {
                 Button("Send Feedback") {
                     openURL(URL(string: "https://github.com/MrKai77/Loop")!)
                 }
@@ -291,6 +303,7 @@ struct AboutConfigurationView: View {
                     openURL(URL(string: "https://github.com/sponsors/MrKai77")!)
                 }
             }
+            .luminareRoundingBehavior(bottom: true)
         }
     }
 
@@ -298,39 +311,53 @@ struct AboutConfigurationView: View {
         LuminareSection(String(localized: "Credits", comment: "Section header shown in settings")) {
             ForEach(model.credits) { credit in
                 creditView(credit)
+                    .luminareRoundingBehavior(
+                        top: (credit == model.credits.first) == true,
+                        bottom: (credit == model.credits.last) == true
+                    )
             }
         }
     }
 
     private func creditView(_ credit: CreditItem) -> some View {
-        Button {
-            openURL(credit.url)
-        } label: {
-            HStack(spacing: 12) {
-                credit.avatar
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 40)
-                    .overlay {
-                        Circle()
-                            .strokeBorder(.white.opacity(0.1), lineWidth: 1)
-                    }
-                    .clipShape(.circle)
-
-                VStack(alignment: .leading) {
-                    Text(credit.name)
-
-                    if let description = credit.description {
-                        description
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+        HStack(spacing: 12) {
+            credit.avatar
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(height: 40)
+                .overlay {
+                    Circle()
+                        .strokeBorder(.white.opacity(0.1), lineWidth: 1)
                 }
+                .clipShape(.circle)
 
-                Spacer()
+            VStack(alignment: .leading) {
+                Text(credit.name)
+
+                if let description = credit.description {
+                    description
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .padding(12)
+
+            Spacer()
+
+            Button {
+                openURL(credit.url)
+            } label: {
+                Image(systemName: "link")
+                    .padding(4)
+                    .contentShape(.rect)
+            }
+            .luminareContentSize(
+                aspectRatio: 1.0,
+                contentMode: .fit,
+                hasFixedHeight: true
+            )
+            .luminareRoundingBehavior(top: true, bottom: true)
+            .luminareSurfaceStyle(.flat)
         }
-        .buttonStyle(.luminareCosmetic(icon: Image(.shareUpRight)))
+        .padding(12)
     }
 }

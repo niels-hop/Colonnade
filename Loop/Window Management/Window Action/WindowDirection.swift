@@ -8,13 +8,18 @@
 import Defaults
 import SwiftUI
 
-// Enum that stores all possible resizing options
+/// Enum that stores all possible resizing options
 enum WindowDirection: String, CaseIterable, Identifiable, Codable {
     var id: Self { self }
 
+    /// "Empty" actions.
+    /// `noAction` is explicitly chosen or user-bound.
+    /// `noSelection` is the default state before any radial menu selection is made.
+    case noAction = "NoAction", noSelection = "NoSelection"
+
     // General Actions
-    case noAction = "NoAction", maximize = "Maximize", almostMaximize = "AlmostMaximize", fullscreen = "Fullscreen"
-    case maximizeHeight = "MaximizeHeight", maximizeWidth = "MaximizeWidth"
+    case maximize = "Maximize", almostMaximize = "AlmostMaximize", fullscreen = "Fullscreen"
+    case maximizeHeight = "MaximizeHeight", maximizeWidth = "MaximizeWidth", fillAvailableSpace = "FillAvailableSpace"
     case undo = "Undo", initialFrame = "InitialFrame", hide = "Hide", minimize = "Minimize", minimizeOthers = "MinimizeOthers"
     case macOSCenter = "MacOSCenter", center = "Center"
 
@@ -41,63 +46,66 @@ enum WindowDirection: String, CaseIterable, Identifiable, Codable {
     case verticalCenterThird = "VerticalCenterThird"
     case bottomThird = "BottomThird", bottomTwoThirds = "BottomTwoThirds"
 
-    // Screen Switching
+    /// Screen Switching
     case nextScreen = "NextScreen", previousScreen = "PreviousScreen", leftScreen = "LeftScreen", rightScreen = "RightScreen", topScreen = "TopScreen", bottomScreen = "BottomScreen"
 
     // Size Adjustment
     case larger = "Larger", smaller = "Smaller"
+    case scaleUp = "ScaleUp", scaleDown = "ScaleDown"
 
-    // Shrink
+    /// Shrink
     case shrinkTop = "ShrinkTop", shrinkBottom = "ShrinkBottom", shrinkRight = "ShrinkRight", shrinkLeft = "ShrinkLeft", shrinkHorizontal = "ShrinkHorizontal", shrinkVertical = "ShrinkVertical"
 
-    // Grow
+    /// Grow
     case growTop = "GrowTop", growBottom = "GrowBottom", growRight = "GrowRight", growLeft = "GrowLeft", growHorizontal = "GrowHorizontal", growVertical = "GrowVertical"
 
-    // Move
+    /// Move
     case moveUp = "MoveUp", moveDown = "MoveDown", moveRight = "MoveRight", moveLeft = "MoveLeft"
 
-    // Focus
-    case focusUp = "FocusUp", focusDown = "FocusDown", focusRight = "FocusRight", focusLeft = "FocusLeft"
+    /// Focus
+    case focusUp = "FocusUp", focusDown = "FocusDown", focusRight = "FocusRight", focusLeft = "FocusLeft", focusNextInStack = "FocusNextInStack"
 
     // Stash
     case stash = "Stash"
     case unstash = "Unstash"
 
-    // Custom Actions
+    /// Custom Actions
     case custom = "Custom", cycle = "Cycle"
 
     // These are used in the menubar resize submenu & keybind configuration
-    static var general: [WindowDirection] { [.fullscreen, .maximize, .almostMaximize, .maximizeHeight, .maximizeWidth, .center, .macOSCenter, .minimize, .minimizeOthers, .hide] }
+    static var general: [WindowDirection] { [.fullscreen, .maximize, .almostMaximize, .maximizeHeight, .maximizeWidth, .fillAvailableSpace, .center, .macOSCenter, .minimize, .minimizeOthers, .hide] }
     static var halves: [WindowDirection] { [.topHalf, .verticalCenterHalf, .bottomHalf, .leftHalf, .horizontalCenterHalf, .rightHalf] }
     static var quarters: [WindowDirection] { [.topLeftQuarter, .topRightQuarter, .bottomLeftQuarter, .bottomRightQuarter] }
     static var horizontalThirds: [WindowDirection] { [.rightThird, .rightTwoThirds, .horizontalCenterThird, .leftTwoThirds, .leftThird] }
     static var verticalThirds: [WindowDirection] { [.topThird, .topTwoThirds, .verticalCenterThird, .bottomTwoThirds, .bottomThird] }
     static var horizontalFourths: [WindowDirection] { [.firstFourth, .secondFourth, .thirdFourth, .fourthFourth, .horizontalCenterFourth, .leftThreeFourths, .rightThreeFourths] }
     static var screenSwitching: [WindowDirection] { [.nextScreen, .previousScreen, .leftScreen, .rightScreen, .topScreen, .bottomScreen] }
-    static var sizeAdjustment: [WindowDirection] { [.larger, .smaller] }
+    static var sizeAdjustment: [WindowDirection] { [.larger, .smaller, .scaleUp, .scaleDown] }
     static var shrink: [WindowDirection] { [.shrinkTop, .shrinkBottom, .shrinkRight, .shrinkLeft, .shrinkHorizontal, .shrinkVertical] }
     static var grow: [WindowDirection] { [.growTop, .growBottom, .growRight, .growLeft, .growHorizontal, .growVertical] }
     static var move: [WindowDirection] { [.moveUp, .moveDown, .moveRight, .moveLeft] }
-    static var focus: [WindowDirection] { [.focusUp, .focusDown, .focusRight, .focusLeft] }
+    static var focus: [WindowDirection] { [.focusUp, .focusDown, .focusRight, .focusLeft, .focusNextInStack] }
     static var more: [WindowDirection] { [.initialFrame, .undo, .custom, .cycle] }
 
     // Computed properties for checking conditions
+    var isNoOp: Bool { [.noSelection, .noAction].contains(self) }
     var willChangeScreen: Bool { WindowDirection.screenSwitching.contains(self) }
     var willAdjustSize: Bool { WindowDirection.sizeAdjustment.contains(self) }
     var willShrink: Bool { WindowDirection.shrink.contains(self) }
     var willGrow: Bool { WindowDirection.grow.contains(self) }
     var willMove: Bool { WindowDirection.move.contains(self) }
     var willFocusWindow: Bool { WindowDirection.focus.contains(self) }
-    var willMaximize: Bool { [.fullscreen, .maximize, .almostMaximize, .maximizeHeight, .maximizeWidth].contains(self) }
     var willCenter: Bool { [.center, .macOSCenter, .verticalCenterHalf, .horizontalCenterHalf].contains(self) }
     var isCustomizable: Bool { [.custom, .stash].contains(self) }
 
     var hasRadialMenuAngle: Bool {
-        let noAngleActions: [WindowDirection] = [.noAction, .minimize, .minimizeOthers, .hide, .initialFrame, .undo, .cycle]
-        return !(noAngleActions.contains(self) || willChangeScreen || willAdjustSize || willShrink || willGrow || willMove || willFocusWindow || willMaximize || willCenter)
+        let noAngleActions: [WindowDirection] = [.noAction, .noSelection, .minimize, .minimizeOthers, .hide, .initialFrame, .undo, .cycle]
+        return !(noAngleActions.contains(self) || shouldFillRadialMenu || willChangeScreen || willAdjustSize || willShrink || willGrow || willMove || willFocusWindow)
     }
 
-    var shouldFillRadialMenu: Bool { willMaximize || willCenter }
+    var shouldFillRadialMenu: Bool {
+        [.fullscreen, .maximize, .almostMaximize, .maximizeHeight, .maximizeWidth, .fillAvailableSpace].contains(self) || willCenter
+    }
 
     var frameMultiplyValues: CGRect? {
         switch self {
@@ -140,24 +148,10 @@ enum WindowDirection: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var nextPreviewDirection: WindowDirection {
+    var focusDirection: NavigationDirection? {
         switch self {
-        case .topHalf: .topRightQuarter
-        case .topRightQuarter: .rightHalf
-        case .rightHalf: .bottomRightQuarter
-        case .bottomRightQuarter: .bottomHalf
-        case .bottomHalf: .bottomLeftQuarter
-        case .bottomLeftQuarter: .leftHalf
-        case .leftHalf: .topLeftQuarter
-        case .topLeftQuarter: .maximize
-        default: .topHalf
-        }
-    }
-
-    var focusEdge: Edge? {
-        switch self {
-        case .focusLeft: .leading
-        case .focusRight: .trailing
+        case .focusLeft: .left
+        case .focusRight: .right
         case .focusUp: .top
         case .focusDown: .bottom
         default: nil

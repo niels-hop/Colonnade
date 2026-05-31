@@ -23,18 +23,38 @@ import SwiftUI
 /// - Black Hole: 2500 Loops
 /// - Summer: 3000 Loops
 /// - Master: 5000 Loops
-
 struct Icon: Hashable, LuminareSelectionData {
     var name: String
     var assetName: String
     var unlockTime: Int
     var unlockMessage: String?
 
+    var isDefault: Bool {
+        assetName == Bundle.main.infoDictionary?["CFBundleIconName"] as? String
+    }
+
     var isSelectable: Bool {
         IconManager.returnUnlockedIcons().contains(self)
     }
 
-    #if DEBUG
+    #if RELEASE
+        /// Remove developer icon in release builds
+        static let all: [Icon] = [
+            .classic,
+            .holo,
+            .rosePine,
+            .metaLoop,
+            .keycap,
+            .white,
+            .black,
+            .daylight,
+            .neon,
+            .synthwaveSunset,
+            .blackHole,
+            .summer,
+            .master
+        ]
+    #else
         static let all: [Icon] = [
             .developer,
             .classic,
@@ -51,26 +71,6 @@ struct Icon: Hashable, LuminareSelectionData {
             .summer,
             .master
         ]
-
-        static let `default` = Icon.developer
-    #else
-        static let all: [Icon] = [
-            .classic,
-            .holo,
-            .rosePine,
-            .metaLoop,
-            .keycap,
-            .white,
-            .black,
-            .daylight,
-            .neon,
-            .synthwaveSunset,
-            .blackHole,
-            .summer,
-            .master
-        ]
-
-        static let `default` = Icon.classic
     #endif
 }
 

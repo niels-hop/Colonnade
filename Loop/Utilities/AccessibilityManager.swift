@@ -9,10 +9,12 @@ import Defaults
 import SwiftUI
 
 /// Stores and manages the accessibility permission state for Loop.
+@MainActor
 final class AccessibilityManager {
     static let shared: AccessibilityManager = .init()
 
     private var permissionCheckerTask: Task<(), Never>!
+
     private var continuations: [UUID: AsyncStream<Bool>.Continuation] = [:]
     private(set) var isGranted: Bool
 
@@ -26,9 +28,9 @@ final class AccessibilityManager {
                 .notifications(named: .AXPermissionsChanged)
 
             for await _ in notifications {
-                /// It seems like the notification is sent immediately after a state change, sometimes before the actual
-                /// reading from `AXIsProcessTrustedWithOptions` is updated.
-                /// So sleep for 250 milliseconds (this is generous, but just to ensure that the reading will be correct).
+                // It seems like the notification is sent immediately after a state change, sometimes before the actual
+                // reading from `AXIsProcessTrustedWithOptions` is updated.
+                // So sleep for 250 milliseconds (this is generous, but just to ensure that the reading will be correct).
                 try? await Task.sleep(for: .milliseconds(250))
 
                 let status = Self.getStatus()
@@ -64,13 +66,17 @@ final class AccessibilityManager {
 
             continuation.onTermination = { [weak self] _ in
                 guard let self else { return }
-                continuations[id] = nil
+
+                Task { @MainActor in
+                    self.continuations[id] = nil
+                }
             }
         }
     }
 
     /// This will yield a new value to all streams if the provided value differs from the previous value.
     /// - Parameter value: the provided value.
+    @MainActor
     private func yield(_ value: Bool) {
         guard value != isGranted else { return }
 
@@ -92,7 +98,10 @@ final class AccessibilityManager {
         if getStatus() {
             return true
         }
-        resetAccessibility() // In case Loop is actually in the list, but the signature is different
+
+        // In case Loop is actually in the list, but the signature is different
+        resetAccessibility()
+        resetInputMonitoring()
 
         let alert = NSAlert()
         alert.messageText = .init(
@@ -125,9 +134,31 @@ final class AccessibilityManager {
     }
 
     /// Executes `/usr/bin/tccutil reset Accessibility <Bundle ID>`.
-    /// This fully removes any accessibility permissions the user may have previously granted to Loop.
+    /// This fully removes any accessibility permissions the user may have previously granted to anything with Loop's bundle ID.
     private static func resetAccessibility() {
-        _ = try? Process.run(URL(filePath: "/usr/bin/tccutil"), arguments: ["reset", "Accessibility", Bundle.main.bundleID])
+        let process = Process()
+        process.executableURL = URL(filePath: "/usr/bin/tccutil")
+        process.arguments = ["reset", "Accessibility", Bundle.main.bundleID]
+
+        // Redirect output and errors to /dev/null
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        try? process.run()
+    }
+
+    /// Executes `/usr/bin/tccutil reset ListenEvent <Bundle ID>`.
+    /// This fully removes any input monitoring permissions the user may have previously granted to anything with Loop's bundle ID.
+    private static func resetInputMonitoring() {
+        let process = Process()
+        process.executableURL = URL(filePath: "/usr/bin/tccutil")
+        process.arguments = ["reset", "ListenEvent", Bundle.main.bundleID]
+
+        // Redirect output and errors to /dev/null
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        try? process.run()
     }
 }
 
