@@ -63,14 +63,18 @@ Integratie in `LoopManager`: `shouldUseUltrawideDock` beslist via `Defaults[.ult
 
 ## Build & Run
 
+> **Let op — Swift-macro:** sinds de upstream-merge gebruikt het project de `Scribe`-package
+> met een Swift-macro (`@Loggable`). Xcode wil die eenmalig interactief laten goedkeuren; in
+> CLI-builds geef je daarom `-skipMacroValidation` mee (zoals hieronder en in `deploy.sh`).
+
 **Standaard build:**
 ```bash
-xcodebuild -scheme Loop -configuration Debug build
+xcodebuild -scheme Loop -configuration Debug -skipMacroValidation build
 ```
 
 **Build + Open:**
 ```bash
-xcodebuild -scheme Loop -configuration Debug build && \
+xcodebuild -scheme Loop -configuration Debug -skipMacroValidation build && \
 open ~/Library/Developer/Xcode/DerivedData/Loop-*/Build/Products/Debug/Loop.app
 ```
 

@@ -30,8 +30,10 @@ if ! security find-identity -p codesigning | grep -q "$SIGN_IDENTITY"; then
 fi
 
 # 2. Build (SwiftFormat draait automatisch via de build phase).
+#    -skipMacroValidation: de Scribe-package levert een Swift-macro (@Loggable) die
+#    Xcode anders interactief wil laten goedkeuren; in een CLI-build slaan we die check over.
 echo "==> Bouwen ($CONFIG)..."
-xcodebuild -scheme Loop -configuration "$CONFIG" build
+xcodebuild -scheme Loop -configuration "$CONFIG" -skipMacroValidation build
 
 # 3. Vind de gebouwde app.
 BUILT_DIR="$(xcodebuild -scheme Loop -configuration "$CONFIG" -showBuildSettings 2>/dev/null \
