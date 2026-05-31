@@ -116,6 +116,12 @@ final class UltrawideDockViewModel: ObservableObject {
     }
 
     func setWindow(to newWindow: Window) {
+        // `openAndUpdate` (and thus `setWindow`) fires on every mouse move. Reloading only makes
+        // sense when the window we're positioning actually changes — otherwise the repeated
+        // `reload()` re-enumerates all windows and rebuilds anchors with fresh UUIDs each tick,
+        // which is both expensive and resets the active anchor selection. The nil→window
+        // transition still reloads (recomputes anchors now skipping the known current window).
+        guard window?.cgWindowID != newWindow.cgWindowID else { return }
         window = newWindow
         Task { @MainActor in await reload() }
     }

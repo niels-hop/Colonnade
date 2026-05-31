@@ -36,8 +36,10 @@ final class UltrawideDockController {
     ) {
         // Already open: action/window updates flow through `setAction`/`setWindow`, so don't
         // re-create the panel or re-warp the cursor (which would fight the user's mouse).
+        // Crucially, do NOT `refresh()` here: `openAndUpdate` runs on every mouse move, and a
+        // reload would re-enumerate all windows + rebuild anchors with fresh UUIDs each tick,
+        // resetting the active anchor and minting a new action identity → endless churn.
         if controller != nil {
-            viewModel?.refresh()
             return
         }
 
