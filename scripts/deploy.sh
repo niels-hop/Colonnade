@@ -52,6 +52,9 @@ sleep 1
 
 # 5. Installeer in /Applications. nhop is admin en /Applications is groep-schrijfbaar,
 #    dus dit lukt normaal zonder sudo, ook als de bestaande app van een ander account is.
+#    We *verplaatsen* de build uit DerivedData i.p.v. te kopiëren: zo blijft er geen
+#    tweede Loop.app met dezelfde bundle-ID (com.nielshop.Loop) achter die Finder/Spotlight
+#    en LaunchServices in de war brengt. xcodebuild maakt 'm bij de volgende build weer aan.
 echo "==> Installeren naar $DEST..."
 if [[ -d "$DEST" ]]; then
     if ! rm -rf "$DEST" 2>/dev/null; then
@@ -61,12 +64,16 @@ if [[ -d "$DEST" ]]; then
         exit 1
     fi
 fi
-cp -R "$APP" "$DEST"
+mv "$APP" "$DEST"
 
 # 6. Verifieer de handtekening (moet stabiel + geldig zijn, niet adhoc).
 echo "==> Handtekening verifiëren..."
 codesign --verify --deep --strict --verbose=2 "$DEST"
 codesign -dvv "$DEST" 2>&1 | grep -E "Identifier|Authority|TeamIdentifier" || true
+
+# 7. Start de zojuist geïnstalleerde app (deploy verwacht je dat Loop daarna draait).
+echo "==> Loop starten..."
+open "$DEST"
 
 echo ""
 echo "Klaar. Loop staat in $DEST."
