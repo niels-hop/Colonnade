@@ -153,10 +153,25 @@ final class UltrawideDockController {
         controller != nil
     }
 
-    /// Hover: maps screen mouse-X to the nearest anchor and returns the resulting action.
+    /// Hover: maps the cursor to the nearest anchor and returns the resulting action.
+    ///
+    /// The dock view is a scaled mini-map of the screen, so we map the cursor *within the dock
+    /// panel* to 0..1 instead of across the full (super ultrawide) screen width. That way a small
+    /// cursor movement across the dock spans every anchor — the user no longer has to drag the
+    /// cursor all the way to the physical screen edge to reach the rightmost anchor.
     @discardableResult
     func updateForMouseX(_ screenMouseX: Double) -> WindowAction? {
-        viewModel?.updateForMouseX(screenMouseX)
+        guard let frame = controller?.window?.frame else {
+            return viewModel?.currentAction
+        }
+        // The mini-screen rectangle inside the panel is inset by the view's outer (20) + inner
+        // (10) padding on each side; map only across that visible rectangle so it lines up with
+        // what the user sees.
+        let inset = 30.0
+        let repMinX = frame.minX + inset
+        let repWidth = max(1, frame.width - inset * 2)
+        let normalized = min(1, max(0, (screenMouseX - repMinX) / repWidth))
+        return viewModel?.updateForNormalizedX(normalized)
     }
 
     /// Click on the current anchor cycles through its size stops (e.g. 1/2 → 1/3 → 2/3).

@@ -143,11 +143,12 @@ final class UltrawideDockViewModel: ObservableObject {
 
     // MARK: - Anchor interaction
 
-    /// Updates the active anchor based on the mouse X (in screen coordinates).
+    /// Updates the active anchor based on a normalized cursor X (0 = left edge, 1 = right edge of
+    /// the dock's mini-screen). The controller maps the raw cursor position into this dock-relative
+    /// space, so a small physical movement across the dock spans the whole screen's anchors.
     @discardableResult
-    func updateForMouseX(_ screenMouseX: Double) -> WindowAction? {
-        guard let screen, !anchors.isEmpty else { return currentAction }
-        let normalizedX = (screenMouseX - screen.frame.minX) / screen.frame.width
+    func updateForNormalizedX(_ normalizedX: Double) -> WindowAction? {
+        guard !anchors.isEmpty else { return currentAction }
 
         let nearest = anchors.min(by: { abs($0.anchorX - normalizedX) < abs($1.anchorX - normalizedX) })
         guard let nearest else { return currentAction }
