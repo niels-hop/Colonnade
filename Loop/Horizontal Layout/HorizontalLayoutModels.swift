@@ -63,7 +63,7 @@ public struct HorizontalLayoutSnapshot: Equatable, Sendable {
             guard ids.insert(tile.id).inserted else {
                 throw HorizontalLayoutError.duplicateTileID(tile.id)
             }
-            guard tile.frame.isFinite else {
+            guard tile.frame.hasFiniteHorizontalLayoutGeometry else {
                 throw HorizontalLayoutError.nonFiniteGeometry(tile.id)
             }
             guard tile.frame.origin.y == 0, tile.frame.height == 1 else {
@@ -155,7 +155,7 @@ public enum HorizontalLayoutError: Error, Equatable, Sendable {
 }
 
 private extension CGRect {
-    var isFinite: Bool {
+    var hasFiniteHorizontalLayoutGeometry: Bool {
         origin.x.isFinite && origin.y.isFinite && width.isFinite && height.isFinite
     }
 }

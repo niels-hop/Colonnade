@@ -13,15 +13,12 @@ final class WindowActionIndicatorService {
     private let radialMenuController = RadialMenuController()
     private let previewController = PreviewController()
     private let ultrawideDockController = UltrawideDockController()
+    private let horizontalLayoutPreviewController = HorizontalLayoutPlanPreviewController()
 
     func openAndUpdate(context: ResizeContext) {
         if Defaults[.hideOnNoSelection], context.action.direction == .noSelection {
             closeAll()
             return
-        }
-
-        if Defaults[.previewVisibility] {
-            previewController.open(context: context)
         }
 
         // On ultrawide screens the dock replaces the radial menu as the primary placement UI.
@@ -39,9 +36,16 @@ final class WindowActionIndicatorService {
                 ultrawideDockController.setWindow(to: window)
             }
             ultrawideDockController.setAction(to: context.action)
+            updateDockPreview(context: context)
         } else if Defaults[.radialMenuVisibility] {
             ultrawideDockController.close()
+            horizontalLayoutPreviewController.close()
+            if Defaults[.previewVisibility] {
+                previewController.open(context: context)
+            }
             radialMenuController.open(context: context)
+        } else if Defaults[.previewVisibility] {
+            previewController.open(context: context)
         }
     }
 
@@ -49,6 +53,7 @@ final class WindowActionIndicatorService {
         radialMenuController.close()
         previewController.close()
         ultrawideDockController.close()
+        horizontalLayoutPreviewController.close()
     }
 
     // MARK: - Ultrawide Dock interaction
@@ -71,5 +76,24 @@ final class WindowActionIndicatorService {
     /// Scroll-wheel fine-tunes the width at the current anchor. `delta` is in fraction-of-span units.
     func adjustDockSize(by delta: Double) -> WindowAction? {
         ultrawideDockController.adjustSize(by: delta)
+    }
+
+    var pendingHorizontalLayoutExecution: HorizontalLayoutPendingExecution? {
+        ultrawideDockController.pendingExecution
+    }
+
+    private func updateDockPreview(context: ResizeContext) {
+        guard Defaults[.previewVisibility] else {
+            previewController.close()
+            horizontalLayoutPreviewController.close()
+            return
+        }
+        if let execution = ultrawideDockController.pendingExecution {
+            previewController.close()
+            horizontalLayoutPreviewController.open(execution)
+        } else {
+            horizontalLayoutPreviewController.close()
+            previewController.open(context: context)
+        }
     }
 }

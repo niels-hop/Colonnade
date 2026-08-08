@@ -56,6 +56,10 @@ final class LoopManager {
         isDockActiveMirror.withLock { $0 }
     }
 
+    /// Main-actor sequence gate for asynchronous mouse tasks. A late task from an older event can
+    /// never replace the newest pending dock plan.
+    private var latestDockEventSequence: UInt64 = 0
+
     private lazy var triggerKeyTimeoutTimer = TriggerKeyTimeoutTimer(
         closeCallback: { [weak self] forceClose in
             Task { await self?.closeLoop(forceClose: forceClose) }
@@ -117,26 +121,26 @@ final class LoopManager {
         // owns its anchor/size state inside the indicator service, so these closures forward the
         // raw interaction and apply whatever action the dock computes.
         isDockActive: { [weak self] in self?.isDockActiveAtomic ?? false },
-        dockMouseMoved: { [weak self] screenMouseX in
+        dockMouseMoved: { [weak self] screenMouseX, sequence in
             Task { @MainActor in
-                guard let self else { return }
+                guard let self, self.acceptDockEvent(sequence) else { return }
                 self.keybindTrigger.canPassthroughNextSpecialEvent = false
                 if let action = self.indicatorService.dockActionForMouseX(screenMouseX) {
                     await self.changeAction(action, canAdvanceCycle: false)
                 }
             }
         },
-        cycleDockSize: { [weak self] in
+        cycleDockSize: { [weak self] sequence in
             Task { @MainActor in
-                guard let self else { return }
+                guard let self, self.acceptDockEvent(sequence) else { return }
                 if let action = self.indicatorService.cycleDockSize() {
                     await self.changeAction(action, canAdvanceCycle: false)
                 }
             }
         },
-        adjustDockSize: { [weak self] delta in
+        adjustDockSize: { [weak self] delta, sequence in
             Task { @MainActor in
-                guard let self else { return }
+                guard let self, self.acceptDockEvent(sequence) else { return }
                 if let action = self.indicatorService.adjustDockSize(by: delta) {
                     await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
                 }
@@ -178,6 +182,7 @@ final class LoopManager {
         shouldCancelOpening = false
         isLoopActive = false
         hasParentCycleActionMirror.withLock { $0 = false }
+        isDockActiveMirror.withLock { $0 = false }
     }
 }
 
@@ -275,6 +280,10 @@ extension LoopManager {
         guard isLoopActive == true else { return }
         log.info("Closing Loop (force closed: \(forceClose))")
 
+        let wasDockActive = isDockActiveAtomic
+        let pendingHorizontalLayoutExecution = forceClose
+            ? nil
+            : indicatorService.pendingHorizontalLayoutExecution
         indicatorService.closeAll()
         isLoopActive = false
         hasParentCycleActionMirror.withLock { $0 = false }
@@ -285,13 +294,15 @@ extension LoopManager {
 
         // Handle normal actions with a target window
         if !forceClose {
-            // If the preview was disabled, the window will already be in the specified action's frame.
-            // So only resize the window if the preview is enabled.
-            if Defaults[.previewVisibility],
-               !resizeContext.action.direction.willFocusWindow {
-                Task {
-                    _ = try? await WindowActionEngine.shared.apply(context: resizeContext)
+            if let pendingHorizontalLayoutExecution {
+                do {
+                    try await HorizontalLayoutExecutor.shared.execute(pendingHorizontalLayoutExecution)
+                } catch {
+                    log.error("Horizontal layout transaction failed: \(error.localizedDescription)")
                 }
+            } else if (Defaults[.previewVisibility] || wasDockActive),
+                      !resizeContext.action.direction.willFocusWindow {
+                _ = try? await WindowActionEngine.shared.apply(context: resizeContext)
             }
 
             // Icon stuff
@@ -491,7 +502,7 @@ extension LoopManager {
             indicatorService.openAndUpdate(context: resizeContext)
 
             Task {
-                if !Defaults[.previewVisibility] {
+                if !Defaults[.previewVisibility], !isDockActiveAtomic {
                     _ = try await WindowActionEngine.shared.apply(context: resizeContext)
                 }
 
@@ -569,6 +580,12 @@ extension LoopManager {
     private func setResizeAction(to newAction: WindowAction, parent newParentAction: WindowAction?) {
         resizeContext.setAction(to: newAction, parent: newParentAction)
         hasParentCycleActionMirror.withLock { $0 = newParentAction != nil }
+    }
+
+    private func acceptDockEvent(_ sequence: UInt64) -> Bool {
+        guard sequence > latestDockEventSequence else { return false }
+        latestDockEventSequence = sequence
+        return isLoopActive
     }
 
     /// Resolves the target screen for `screenToResizeOn`.

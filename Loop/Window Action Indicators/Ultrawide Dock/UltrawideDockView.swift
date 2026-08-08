@@ -16,7 +16,7 @@ struct UltrawideDockView: View {
 
     private let screen: NSScreen?
     private let baseDockWidth: CGFloat = 600
-    private let baseDockHeight: CGFloat = 150
+    private let baseDockHeight: CGFloat = 176
     private let cornerRadius: CGFloat = 10
 
     // Compute dynamic dock width based on screen aspect ratio
@@ -58,8 +58,10 @@ struct UltrawideDockView: View {
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             }
 
-            // Screen representation
-            GeometryReader { geo in
+            VStack(spacing: 7) {
+                // Screen representation. Tiles, shared dividers, and free-space anchors are all
+                // explicit targets; the footer explains the operation that will commit on release.
+                GeometryReader { geo in
                 let width = geo.size.width
                 let height = geo.size.height
 
@@ -72,10 +74,15 @@ struct UltrawideDockView: View {
                     let opacity = 0.5 - (normalizedDepth * 0.2) // Range: 0.3 (back) to 0.5 (front)
 
                     RoundedRectangle(cornerRadius: 5)
-                        .fill(Color.gray.opacity(opacity))
+                        .fill(windowFrame.isActive ? Color.gray.opacity(opacity + 0.12) : Color.gray.opacity(opacity))
                         .overlay(
                             RoundedRectangle(cornerRadius: 5)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                .stroke(
+                                    viewModel.activeTargetID == "tile:\(windowFrame.id.rawValue)"
+                                        ? accentColorController.color1
+                                        : Color.white.opacity(0.3),
+                                    lineWidth: viewModel.activeTargetID == "tile:\(windowFrame.id.rawValue)" ? 2 : 1
+                                )
                         )
                         .frame(
                             width: max(0, windowFrame.frame.width * width),
@@ -93,7 +100,7 @@ struct UltrawideDockView: View {
                 // and bottom edges. The active anchor is rendered in the accent color so the
                 // user can see which snap point will commit when releasing the loop trigger.
                 ForEach(viewModel.anchors) { anchor in
-                    let isActive = anchor.id == viewModel.activeAnchorID
+                    let isActive = "anchor:\(anchor.id)" == viewModel.activeTargetID
                     let tickColor: Color = isActive
                         ? accentColorController.color1
                         : Color.white.opacity(0.35)
@@ -113,36 +120,66 @@ struct UltrawideDockView: View {
                         .zIndex(500)
                 }
 
-                // Active Preview Window
-                RoundedRectangle(cornerRadius: 5)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(
-                                colors: [
+                // Shared divider handles. Only adjacent handles are bright enough to invite a
+                // push-pull, while the remaining handles still explain the row's structure.
+                ForEach(viewModel.dividers) { divider in
+                    let isActive = "divider:\(divider.id)" == viewModel.activeTargetID
+                    Capsule()
+                        .fill(
+                            isActive
+                                ? accentColorController.color1
+                                : Color.white.opacity(divider.isCurrentAdjacent ? 0.55 : 0.2)
+                        )
+                        .frame(width: isActive ? 7 : 4, height: isActive ? 30 : 20)
+                        .position(x: divider.x * width, y: height / 2)
+                        .shadow(color: Color.black.opacity(0.25), radius: 2)
+                        .zIndex(600)
+                }
+
+                // Every affected member of a multi-window plan is previewed, not just the current
+                // window. This makes swaps, profiles, and divider changes legible before release.
+                ForEach(viewModel.previewFrames) { preview in
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
                                     accentColorController.color1,
                                     accentColorController.color2
-                                ]
-                            ),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 5)
-                            .stroke(Color.white.opacity(0.5), lineWidth: 2)
-                    )
-                    .frame(
-                        width: max(0, viewModel.previewFrame.width * width),
-                        height: max(0, viewModel.previewFrame.height * height)
-                    )
-                    .position(
-                        x: viewModel.previewFrame.midX * width,
-                        y: viewModel.previewFrame.midY * height
-                    )
-                    .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    .zIndex(1000) // Always on top
+                        .opacity(preview.isCurrent ? 0.9 : 0.58)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Color.white.opacity(0.65), lineWidth: preview.isCurrent ? 2 : 1)
+                        )
+                        .frame(
+                            width: max(0, preview.frame.width * width),
+                            height: max(0, preview.frame.height * height)
+                        )
+                        .position(x: preview.frame.midX * width, y: preview.frame.midY * height)
+                        .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
+                        .zIndex(preview.isCurrent ? 1000 : 900)
+                }
             }
-            .padding(10) // Inner padding
+            .frame(maxHeight: .infinity)
+
+                HStack(spacing: 8) {
+                    Text(viewModel.operationTitle)
+                        .font(.system(size: 11, weight: .semibold))
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                    Text(viewModel.percentageFeedback)
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 4)
+                .frame(height: 18)
+            }
+            .padding(10)
         }
         .frame(width: dockWidth, height: dockHeight)
         .shadow(radius: 10)
@@ -151,6 +188,7 @@ struct UltrawideDockView: View {
         .animation(luminareAnimation, value: [accentColorController.color1, accentColorController.color2])
         .animation(luminareAnimation, value: viewModel.existingWindows.count)
         .animation(luminareAnimation, value: viewModel.anchors.count)
-        .animation(luminareAnimation, value: viewModel.activeAnchorID)
+        .animation(luminareAnimation, value: viewModel.activeTargetID)
+        .animation(luminareAnimation, value: viewModel.previewFrames.map(\.frame))
     }
 }

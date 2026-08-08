@@ -24,6 +24,14 @@ actor WindowRecords {
         }
     }
 
+    /// One successfully settled member of a horizontal layout transaction.
+    struct HorizontalLayoutBatchEntry {
+        let window: Window
+        let originalProperties: Window.ResolvedProperties
+        let actualProperties: Window.ResolvedProperties
+        let action: WindowAction
+    }
+
     /// Pre-resolved snapshot of a window's records for synchronous access.
     struct ResolvedRecord {
         let initialFrame: CGRect?
@@ -115,6 +123,16 @@ actor WindowRecords {
         }
 
         log.info("Recorded: \(action) for: \(window)")
+    }
+
+    /// Records a verified multi-window result under one actor turn. The executor calls this only after
+    /// every window settled, so a failed/rolled-back batch never leaves partial action history behind.
+    func recordHorizontalLayoutBatch(_ entries: [HorizontalLayoutBatchEntry]) {
+        for entry in entries {
+            recordFirstIfNeeded(for: entry.window, resolvedProperties: entry.originalProperties)
+            recordsByWindowID[entry.window.cgWindowID]?.actions.insert(entry.action, at: 0)
+            log.info("Recorded horizontal layout frame \(entry.actualProperties.frame) for: \(entry.window)")
+        }
     }
 
     /// Removes the last action performed on the specified window. This will NOT remove the first action for the specified window.

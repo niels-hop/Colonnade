@@ -92,7 +92,7 @@ final class UltrawideDockController {
 
         // Add padding (view has .padding(20))
         let width = dockWidth + 40
-        let height: CGFloat = 190 // 150 base + 40 padding
+        let height: CGFloat = 216 // 176 base + 40 padding
 
         panel.setFrame(
             NSRect(
@@ -125,6 +125,7 @@ final class UltrawideDockController {
     func close() {
         guard let windowController = controller else { return }
         controller = nil
+        viewModel = nil
 
         windowController.window?.animator().alphaValue = 1
         NSAnimationContext.runAnimationGroup { context in
@@ -189,5 +190,11 @@ final class UltrawideDockController {
     /// The currently computed action — source of truth while the dock is open.
     var currentAction: WindowAction? {
         viewModel?.currentAction
+    }
+
+    /// Latest complete multi-window transaction. It is replaced on every dock interaction and is
+    /// consumed exactly once by `LoopManager` when the trigger is released.
+    var pendingExecution: HorizontalLayoutPendingExecution? {
+        viewModel?.pendingExecution
     }
 }

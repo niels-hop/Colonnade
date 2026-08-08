@@ -6,6 +6,7 @@
 //
 
 import Defaults
+import os
 import Scribe
 import SwiftUI
 
@@ -24,9 +25,10 @@ final class MouseInteractionObserver {
     // Ultrawide Dock hooks. When the dock is active it replaces the radial menu: mouse movement
     // selects an anchor, clicks cycle the size, and the scroll wheel fine-tunes the width.
     private let isDockActive: () -> Bool
-    private let dockMouseMoved: (CGFloat) -> ()
-    private let cycleDockSize: () -> ()
-    private let adjustDockSize: (Double) -> ()
+    private let dockMouseMoved: (CGFloat, UInt64) -> ()
+    private let cycleDockSize: (UInt64) -> ()
+    private let adjustDockSize: (Double, UInt64) -> ()
+    private let dockEventSequence = OSAllocatedUnfairLock<UInt64>(initialState: 0)
 
     private var mouseMovementMonitor: PassiveEventMonitor?
     private var leftClickMonitor: ActiveEventMonitor?
@@ -54,9 +56,9 @@ final class MouseInteractionObserver {
         canSelectNextCycleitem: @escaping () -> Bool,
         checkIfLoopOpen: @escaping () -> Bool,
         isDockActive: @escaping () -> Bool,
-        dockMouseMoved: @escaping (CGFloat) -> (),
-        cycleDockSize: @escaping () -> (),
-        adjustDockSize: @escaping (Double) -> ()
+        dockMouseMoved: @escaping (CGFloat, UInt64) -> (),
+        cycleDockSize: @escaping (UInt64) -> (),
+        adjustDockSize: @escaping (Double, UInt64) -> ()
     ) {
         self.windowActionCache = windowActionCache
         self.changeAction = changeAction
@@ -144,6 +146,7 @@ final class MouseInteractionObserver {
 
     private func processNewMouseLocation(_ event: CGEvent) {
         guard checkIfLoopOpen() else { return }
+        let dockSequence = isDockActive() ? nextDockEventSequence() : 0
 
         Task {
             let currentMousePosition = computeLatestMousePosition(event)
@@ -165,7 +168,7 @@ final class MouseInteractionObserver {
             // Ultrawide Dock: anchor selection is driven by the absolute screen mouse-X rather than
             // the radial angle/distance, so branch out before the radial-menu math runs.
             if isDockActive() {
-                dockMouseMoved(currentMousePosition.x)
+                dockMouseMoved(currentMousePosition.x, dockSequence)
                 return
             }
 
@@ -261,7 +264,7 @@ final class MouseInteractionObserver {
         // instead of advancing a radial cycle item.
         if isDockActive() {
             guard checkIfLoopOpen() else { return .forward }
-            cycleDockSize()
+            cycleDockSize(nextDockEventSequence())
             return .ignore
         }
 
@@ -288,6 +291,13 @@ final class MouseInteractionObserver {
         let delta = max(-0.1, min(0.1, raw))
         guard delta != 0 else { return }
 
-        adjustDockSize(delta)
+        adjustDockSize(delta, nextDockEventSequence())
+    }
+
+    private func nextDockEventSequence() -> UInt64 {
+        dockEventSequence.withLock {
+            $0 &+= 1
+            return $0
+        }
     }
 }
