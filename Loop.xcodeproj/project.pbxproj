@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		484C54012F8A000100000001 /* HorizontalLayoutModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484C54112F8A000100000001 /* HorizontalLayoutModels.swift */; };
+		484C54022F8A000100000001 /* HorizontalLayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484C54122F8A000100000001 /* HorizontalLayoutEngine.swift */; };
 		2A28492B2F22B4B700F6CE42 /* Scribe in Frameworks */ = {isa = PBXBuildFile; productRef = 2A28492A2F22B4B700F6CE42 /* Scribe */; };
 		2A28B6292EE5050C00A1E26B /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 2A28B6282EE5050C00A1E26B /* Defaults */; };
 		2A28B62C2EE5057C00A1E26B /* Luminare in Frameworks */ = {isa = PBXBuildFile; productRef = 2A28B62B2EE5057C00A1E26B /* Luminare */; };
@@ -60,6 +62,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		484C54102F8A000100000001 /* LoopHorizontalLayoutTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LoopHorizontalLayoutTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		484C54112F8A000100000001 /* HorizontalLayoutModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutModels.swift"; sourceTree = SOURCE_ROOT; };
+		484C54122F8A000100000001 /* HorizontalLayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutEngine.swift"; sourceTree = SOURCE_ROOT; };
 		2A8689072F809625005B521B /* LoopDockTile.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LoopDockTile.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		A848130C2BD1A8D100B02E93 /* .github */ = {isa = PBXFileReference; lastKnownFileType = folder; path = .github; sourceTree = "<group>"; };
 		A86AFD7529888B29008F4892 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -111,11 +116,19 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2A6A87F02F4D20D2004E995D /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2A6A87F22F4D20F4004E995D /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
 		2A86890E2F809700005B521B /* LoopDockTile */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = LoopDockTile; sourceTree = "<group>"; };
+		484C54202F8A000100000001 /* LoopTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = LoopTests; sourceTree = "<group>"; };
 		A8C751AC2D7BA98600B58784 /* Loop */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A8C751FF2D7BA98600B58784 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Loop; sourceTree = "<group>"; };
 		B1AA00022F30000100AABBCC /* LoopUpdaterHelper */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2A5DD5CC2F5D270C0077AB3C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = LoopUpdaterHelper; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		484C54302F8A000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2A8689042F809625005B521B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -166,6 +179,7 @@
 				A86AFD7529888B29008F4892 /* README.md */,
 				A894B0C52C4B31AA00B4CE6F /* CONTRIBUTING.md */,
 				A8C751AC2D7BA98600B58784 /* Loop */,
+				484C54202F8A000100000001 /* LoopTests */,
 				B1AA00022F30000100AABBCC /* LoopUpdaterHelper */,
 				2A86890E2F809700005B521B /* LoopDockTile */,
 				A8E59C36297F5E9A0064D4BA /* Products */,
@@ -178,6 +192,7 @@
 			isa = PBXGroup;
 			children = (
 				A8E59C35297F5E9A0064D4BA /* Loop.app */,
+				484C54102F8A000100000001 /* LoopHorizontalLayoutTests.xctest */,
 				B1AA00012F30000100AABBCC /* LoopUpdaterHelper */,
 				2A8689072F809625005B521B /* LoopDockTile.plugin */,
 			);
@@ -187,6 +202,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		484C54402F8A000100000001 /* LoopHorizontalLayoutTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 484C54802F8A000100000001 /* Build configuration list for PBXNativeTarget "LoopHorizontalLayoutTests" */;
+			buildPhases = (
+				484C54502F8A000100000001 /* Sources */,
+				484C54302F8A000100000001 /* Frameworks */,
+				484C54602F8A000100000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				484C54202F8A000100000001 /* LoopTests */,
+			);
+			name = LoopHorizontalLayoutTests;
+			packageProductDependencies = (
+			);
+			productName = LoopHorizontalLayoutTests;
+			productReference = 484C54102F8A000100000001 /* LoopHorizontalLayoutTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		2A8689062F809625005B521B /* LoopDockTile */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2A8689082F809625005B521B /* Build configuration list for PBXNativeTarget "LoopDockTile" */;
@@ -278,6 +315,9 @@
 					2A8689062F809625005B521B = {
 						CreatedOnToolsVersion = 26.4;
 					};
+					484C54402F8A000100000001 = {
+						CreatedOnToolsVersion = 26.4;
+					};
 					A8E59C34297F5E9A0064D4BA = {
 						CreatedOnToolsVersion = 14.2;
 					};
@@ -318,6 +358,7 @@
 			projectRoot = "";
 			targets = (
 				A8E59C34297F5E9A0064D4BA /* Loop */,
+				484C54402F8A000100000001 /* LoopHorizontalLayoutTests */,
 				B1AA00112F30000100AABBCC /* LoopUpdaterHelper */,
 				2A8689062F809625005B521B /* LoopDockTile */,
 			);
@@ -325,6 +366,13 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		484C54602F8A000100000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2A8689052F809625005B521B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -349,6 +397,15 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		484C54502F8A000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				484C54012F8A000100000001 /* HorizontalLayoutModels.swift in Sources */,
+				484C54022F8A000100000001 /* HorizontalLayoutEngine.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2A8689032F809625005B521B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -386,6 +443,45 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		484C54702F8A000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.LoopHorizontalLayoutTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		484C54712F8A000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.LoopHorizontalLayoutTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		484C54722F8A000100000001 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.LoopHorizontalLayoutTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Development;
+		};
 		2A8689092F809625005B521B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -870,6 +966,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		484C54802F8A000100000001 /* Build configuration list for PBXNativeTarget "LoopHorizontalLayoutTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				484C54702F8A000100000001 /* Debug */,
+				484C54712F8A000100000001 /* Release */,
+				484C54722F8A000100000001 /* Development */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		2A8689082F809625005B521B /* Build configuration list for PBXNativeTarget "LoopDockTile" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
