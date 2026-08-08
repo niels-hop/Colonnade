@@ -67,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             WindowDragManager.shared.addObservers()
             StashManager.shared.start()
             AccessibilityManager.requestAccess()
+            SavedLayoutLifecycleCoordinator.shared.start()
 
             // Wait for the app to settle before showing the update window
             try? await Task.sleep(for: .seconds(5))
@@ -177,6 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         LoopManager.shared.shutdown()
         WindowDragManager.shared.shutdown()
         StashManager.shared.shutdown()
+        SavedLayoutLifecycleCoordinator.shared.stop()
         return .terminateNow
     }
 

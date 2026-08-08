@@ -30,6 +30,24 @@ struct LoopApp: App {
 
             Divider()
 
+            Menu {
+                ForEach(SavedLayoutSlot.fixedSlots) { slot in
+                    Menu(slot.displayName) {
+                        Button("Restore") {
+                            Task { await SavedLayoutManager.shared.restoreWithFeedback(slot) }
+                        }
+
+                        Button("Save Current Layout") {
+                            Task { await SavedLayoutManager.shared.saveWithFeedback(slot) }
+                        }
+                    }
+                }
+            } label: {
+                Label("Layouts", systemImage: "rectangle.3.group")
+            }
+
+            Divider()
+
             Button {
                 if let url = URL(string: "https://github.com/sponsors/MrKai77") {
                     NSWorkspace.shared.open(url)

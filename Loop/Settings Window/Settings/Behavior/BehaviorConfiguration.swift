@@ -31,6 +31,13 @@ struct BehaviorConfigurationView: View {
     @Default(.animateStashedWindows) var animateStashedWindows
     @Default(.shiftFocusWhenStashed) var shiftFocusWhenStashed
     @Default(.ultrawideDockTriggerMode) var ultrawideDockTriggerMode
+    @Default(.savedLayoutWorkName) var savedLayoutWorkName
+    @Default(.savedLayoutFocusName) var savedLayoutFocusName
+    @Default(.savedLayoutMacBookName) var savedLayoutMacBookName
+    @Default(.defaultSavedLayoutSlot) var defaultSavedLayoutSlot
+    @Default(.restoreSavedLayoutOnLaunch) var restoreSavedLayoutOnLaunch
+    @Default(.restoreSavedLayoutOnWake) var restoreSavedLayoutOnWake
+    @Default(.restoreSavedLayoutOnDisplayChange) var restoreSavedLayoutOnDisplayChange
 
     @State private var isPaddingConfigurationViewPresented = false
 
@@ -50,7 +57,8 @@ struct BehaviorConfigurationView: View {
                 AnyHashable(resizeWindowUnderCursor),
                 AnyHashable(windowSnapping),
                 AnyHashable(respectStageManager),
-                AnyHashable(ultrawideDockTriggerMode)
+                AnyHashable(ultrawideDockTriggerMode),
+                AnyHashable(defaultSavedLayoutSlot)
             ]
         )
     }
@@ -110,6 +118,34 @@ struct BehaviorConfigurationView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
+
+            Divider()
+
+            LuminareTextField(
+                "Work slot",
+                text: Binding<String?>(get: { savedLayoutWorkName }, set: { savedLayoutWorkName = $0 ?? "" })
+            )
+            LuminareTextField(
+                "Focus slot",
+                text: Binding<String?>(get: { savedLayoutFocusName }, set: { savedLayoutFocusName = $0 ?? "" })
+            )
+            LuminareTextField(
+                "MacBook slot",
+                text: Binding<String?>(get: { savedLayoutMacBookName }, set: { savedLayoutMacBookName = $0 ?? "" })
+            )
+
+            LuminareSliderPicker(
+                SavedLayoutSlot.fixedSlots,
+                selection: $defaultSavedLayoutSlot
+            ) { slot in
+                Text(slot.displayName)
+            } label: {
+                Text("Default layout")
+            }
+
+            LuminareToggle("Restore on launch or login", isOn: $restoreSavedLayoutOnLaunch)
+            LuminareToggle("Restore after wake", isOn: $restoreSavedLayoutOnWake)
+            LuminareToggle("Restore when displays change", isOn: $restoreSavedLayoutOnDisplayChange)
         }
     }
 
