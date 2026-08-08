@@ -2,7 +2,7 @@
 //  SavedLayoutLifecycleCoordinator.swift
 //  Loop
 //
-//  Debounced launch, wake, and display-change restore integration.
+//  Debounced launch, wake, display-change, and Space-change restore integration.
 //
 
 import AppKit
@@ -32,6 +32,17 @@ final class SavedLayoutLifecycleCoordinator {
         ) { [coordinator = self] _ in
             Task { @MainActor in
                 guard Defaults[.restoreSavedLayoutOnWake] else { return }
+                coordinator.scheduleRestore()
+            }
+        })
+
+        observers.append(workspaceCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [coordinator = self] _ in
+            Task { @MainActor in
+                guard Defaults[.restoreSavedLayoutOnSpaceChange] else { return }
                 coordinator.scheduleRestore()
             }
         })

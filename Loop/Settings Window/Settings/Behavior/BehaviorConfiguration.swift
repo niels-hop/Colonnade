@@ -38,6 +38,7 @@ struct BehaviorConfigurationView: View {
     @Default(.restoreSavedLayoutOnLaunch) var restoreSavedLayoutOnLaunch
     @Default(.restoreSavedLayoutOnWake) var restoreSavedLayoutOnWake
     @Default(.restoreSavedLayoutOnDisplayChange) var restoreSavedLayoutOnDisplayChange
+    @Default(.restoreSavedLayoutOnSpaceChange) var restoreSavedLayoutOnSpaceChange
 
     @State private var isPaddingConfigurationViewPresented = false
 
@@ -146,6 +147,7 @@ struct BehaviorConfigurationView: View {
             LuminareToggle("Restore on launch or login", isOn: $restoreSavedLayoutOnLaunch)
             LuminareToggle("Restore after wake", isOn: $restoreSavedLayoutOnWake)
             LuminareToggle("Restore when displays change", isOn: $restoreSavedLayoutOnDisplayChange)
+            LuminareToggle("Restore when Spaces change", isOn: $restoreSavedLayoutOnSpaceChange)
         }
     }
 

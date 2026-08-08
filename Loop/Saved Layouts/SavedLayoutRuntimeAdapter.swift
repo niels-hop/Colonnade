@@ -30,7 +30,9 @@ final class SavedLayoutRuntimeAdapter {
         for screen in screens {
             let bounds = Self.workingBounds(for: screen)
             let tolerance = fullHeightTolerance(for: screen)
-            let railWindows = windows.compactMap { window -> (Window, NormalizedHorizontalPlacement)? in
+            // WindowUtility returns visible windows front-to-back. Keep that order long enough
+            // to identify the primary tile before arranging the snapshot from left to right.
+            let visibleRailWindows = windows.compactMap { window -> (Window, NormalizedHorizontalPlacement)? in
                 guard screenContaining(window) == screen,
                       SavedLayoutGeometry.isFullHeightRail(window.frame, in: bounds, tolerance: tolerance),
                       let placement = SavedLayoutGeometry.normalizedPlacement(for: window.frame, in: bounds)
@@ -38,7 +40,9 @@ final class SavedLayoutRuntimeAdapter {
                     return nil
                 }
                 return (window, placement)
-            }.sorted { $0.1.normalizedX < $1.1.normalizedX }
+            }
+            let primaryWindowID = visibleRailWindows.first?.0.cgWindowID
+            let railWindows = visibleRailWindows.sorted { $0.1.normalizedX < $1.1.normalizedX }
 
             let snapshots = try railWindows.enumerated().map { index, item in
                 try ManagedWindowSnapshot(
@@ -53,13 +57,16 @@ final class SavedLayoutRuntimeAdapter {
                 )
             }
             capturedWindowCount += snapshots.count
+            let primaryTileID = primaryWindowID.flatMap { windowID in
+                railWindows.firstIndex { $0.0.cgWindowID == windowID }.map { snapshots[$0].id }
+            }
 
             guard let displayID = screen.displayID else { continue }
             let display = CoreGraphicsDisplayIdentityAdapter.identity(for: displayID)
             let snapshot = try WindowAwarenessSnapshot(
                 display: display,
                 windows: snapshots,
-                primaryTileID: nil
+                primaryTileID: primaryTileID
             )
             captured.append(CapturedDisplay(screen: screen, snapshot: snapshot))
         }

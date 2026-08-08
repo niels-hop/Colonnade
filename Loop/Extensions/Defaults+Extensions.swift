@@ -65,6 +65,7 @@ extension Defaults.Keys {
     static let restoreSavedLayoutOnLaunch = Key<Bool>("restoreSavedLayoutOnLaunch", default: false, iCloud: false)
     static let restoreSavedLayoutOnWake = Key<Bool>("restoreSavedLayoutOnWake", default: false, iCloud: false)
     static let restoreSavedLayoutOnDisplayChange = Key<Bool>("restoreSavedLayoutOnDisplayChange", default: false, iCloud: false)
+    static let restoreSavedLayoutOnSpaceChange = Key<Bool>("restoreSavedLayoutOnSpaceChange", default: false, iCloud: false)
     @available(*, deprecated, message: "Use ultrawideDockTriggerMode instead")
     static let useUltrawideDock = Key<Bool>("useUltrawideDock", default: true, iCloud: true)
 
