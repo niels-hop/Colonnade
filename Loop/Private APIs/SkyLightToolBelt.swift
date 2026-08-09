@@ -11,6 +11,53 @@ import SwiftUI
 /// A wrapper for functions defined in `SkyLightSymbolLoader`
 @Loggable(style: .static)
 enum SkyLightToolBelt {
+    struct ManagedDisplay {
+        let identifier: UUID
+        let spaces: [ManagedSpace]
+        let currentSpace: ManagedSpace
+
+        init?(dictionary: NSDictionary) {
+            guard
+                let identifier = UUID(uuidString: dictionary["Display Identifier"] as? String ?? ""),
+                let spaces = (dictionary["Spaces"] as? [NSDictionary])?.compactMap({ ManagedSpace(dictionary: $0) }),
+                let currentSpace = ManagedSpace(dictionary: dictionary["Current Space"] as? NSDictionary)
+            else {
+                return nil
+            }
+
+            self.identifier = identifier
+            self.spaces = spaces
+            self.currentSpace = currentSpace
+        }
+    }
+
+    struct ManagedSpace {
+        let id: UInt64
+        let managedID: UInt64
+        let type: UInt64
+        let uuid: UUID?
+
+        var isDesktop: Bool {
+            type == 0
+        }
+
+        init?(dictionary: NSDictionary?) {
+            guard
+                let dictionary,
+                let id = dictionary["id64"] as? UInt64,
+                let managedID = dictionary["ManagedSpaceID"] as? UInt64,
+                let type = dictionary["type"] as? UInt64
+            else {
+                return nil
+            }
+
+            self.id = id
+            self.managedID = managedID
+            self.type = type
+            self.uuid = UUID(uuidString: dictionary["uuid"] as? String ?? "")
+        }
+    }
+
     /// Brings the window’s owning process to the front using SkyLight APIs.
     /// - Parameters:
     ///   - windowID: The `CGWindowID` of the window to make the frontmost process.
@@ -45,11 +92,34 @@ enum SkyLightToolBelt {
     }
 
     ///
+    /// Byte layout for the synthetic `CGSEventRecord` posted by `makeKeyWindow`.
+    /// Offsets match CGSInternal's CGSEvent.h / yabai / AltTab.
+    private enum MakeKeyWindowEvent {
+        /// Allocated buffer size. The record's declared length stays `recordLength`;
+        /// we allocate a little more because newer macOS WindowServer encoding can
+        /// read past the record (see AltTab / paneru#123).
+        static let bufferSize = 0x100
+        static let lengthOffset = 0x04
+        static let recordLength: UInt8 = 0xF8
+        static let eventTypeOffset = 0x08
+        static let leftMouseDown: UInt8 = 0x01
+        static let leftMouseUp: UInt8 = 0x02
+        /// Window-relative click point. Just outside the frame so the window becomes
+        /// key without hitting content. Must be finite — `0xFF` fill decodes as NaN
+        /// and can terminate Chromium PWA app-shim Mojo connections (#1131).
+        static let windowLocationOffset = 0x20
+        static let offContentPoint = CGPoint(x: -1, y: -1)
+        static let unknownFlagOffset = 0x3A
+        static let unknownFlagValue: UInt8 = 0x10
+        static let windowIdOffset = 0x3C
+    }
+
     /// Focuses a window. This will attempt to bring the window to the front and make it the active window.
     /// Note that this first sets the process as frontmost, *then* sends a left click event to the window itself.
     ///
-    /// This method uses a private API to focus the window.
-    /// The code for this method is derived from the Amethyst source code. Details of its implementation can be found [here](https://github.com/Hammerspoon/hammerspoon/issues/370#issuecomment-545545468)
+    /// Uses a private API. Derived from Hammerspoon / yabai / AltTab
+    /// (https://github.com/Hammerspoon/hammerspoon/issues/370#issuecomment-545545468,
+    /// https://github.com/lwouis/alt-tab-macos/commit/782f1fe2e7272f185526e3e69eadd08c241fe050).
     ///
     /// - Parameters:
     ///   - windowID: The `CGWindowID` of the window to focus.
@@ -70,19 +140,16 @@ enum SkyLightToolBelt {
             return false
         }
 
-        // `0x01` is left click down, `0x02` is left click up (see `CGEventType`)
-        for byte in [0x01, 0x02] {
-            // Create raw `SLSEvent` data.
-            // Future consideration: instead of manually creating the bytes here, investigate:
-            // - Creating a `SLSEvent` (likely analogous to `CGEvent`)
-            // - Apply an identifier to the event to help Loop differentiate events that originate from itself
-            // - Converting the `SLSEvent` to data using `SLEventCreateData` in SkyLight
-            var bytes = [UInt8](repeating: 0, count: 0xF8)
-            bytes[0x04] = 0xF8
-            bytes[0x08] = UInt8(byte)
-            bytes[0x3A] = 0x10
-            memcpy(&bytes[0x3C], &wid, MemoryLayout<UInt32>.size)
-            memset(&bytes[0x20], 0xFF, 0x10)
+        var offContentPoint = MakeKeyWindowEvent.offContentPoint
+
+        for eventType in [MakeKeyWindowEvent.leftMouseDown, MakeKeyWindowEvent.leftMouseUp] {
+            var bytes = [UInt8](repeating: 0, count: MakeKeyWindowEvent.bufferSize)
+            bytes[MakeKeyWindowEvent.lengthOffset] = MakeKeyWindowEvent.recordLength
+            bytes[MakeKeyWindowEvent.eventTypeOffset] = eventType
+            bytes[MakeKeyWindowEvent.unknownFlagOffset] = MakeKeyWindowEvent.unknownFlagValue
+            memcpy(&bytes[MakeKeyWindowEvent.windowIdOffset], &wid, MemoryLayout<UInt32>.size)
+            memcpy(&bytes[MakeKeyWindowEvent.windowLocationOffset], &offContentPoint, MemoryLayout<CGPoint>.size)
+
             let cgStatus = bytes.withUnsafeMutableBufferPointer { pointer in
                 SLPSPostEventRecordTo(&psn, &pointer.baseAddress!.pointee)
             }
@@ -209,6 +276,116 @@ enum SkyLightToolBelt {
         }
 
         return level
+    }
+
+    /// Moves the window to a Mission Control desktop space.
+    /// - Parameters:
+    ///   - windowID: The `CGWindowID` of the window to move.
+    ///   - spaceID: The target managed space id64.
+    /// - Returns: Whether the window is on, or was moved to, the target space.
+    @available(macOS 14.0, *)
+    @discardableResult
+    static func moveWindow(_ windowID: CGWindowID, toSpace spaceID: UInt64) -> Bool {
+        if copySpaces(forWindows: [windowID]).contains(spaceID) {
+            return true
+        }
+
+        let moved = SkyLightBridgedSPI.moveWindow(windowID, toSpace: spaceID)
+        if !moved {
+            log.error("SkyLight bridged window movement is unavailable")
+        }
+
+        return moved
+    }
+
+    /// Returns all managed displays and their spaces in Mission Control order.
+    @available(macOS 14.0, *)
+    static func copyDisplaysWithSpaces() -> [ManagedDisplay] {
+        guard let result = SkyLightBridgedSPI.copyManagedDisplaySpaces() else {
+            log.error("SkyLight bridged display space lookup is unavailable")
+            return []
+        }
+
+        return result.compactMap(ManagedDisplay.init(dictionary:))
+    }
+
+    /// Returns the largest number of regular desktop spaces on any managed display.
+    @available(macOS 14.0, *)
+    static func maximumDesktopCount() -> Int {
+        copyDisplaysWithSpaces()
+            .map { display in
+                display.spaces.filter(\.isDesktop).count
+            }
+            .max() ?? 0
+    }
+
+    /// Returns the managed space ids for the given windows.
+    @available(macOS 14.0, *)
+    static func copySpaces(forWindows windowIDs: [CGWindowID]) -> [UInt64] {
+        guard let numbers = SkyLightBridgedSPI.copySpaces(forWindows: windowIDs, options: .allManaged) else {
+            log.error("SkyLight bridged window space lookup is unavailable")
+            return []
+        }
+
+        return numbers.map { UInt64(truncating: $0) }
+    }
+
+    /// Returns the first managed space id for a window, or `nil` if SkyLight cannot resolve it.
+    @available(macOS 14.0, *)
+    static func copySpace(forWindow windowID: CGWindowID) -> UInt64? {
+        let spaceID = copySpaces(forWindows: [windowID]).first ?? 0
+        return spaceID == 0 ? nil : spaceID
+    }
+
+    /// Resolves the desktop space adjacent to the window's current desktop.
+    /// - Parameters:
+    ///   - windowID: The target window.
+    ///   - offset: `-1` for previous desktop, `1` for next desktop.
+    @available(macOS 14.0, *)
+    static func desktopSpace(forWindow windowID: CGWindowID, offset: Int) -> ManagedSpace? {
+        guard offset != 0,
+              let currentSpaceID = copySpace(forWindow: windowID),
+              let display = copyDisplaysWithSpaces().first(where: { display in
+                  display.spaces.contains { $0.id == currentSpaceID }
+              })
+        else {
+            return nil
+        }
+
+        let desktops = display.spaces.filter(\.isDesktop)
+        guard let currentIndex = desktops.firstIndex(where: { $0.id == currentSpaceID }) else {
+            log.error("Window \(windowID) is not on a regular desktop space")
+            return nil
+        }
+
+        let targetIndex = currentIndex + offset
+        guard desktops.indices.contains(targetIndex) else {
+            return nil
+        }
+
+        return desktops[targetIndex]
+    }
+
+    /// Resolves a 1-based desktop number on the display hosting the window's current space.
+    @available(macOS 14.0, *)
+    static func desktopSpace(forWindow windowID: CGWindowID, desktopNumber: UInt) -> ManagedSpace? {
+        guard desktopNumber > 0,
+              let currentSpaceID = copySpace(forWindow: windowID),
+              let display = copyDisplaysWithSpaces().first(where: { display in
+                  display.spaces.contains { $0.id == currentSpaceID }
+              })
+        else {
+            return nil
+        }
+
+        let desktops = display.spaces.filter(\.isDesktop)
+        let targetIndex = Int(desktopNumber - 1)
+
+        guard desktops.indices.contains(targetIndex) else {
+            return nil
+        }
+
+        return desktops[targetIndex]
     }
 
     /// Retrieves the corner radii for a specific window.
