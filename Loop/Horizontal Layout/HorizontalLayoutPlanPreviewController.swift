@@ -43,8 +43,9 @@ final class HorizontalLayoutPlanPreviewController {
     func open(_ execution: HorizontalLayoutPendingExecution) {
         let screen = execution.screen
         let displayBounds = screen.displayBounds
+        let changedTileIDs = execution.changedTileIDs
         model.frames = execution.plan.snapshot.tiles.compactMap { tile in
-            guard execution.changedIDs.contains(tile.id) else { return nil }
+            guard changedTileIDs.contains(tile.id) else { return nil }
             let action = HorizontalLayoutRuntimeAdapter.action(for: tile.frame)
             var frame = execution.padding.applyToWindow(
                 frame: HorizontalLayoutRuntimeAdapter.logicalFrame(tile.frame, in: execution.usableBounds),

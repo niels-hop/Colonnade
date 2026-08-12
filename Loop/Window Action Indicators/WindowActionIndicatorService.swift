@@ -16,11 +16,6 @@ final class WindowActionIndicatorService {
     private let horizontalLayoutPreviewController = HorizontalLayoutPlanPreviewController()
 
     func openAndUpdate(context: ResizeContext) {
-        if Defaults[.hideOnNoSelection], context.action.direction == .noSelection {
-            closeAll()
-            return
-        }
-
         // On ultrawide screens the dock replaces the radial menu as the primary placement UI.
         // It opens once and is then kept in sync via `setWindow`/`setAction`. The screen is only
         // resolved on a later `openAndUpdate` call, so the radial menu may have opened on the first
@@ -37,6 +32,8 @@ final class WindowActionIndicatorService {
             }
             ultrawideDockController.setAction(to: context.action)
             updateDockPreview(context: context)
+        } else if Defaults[.hideOnNoSelection], context.action.direction == .noSelection {
+            closeAll()
         } else if Defaults[.radialMenuVisibility] {
             ultrawideDockController.close()
             horizontalLayoutPreviewController.close()
@@ -63,17 +60,24 @@ final class WindowActionIndicatorService {
         ultrawideDockController.isActive
     }
 
-    /// Hover: maps the absolute screen mouse-X to the nearest anchor and returns the resulting action.
+    /// Hover: maps compact horizontal pointer motion to a direct dock target.
     func dockActionForMouseX(_ screenMouseX: CGFloat) -> WindowAction? {
         ultrawideDockController.updateForMouseX(Double(screenMouseX))
     }
 
-    /// Click cycles through the size stops at the active anchor (e.g. 1/2 → 1/3 → 2/3).
-    func cycleDockSize() -> WindowAction? {
-        ultrawideDockController.cycleSize()
+    func dockPointerDown(at screenMouseX: CGFloat) -> WindowAction? {
+        ultrawideDockController.pointerDown(at: Double(screenMouseX))
     }
 
-    /// Scroll-wheel fine-tunes the width at the current anchor. `delta` is in fraction-of-span units.
+    func dockPointerDragged(to screenMouseX: CGFloat) -> WindowAction? {
+        ultrawideDockController.drag(to: Double(screenMouseX))
+    }
+
+    func dockPointerUp(at screenMouseX: CGFloat) -> WindowAction? {
+        ultrawideDockController.pointerUp(at: Double(screenMouseX))
+    }
+
+    /// Scroll-wheel fine-tunes the current placement or divider.
     func adjustDockSize(by delta: Double) -> WindowAction? {
         ultrawideDockController.adjustSize(by: delta)
     }
@@ -82,8 +86,17 @@ final class WindowActionIndicatorService {
         ultrawideDockController.pendingExecution
     }
 
+    var hasPendingDockCommit: Bool {
+        ultrawideDockController.hasPendingCommit
+    }
+
     private func updateDockPreview(context: ResizeContext) {
         guard Defaults[.previewVisibility] else {
+            previewController.close()
+            horizontalLayoutPreviewController.close()
+            return
+        }
+        guard ultrawideDockController.hasPendingCommit else {
             previewController.close()
             horizontalLayoutPreviewController.close()
             return

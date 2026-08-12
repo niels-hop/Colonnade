@@ -1,0 +1,329 @@
+import CoreGraphics
+import XCTest
+
+final class UltrawideDockInteractionTests: XCTestCase {
+    private let a = HorizontalLayoutTileID(rawValue: "a")
+    private let a2 = HorizontalLayoutTileID(rawValue: "a2")
+    private let b = HorizontalLayoutTileID(rawValue: "b")
+    private let current = HorizontalLayoutTileID(rawValue: "current")
+
+    func testInteractionStartsNeutralAndCancelClearsPendingPlacement() throws {
+        var interaction = try makeInteraction(windows: [])
+
+        XCTAssertEqual(interaction.output.operation, .idle)
+        XCTAssertNil(interaction.output.commit)
+
+        let placement = interaction.handle(.move(to: 0.1))
+        guard case let .window(id, frame, kind) = placement.commit else {
+            return XCTFail("Expected a single-window placement")
+        }
+        XCTAssertEqual(id, current)
+        XCTAssertEqual(kind, .placement)
+        assertFrame(frame, x: 0, width: 0.5)
+
+        let cancelled = interaction.handle(.cancel)
+        XCTAssertEqual(cancelled.operation, .idle)
+        XCTAssertNil(cancelled.commit)
+        XCTAssertTrue(cancelled.previews.isEmpty)
+    }
+
+    func testStandalonePointerZonesPlaceLeftCenterAndRight() throws {
+        var interaction = try makeInteraction(windows: [])
+
+        assertWindowCommit(interaction.handle(.move(to: 0.1)), x: 0, width: 0.5)
+        assertWindowCommit(interaction.handle(.move(to: 0.5)), x: 0.25, width: 0.5)
+        assertWindowCommit(interaction.handle(.move(to: 0.9)), x: 0.5, width: 0.5)
+    }
+
+    func testSingleCurrentWindowStillOffersCenteredStandalonePlacement() throws {
+        var interaction = try makeInteraction(
+            windows: [window(current, x: 0, width: 1, zIndex: 0)]
+        )
+
+        let output = interaction.handle(.move(to: 0.5))
+
+        XCTAssertEqual(output.target, .place(edge: .center))
+        assertWindowCommit(output, x: 0.25, width: 0.5)
+    }
+
+    func testScrollFineTunesStandaloneWidthAtStableStops() throws {
+        var interaction = try makeInteraction(windows: [])
+
+        _ = interaction.handle(.move(to: 0.1))
+        let adjusted = interaction.handle(.scroll(delta: 1 / 6))
+
+        assertWindowCommit(adjusted, x: 0, width: 2 / 3)
+    }
+
+    func testOccupiedTileCenterStacksWithoutChangingExistingSlots() throws {
+        let windows = [
+            window(a, x: 0, width: 0.5, zIndex: 0),
+            window(b, x: 0.5, width: 0.5, zIndex: 1),
+        ]
+        var interaction = try makeInteraction(windows: windows)
+        let originalSlots = interaction.scene.slots
+
+        let output = interaction.handle(.move(to: 0.25))
+
+        XCTAssertEqual(output.operation, .stack(existingCount: 1))
+        XCTAssertEqual(output.target, .stack(slotID: a))
+        guard case let .window(id, frame, kind) = output.commit else {
+            return XCTFail("Expected stacking to move only the current window")
+        }
+        XCTAssertEqual(id, current)
+        XCTAssertEqual(kind, .stack)
+        assertFrame(frame, x: 0, width: 0.5)
+        XCTAssertEqual(interaction.scene.slots, originalSlots)
+    }
+
+    func testStackUsesVisibleWindowFrameInsteadOfBridgedLogicalSlot() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.49, zIndex: 0),
+            window(b, x: 0.51, width: 0.49, zIndex: 1),
+        ])
+
+        let output = interaction.handle(.move(to: 0.25))
+
+        guard case let .window(_, frame, kind) = output.commit else {
+            return XCTFail("Expected an exact stack placement")
+        }
+        XCTAssertEqual(kind, .stack)
+        assertFrame(frame, x: 0, width: 0.49)
+    }
+
+    func testOccupiedTileEdgeInsertsInsteadOfStacking() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.5, zIndex: 0),
+            window(b, x: 0.5, width: 0.5, zIndex: 1),
+        ])
+
+        let output = interaction.handle(.move(to: 0.46))
+
+        guard case .insert = output.operation else {
+            return XCTFail("Expected an insertion target near the tile edge")
+        }
+        guard case let .layout(plan, membersByTileID) = output.commit else {
+            return XCTFail("Expected a row plan")
+        }
+        XCTAssertEqual(plan.snapshot.tiles.map(\.id), [a, current, b])
+        XCTAssertEqual(membersByTileID[current], [current])
+        for tile in plan.snapshot.tiles {
+            XCTAssertEqual(tile.frame.width, 1 / 3, accuracy: 0.000_001)
+        }
+    }
+
+    func testFreeSpaceInsertionDoesNotStageAnUnchangedNeighbour() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.5, zIndex: 0),
+        ])
+
+        let output = interaction.handle(.move(to: 0.8))
+        guard case let .layout(plan, membersByTileID) = output.commit else {
+            return XCTFail("Expected insertion into the free half")
+        }
+
+        let changes = UltrawideDockLayoutDiffer.changes(
+            for: plan,
+            membersByTileID: membersByTileID,
+            in: interaction.scene
+        )
+        XCTAssertEqual(changes.windowIDs, [current])
+        XCTAssertEqual(changes.tileIDs, [current])
+        assertFrame(plan.snapshot.tiles[0].frame, x: 0, width: 0.5)
+        assertFrame(plan.snapshot.tiles[1].frame, x: 0.5, width: 0.5)
+    }
+
+    func testDividerIsNeutralUntilPointerDownAndFollowsDrag() throws {
+        var interaction = try makeInteraction(
+            windows: [
+                window(a, x: 0, width: 0.5, zIndex: 0),
+                window(b, x: 0.5, width: 0.5, zIndex: 1),
+            ],
+            currentID: a
+        )
+
+        let hover = interaction.handle(.move(to: 0.5))
+        XCTAssertEqual(hover.target, .divider(after: a))
+        XCTAssertEqual(hover.operation, .resizeReady)
+        XCTAssertNil(hover.commit)
+
+        XCTAssertNil(interaction.handle(.pointerDown(at: 0.5)).commit)
+        let dragged = interaction.handle(.drag(to: 0.7))
+
+        XCTAssertEqual(dragged.operation, .resize)
+        XCTAssertEqual(dragged.cursor, .resizeLeftRight)
+        guard case let .layout(plan, _) = dragged.commit else {
+            return XCTFail("Expected a divider layout plan")
+        }
+        assertFrame(plan.snapshot.tiles[0].frame, x: 0, width: 0.7)
+        assertFrame(plan.snapshot.tiles[1].frame, x: 0.7, width: 0.3)
+        XCTAssertNotNil(interaction.handle(.pointerUp(at: 0.7)).commit)
+    }
+
+    func testDividerClickWithoutDragStaysNeutral() throws {
+        var interaction = try makeInteraction(
+            windows: [
+                window(a, x: 0, width: 0.5, zIndex: 0),
+                window(b, x: 0.5, width: 0.5, zIndex: 1),
+            ],
+            currentID: a
+        )
+
+        _ = interaction.handle(.move(to: 0.5))
+        XCTAssertNil(interaction.handle(.pointerDown(at: 0.5)).commit)
+
+        let released = interaction.handle(.pointerUp(at: 0.5))
+        XCTAssertEqual(released.operation, .resizeReady)
+        XCTAssertNil(released.commit)
+    }
+
+    func testDividerHoverClearsAnEarlierPlacementCommit() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.5, zIndex: 0),
+            window(b, x: 0.5, width: 0.5, zIndex: 1),
+        ])
+
+        XCTAssertNotNil(interaction.handle(.move(to: 0.25)).commit)
+        let divider = interaction.handle(.move(to: 0.5))
+
+        XCTAssertEqual(divider.operation, .resizeReady)
+        XCTAssertNil(divider.commit)
+    }
+
+    func testDragWithoutADividerContinuesSelectingTargets() throws {
+        var interaction = try makeInteraction(windows: [])
+
+        _ = interaction.handle(.move(to: 0.1))
+        _ = interaction.handle(.pointerDown(at: 0.1))
+        let dragged = interaction.handle(.drag(to: 0.9))
+
+        assertWindowCommit(dragged, x: 0.5, width: 0.5)
+    }
+
+    func testExactOverlapsBecomeOneStackAndResizeMovesEveryMember() throws {
+        var interaction = try makeInteraction(
+            windows: [
+                window(a, x: 0, width: 0.5, zIndex: 0),
+                window(a2, x: 0, width: 0.5, zIndex: 1),
+                window(b, x: 0.5, width: 0.5, zIndex: 2),
+            ],
+            currentID: a
+        )
+
+        XCTAssertEqual(interaction.scene.slots.count, 2)
+        XCTAssertEqual(interaction.scene.slots[0].memberIDs, [a, a2])
+
+        _ = interaction.handle(.move(to: 0.5))
+        _ = interaction.handle(.pointerDown(at: 0.5))
+        let dragged = interaction.handle(.drag(to: 0.6))
+
+        guard case let .layout(plan, membersByTileID) = dragged.commit else {
+            return XCTFail("Expected a stacked divider plan")
+        }
+        XCTAssertEqual(membersByTileID[a], [a, a2])
+        assertFrame(plan.snapshot.tiles[0].frame, x: 0, width: 0.6)
+        assertFrame(plan.snapshot.tiles[1].frame, x: 0.6, width: 0.4)
+    }
+
+    func testMovingCurrentWindowOutOfStackLeavesUnderlyingWindowInOldSlot() throws {
+        var interaction = try makeInteraction(
+            windows: [
+                window(a, x: 0, width: 0.5, zIndex: 0),
+                window(a2, x: 0, width: 0.5, zIndex: 1),
+                window(b, x: 0.5, width: 0.5, zIndex: 2),
+            ],
+            currentID: a
+        )
+
+        let output = interaction.handle(.move(to: 0.9))
+
+        guard case let .layout(plan, membersByTileID) = output.commit else {
+            return XCTFail("Expected the current stack member to become its own slot")
+        }
+        XCTAssertEqual(plan.snapshot.tiles.count, 3)
+        XCTAssertEqual(Set(membersByTileID.values.flatMap { $0 }), Set([a, a2, b]))
+        XCTAssertTrue(membersByTileID.values.contains([a2]))
+        XCTAssertTrue(membersByTileID.values.contains([a]))
+    }
+
+    func testPartialOverlapIsRejectedInsteadOfSilentlyMovingWindows() {
+        XCTAssertThrowsError(try UltrawideDockScene(
+            windows: [
+                window(a, x: 0, width: 0.6, zIndex: 0),
+                window(b, x: 0.5, width: 0.5, zIndex: 1),
+            ],
+            currentID: a,
+            frameTolerance: 0.001
+        )) { error in
+            XCTAssertEqual(error as? HorizontalLayoutError, .overlappingOrUnordered(b))
+        }
+    }
+
+    func testCurrentOverlappingWindowCanReenterAnOtherwiseValidRow() throws {
+        let scene = try UltrawideDockSceneBuilder.makeRuntimeScene(
+            windows: [
+                window(a, x: 0, width: 0.5, zIndex: 1),
+                window(b, x: 0.5, width: 0.5, zIndex: 2),
+                window(current, x: 0.25, width: 0.5, zIndex: 0),
+            ],
+            currentID: current,
+            frameTolerance: 0.001
+        )
+
+        XCTAssertEqual(scene.slots.map(\.id), [a, b])
+        XCTAssertNil(scene.currentSlot)
+    }
+
+    private func makeInteraction(
+        windows: [UltrawideDockWindowSnapshot],
+        currentID: HorizontalLayoutTileID? = nil
+    ) throws -> UltrawideDockInteraction {
+        let scene = try UltrawideDockScene(
+            windows: windows,
+            currentID: currentID ?? current,
+            frameTolerance: 0.001
+        )
+        return try UltrawideDockInteraction(scene: scene, minimumWidth: 0.1)
+    }
+
+    private func window(
+        _ id: HorizontalLayoutTileID,
+        x: CGFloat,
+        width: CGFloat,
+        zIndex: Int
+    ) -> UltrawideDockWindowSnapshot {
+        UltrawideDockWindowSnapshot(
+            id: id,
+            frame: CGRect(x: x, y: 0, width: width, height: 1),
+            zIndex: zIndex
+        )
+    }
+
+    private func assertWindowCommit(
+        _ output: UltrawideDockOutput,
+        x: CGFloat,
+        width: CGFloat,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        guard case let .window(id, frame, kind) = output.commit else {
+            return XCTFail("Expected a window commit", file: file, line: line)
+        }
+        XCTAssertEqual(id, current, file: file, line: line)
+        XCTAssertEqual(kind, .placement, file: file, line: line)
+        assertFrame(frame, x: x, width: width, file: file, line: line)
+    }
+
+    private func assertFrame(
+        _ frame: CGRect,
+        x: CGFloat,
+        width: CGFloat,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        XCTAssertEqual(frame.minX, x, accuracy: 0.000_001, file: file, line: line)
+        XCTAssertEqual(frame.width, width, accuracy: 0.000_001, file: file, line: line)
+        XCTAssertEqual(frame.minY, 0, file: file, line: line)
+        XCTAssertEqual(frame.height, 1, file: file, line: line)
+    }
+}

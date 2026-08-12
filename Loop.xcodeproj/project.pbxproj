@@ -11,6 +11,7 @@
 		484C54022F8A000100000001 /* HorizontalLayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484C54122F8A000100000001 /* HorizontalLayoutEngine.swift */; };
 		484C54032F8A000100000001 /* HorizontalLayoutRuntimeGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484C54132F8A000100000001 /* HorizontalLayoutRuntimeGeometry.swift */; };
 		484C54042F8A000100000001 /* HorizontalLayoutExecutionCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484C54142F8A000100000001 /* HorizontalLayoutExecutionCore.swift */; };
+		484C54052F8A000100000001 /* UltrawideDockInteraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484C54152F8A000100000001 /* UltrawideDockInteraction.swift */; };
 		2A28492B2F22B4B700F6CE42 /* Scribe in Frameworks */ = {isa = PBXBuildFile; productRef = 2A28492A2F22B4B700F6CE42 /* Scribe */; };
 		2A28B6292EE5050C00A1E26B /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 2A28B6282EE5050C00A1E26B /* Defaults */; };
 		2A86890D2F80968A005B521B /* LoopDockTile.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2A8689072F809625005B521B /* LoopDockTile.plugin */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -69,6 +70,7 @@
 		484C54122F8A000100000001 /* HorizontalLayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutEngine.swift"; sourceTree = SOURCE_ROOT; };
 		484C54132F8A000100000001 /* HorizontalLayoutRuntimeGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutRuntimeGeometry.swift"; sourceTree = SOURCE_ROOT; };
 		484C54142F8A000100000001 /* HorizontalLayoutExecutionCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutExecutionCore.swift"; sourceTree = SOURCE_ROOT; };
+		484C54152F8A000100000001 /* UltrawideDockInteraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/UltrawideDockInteraction.swift"; sourceTree = SOURCE_ROOT; };
 		2A8689072F809625005B521B /* LoopDockTile.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LoopDockTile.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		A848130C2BD1A8D100B02E93 /* .github */ = {isa = PBXFileReference; lastKnownFileType = folder; path = .github; sourceTree = "<group>"; };
 		A86AFD7529888B29008F4892 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -409,6 +411,7 @@
 				484C54022F8A000100000001 /* HorizontalLayoutEngine.swift in Sources */,
 				484C54032F8A000100000001 /* HorizontalLayoutRuntimeGeometry.swift in Sources */,
 				484C54042F8A000100000001 /* HorizontalLayoutExecutionCore.swift in Sources */,
+				484C54052F8A000100000001 /* UltrawideDockInteraction.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

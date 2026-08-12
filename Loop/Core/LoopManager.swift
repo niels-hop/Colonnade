@@ -117,24 +117,40 @@ final class LoopManager {
             self?.hasParentCycleActionAtomic ?? false
         },
         checkIfLoopOpen: { [weak self] in self?.isLoopActiveAtomic ?? false },
-        // Ultrawide Dock hooks: when the dock is active it replaces the radial menu. The dock
-        // owns its anchor/size state inside the indicator service, so these closures forward the
-        // raw interaction and apply whatever action the dock computes.
+        // Ultrawide Dock hooks: hover selects, while a left-button drag owns divider movement.
         isDockActive: { [weak self] in self?.isDockActiveAtomic ?? false },
         dockMouseMoved: { [weak self] screenMouseX, sequence in
             Task { @MainActor in
                 guard let self, self.acceptDockEvent(sequence) else { return }
                 self.keybindTrigger.canPassthroughNextSpecialEvent = false
                 if let action = self.indicatorService.dockActionForMouseX(screenMouseX) {
-                    await self.changeAction(action, canAdvanceCycle: false)
+                    await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
                 }
             }
         },
-        cycleDockSize: { [weak self] sequence in
+        dockPointerDown: { [weak self] screenMouseX, sequence in
             Task { @MainActor in
                 guard let self, self.acceptDockEvent(sequence) else { return }
-                if let action = self.indicatorService.cycleDockSize() {
-                    await self.changeAction(action, canAdvanceCycle: false)
+                self.keybindTrigger.canPassthroughNextSpecialEvent = false
+                if let action = self.indicatorService.dockPointerDown(at: screenMouseX) {
+                    await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
+                }
+            }
+        },
+        dockPointerDragged: { [weak self] screenMouseX, sequence in
+            Task { @MainActor in
+                guard let self, self.acceptDockEvent(sequence) else { return }
+                self.keybindTrigger.canPassthroughNextSpecialEvent = false
+                if let action = self.indicatorService.dockPointerDragged(to: screenMouseX) {
+                    await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
+                }
+            }
+        },
+        dockPointerUp: { [weak self] screenMouseX, sequence in
+            Task { @MainActor in
+                guard let self, self.acceptDockEvent(sequence) else { return }
+                if let action = self.indicatorService.dockPointerUp(at: screenMouseX) {
+                    await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
                 }
             }
         },
@@ -260,6 +276,10 @@ extension LoopManager {
             return
         }
 
+        // Resolve the screen before starting pointer observation. This lets the dock open in a
+        // genuinely neutral state immediately, even when the trigger's starting action is noSelection.
+        _ = resolveAndStoreTargetScreen(action: startingAction, window: window)
+
         if !Defaults[.disableCursorInteraction] {
             mouseInteractionObserver.start(initialMousePosition: resizeContext.initialMousePosition)
         }
@@ -281,6 +301,7 @@ extension LoopManager {
         log.info("Closing Loop (force closed: \(forceClose))")
 
         let wasDockActive = isDockActiveAtomic
+        let hasPendingDockCommit = !forceClose && indicatorService.hasPendingDockCommit
         let pendingHorizontalLayoutExecution = forceClose
             ? nil
             : indicatorService.pendingHorizontalLayoutExecution
@@ -300,14 +321,16 @@ extension LoopManager {
                 } catch {
                     log.error("Horizontal layout transaction failed: \(error.localizedDescription)")
                 }
-            } else if (Defaults[.previewVisibility] || wasDockActive),
+            } else if (wasDockActive ? hasPendingDockCommit : Defaults[.previewVisibility]),
                       !resizeContext.action.direction.willFocusWindow {
                 _ = try? await WindowActionEngine.shared.apply(context: resizeContext)
             }
 
-            // Icon stuff
-            Defaults[.timesLooped] += 1
-            IconManager.checkIfUnlockedNewIcon()
+            // A neutral dock open/close is a cancellation, not a completed window action.
+            if !wasDockActive || hasPendingDockCommit {
+                Defaults[.timesLooped] += 1
+                IconManager.checkIfUnlockedNewIcon()
+            }
         }
 
         Task {
@@ -608,9 +631,8 @@ extension LoopManager {
 
         resizeContext.setScreen(to: targetScreen)
 
-        // The dock-vs-radial decision depends on the screen, which is only known here. Update the
-        // mirror now — before `openAndUpdate` opens the dock and warps the cursor — so the mouse
-        // observer's dock branch is already active when the warp's first mouse event arrives.
+        // The dock-vs-radial decision depends on the screen. Mirror it before pointer observation
+        // starts so the very first movement follows the correct interaction model.
         let dockActive = UltrawideDockController.shouldUseUltrawideDock(for: targetScreen)
         isDockActiveMirror.withLock { $0 = dockActive }
 

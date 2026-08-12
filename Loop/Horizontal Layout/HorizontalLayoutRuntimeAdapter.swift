@@ -11,11 +11,10 @@ struct HorizontalLayoutRuntimeWindow {
 
 @MainActor
 struct HorizontalLayoutRuntimeSnapshot {
-    let layout: HorizontalLayoutSnapshot
+    let scene: UltrawideDockScene
     let windows: [HorizontalLayoutRuntimeWindow]
     let windowsByID: [HorizontalLayoutTileID: Window]
     let currentID: HorizontalLayoutTileID
-    let currentIsTile: Bool
     let usableBounds: CGRect
     let padding: PaddingConfiguration
     let screen: NSScreen
@@ -30,14 +29,29 @@ struct HorizontalLayoutRuntimeCapture {
 @MainActor
 struct HorizontalLayoutPendingExecution {
     let plan: HorizontalLayoutPlan
-    let changedIDs: [HorizontalLayoutTileID]
+    let membersByTileID: [HorizontalLayoutTileID: [HorizontalLayoutTileID]]
+    let changedWindowIDs: [HorizontalLayoutTileID]
     let windowsByID: [HorizontalLayoutTileID: Window]
     let usableBounds: CGRect
     let padding: PaddingConfiguration
     let screen: NSScreen
 
     var normalizedFrames: [HorizontalLayoutTileID: CGRect] {
-        Dictionary(uniqueKeysWithValues: plan.snapshot.tiles.map { ($0.id, $0.frame) })
+        var result: [HorizontalLayoutTileID: CGRect] = [:]
+        for tile in plan.snapshot.tiles {
+            for windowID in membersByTileID[tile.id] ?? [tile.id] {
+                result[windowID] = tile.frame
+            }
+        }
+        return result
+    }
+
+    var changedTileIDs: Set<HorizontalLayoutTileID> {
+        let changed = Set(changedWindowIDs)
+        return Set(plan.snapshot.tiles.compactMap { tile in
+            let members = membersByTileID[tile.id] ?? [tile.id]
+            return members.contains(where: changed.contains) ? tile.id : nil
+        })
     }
 }
 
@@ -114,24 +128,26 @@ struct HorizontalLayoutRuntimeAdapter {
         windowsByID[currentID] = currentWindow
 
         do {
-            let layout = try HorizontalLayoutRuntimeGeometry.makeSnapshot(
-                from: displayWindows.map { HorizontalLayoutTile(id: $0.id, frame: $0.normalizedFrame) },
-                adjacencyTolerance: Self.adjacencyTolerance / usableBounds.width
+            let scene = try UltrawideDockSceneBuilder.makeRuntimeScene(
+                windows: displayWindows.map {
+                    UltrawideDockWindowSnapshot(id: $0.id, frame: $0.normalizedFrame, zIndex: $0.zIndex)
+                },
+                currentID: currentID,
+                frameTolerance: Self.adjacencyTolerance / usableBounds.width
             )
             let runtime = HorizontalLayoutRuntimeSnapshot(
-                layout: layout,
+                scene: scene,
                 windows: displayWindows,
                 windowsByID: windowsByID,
                 currentID: currentID,
-                currentIsTile: layout.tiles.contains(where: { $0.id == currentID }),
                 usableBounds: usableBounds,
                 padding: padding,
                 screen: screen
             )
             return HorizontalLayoutRuntimeCapture(displayWindows: displayWindows, snapshot: runtime)
         } catch {
-            // An already-overlapping row is not silently repaired. The dock keeps its single-window
-            // anchors available, but multi-window operations stay disabled until the row is valid.
+            // Exact overlaps are grouped into stacks by `UltrawideDockScene`. Other overlaps remain
+            // invalid because silently repairing partially intersecting windows would be destructive.
             return HorizontalLayoutRuntimeCapture(displayWindows: displayWindows, snapshot: nil)
         }
     }

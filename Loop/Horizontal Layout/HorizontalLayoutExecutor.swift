@@ -30,7 +30,7 @@ final class HorizontalLayoutExecutor {
     @discardableResult
     func execute(_ execution: HorizontalLayoutPendingExecution) async throws -> HorizontalLayoutBatchResult {
         let normalizedFrames = execution.normalizedFrames
-        let orderedIDs = execution.changedIDs.sorted {
+        let orderedIDs = execution.changedWindowIDs.sorted {
             let lhsX = normalizedFrames[$0]?.minX ?? 0
             let rhsX = normalizedFrames[$1]?.minX ?? 0
             return lhsX == rhsX ? $0.rawValue < $1.rawValue : lhsX < rhsX

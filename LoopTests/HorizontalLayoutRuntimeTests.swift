@@ -48,6 +48,24 @@ final class HorizontalLayoutRuntimeTests: XCTestCase {
         ))
     }
 
+    func testRuntimeGeometryReversesInnerPaddingForExactStacking() {
+        let centered = HorizontalLayoutRuntimeGeometry.rawFrameProducingPaddedWindow(
+            CGRect(x: 0.255, y: 0, width: 0.49, height: 1),
+            halfWindowPadding: 0.005,
+            edgeTolerance: 0.001
+        )
+        XCTAssertEqual(centered.minX, 0.25, accuracy: 0.000_001)
+        XCTAssertEqual(centered.width, 0.5, accuracy: 0.000_001)
+
+        let leading = HorizontalLayoutRuntimeGeometry.rawFrameProducingPaddedWindow(
+            CGRect(x: 0, y: 0, width: 0.495, height: 1),
+            halfWindowPadding: 0.005,
+            edgeTolerance: 0.001
+        )
+        XCTAssertEqual(leading.minX, 0, accuracy: 0.000_001)
+        XCTAssertEqual(leading.width, 0.5, accuracy: 0.000_001)
+    }
+
     @MainActor
     func testBatchExecutorStagesThenSettlesCompletePlan() async throws {
         let bounds = CGRect(x: 0, y: 0, width: 1000, height: 800)

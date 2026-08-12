@@ -22,11 +22,12 @@ final class MouseInteractionObserver {
     private let canSelectNextCycleitem: () -> Bool
     private let checkIfLoopOpen: () -> Bool
 
-    // Ultrawide Dock hooks. When the dock is active it replaces the radial menu: mouse movement
-    // selects an anchor, clicks cycle the size, and the scroll wheel fine-tunes the width.
+    // Ultrawide Dock hooks. Hover selects a target; a real left-button drag owns a divider.
     private let isDockActive: () -> Bool
     private let dockMouseMoved: (CGFloat, UInt64) -> ()
-    private let cycleDockSize: (UInt64) -> ()
+    private let dockPointerDown: (CGFloat, UInt64) -> ()
+    private let dockPointerDragged: (CGFloat, UInt64) -> ()
+    private let dockPointerUp: (CGFloat, UInt64) -> ()
     private let adjustDockSize: (Double, UInt64) -> ()
     private let dockEventSequence = OSAllocatedUnfairLock<UInt64>(initialState: 0)
 
@@ -57,7 +58,9 @@ final class MouseInteractionObserver {
         checkIfLoopOpen: @escaping () -> Bool,
         isDockActive: @escaping () -> Bool,
         dockMouseMoved: @escaping (CGFloat, UInt64) -> (),
-        cycleDockSize: @escaping (UInt64) -> (),
+        dockPointerDown: @escaping (CGFloat, UInt64) -> (),
+        dockPointerDragged: @escaping (CGFloat, UInt64) -> (),
+        dockPointerUp: @escaping (CGFloat, UInt64) -> (),
         adjustDockSize: @escaping (Double, UInt64) -> ()
     ) {
         self.windowActionCache = windowActionCache
@@ -67,7 +70,9 @@ final class MouseInteractionObserver {
         self.checkIfLoopOpen = checkIfLoopOpen
         self.isDockActive = isDockActive
         self.dockMouseMoved = dockMouseMoved
-        self.cycleDockSize = cycleDockSize
+        self.dockPointerDown = dockPointerDown
+        self.dockPointerDragged = dockPointerDragged
+        self.dockPointerUp = dockPointerUp
         self.adjustDockSize = adjustDockSize
     }
 
@@ -95,6 +100,7 @@ final class MouseInteractionObserver {
             "mouse_movement_monitor",
             events: [
                 .mouseMoved, // switch action when mouse is moved
+                .leftMouseDragged, // direct divider manipulation in the Ultrawide Dock
                 .otherMouseDragged // switch action when mouse is moved with the middle mouse button clicked
             ],
             callback: processNewMouseLocation
@@ -104,14 +110,13 @@ final class MouseInteractionObserver {
 
         let leftClickMonitor = ActiveEventMonitor(
             "left_click_monitor",
-            events: [.leftMouseDown], // Increment a cycle action on a left click
-            callback: activateNextCycleAction
+            events: [.leftMouseDown, .leftMouseUp],
+            callback: processLeftMouseButton
         )
         leftClickMonitor.start()
         self.leftClickMonitor = leftClickMonitor
 
-        // The scroll wheel only does anything while the Ultrawide Dock is active (fine-tuning the
-        // width). It's harmless otherwise: the callback early-returns when the dock isn't driving.
+        // The scroll wheel fine-tunes a placement or hovered divider while the dock is active.
         let scrollWheelMonitor = PassiveEventMonitor(
             "scroll_wheel_monitor",
             events: [.scrollWheel],
@@ -165,10 +170,13 @@ final class MouseInteractionObserver {
             previousAngleToMouse = angleToMouse
             previousDistanceToMouse = distanceToMouse
 
-            // Ultrawide Dock: anchor selection is driven by the absolute screen mouse-X rather than
-            // the radial angle/distance, so branch out before the radial-menu math runs.
+            // Divider dragging is distinct from hover; merely crossing a handle never resizes it.
             if isDockActive() {
-                dockMouseMoved(currentMousePosition.x, dockSequence)
+                if event.type == .leftMouseDragged {
+                    dockPointerDragged(currentMousePosition.x, dockSequence)
+                } else {
+                    dockMouseMoved(currentMousePosition.x, dockSequence)
+                }
                 return
             }
 
@@ -252,7 +260,7 @@ final class MouseInteractionObserver {
         return resolved
     }
 
-    private func activateNextCycleAction(_ event: CGEvent) -> ActiveEventMonitor.EventHandling {
+    private func processLeftMouseButton(_ event: CGEvent) -> ActiveEventMonitor.EventHandling {
         // Ensure that the source originates from the HID state ID.
         // Otherwise, this event was likely sent from Loop to focus the frontmost click (see `Window.focus` which sends a `SLSEvent` to the window)
         let sourceID = CGEventSourceStateID(rawValue: Int32(event.getIntegerValueField(.eventSourceStateID)))
@@ -260,13 +268,18 @@ final class MouseInteractionObserver {
             return .forward
         }
 
-        // Ultrawide Dock: a click cycles the size at the active anchor (e.g. 1/2 → 1/3 → 2/3)
-        // instead of advancing a radial cycle item.
         if isDockActive() {
             guard checkIfLoopOpen() else { return .forward }
-            cycleDockSize(nextDockEventSequence())
+            let mouseX = NSEvent.mouseLocation.x
+            if event.type == .leftMouseDown {
+                dockPointerDown(mouseX, nextDockEventSequence())
+            } else {
+                dockPointerUp(mouseX, nextDockEventSequence())
+            }
             return .ignore
         }
+
+        guard event.type == .leftMouseDown else { return .forward }
 
         guard checkIfLoopOpen(), canSelectNextCycleitem() else {
             return .forward
@@ -277,7 +290,7 @@ final class MouseInteractionObserver {
         return .ignore
     }
 
-    /// Scroll-wheel fine-tunes the width at the current anchor while the Ultrawide Dock is open.
+    /// Scroll-wheel fine-tunes the current placement or hovered divider.
     /// One detent ≈ 4% of the available span; the sign follows the OS's natural-scroll setting.
     private func processScrollWheel(_ event: CGEvent) {
         guard checkIfLoopOpen(), isDockActive() else { return }

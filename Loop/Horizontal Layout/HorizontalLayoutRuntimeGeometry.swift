@@ -44,4 +44,26 @@ enum HorizontalLayoutRuntimeGeometry {
             height: bounds.height
         )
     }
+
+    /// Reconstructs the raw horizontal action frame that produces an already-padded visible frame.
+    /// This is used for stacking: applying Loop's inner padding again must still land exactly on the
+    /// window underneath instead of making the newly stacked window slightly narrower.
+    static func rawFrameProducingPaddedWindow(
+        _ paddedFrame: CGRect,
+        halfWindowPadding: CGFloat,
+        edgeTolerance: CGFloat
+    ) -> CGRect {
+        let padding = max(0, halfWindowPadding)
+        let tolerance = max(0, edgeTolerance)
+        let expandsLeading = paddedFrame.minX > tolerance
+        let expandsTrailing = paddedFrame.maxX < 1 - tolerance
+        let minX = max(0, paddedFrame.minX - (expandsLeading ? padding : 0))
+        let maxX = min(1, paddedFrame.maxX + (expandsTrailing ? padding : 0))
+        return CGRect(
+            x: minX,
+            y: paddedFrame.minY,
+            width: max(0, maxX - minX),
+            height: paddedFrame.height
+        )
+    }
 }
