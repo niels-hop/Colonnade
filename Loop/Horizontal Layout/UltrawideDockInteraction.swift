@@ -172,6 +172,8 @@ enum UltrawideDockEdge: Equatable, Sendable {
 
 enum UltrawideDockTarget: Equatable, Sendable {
     case place(edge: UltrawideDockEdge)
+    /// Free placement: a span picked purely from the pointer, unrelated to the row.
+    case free(position: CGFloat)
     case insert(position: CGFloat)
     case stack(slotID: HorizontalLayoutTileID)
     case current(slotID: HorizontalLayoutTileID)
@@ -181,6 +183,7 @@ enum UltrawideDockTarget: Equatable, Sendable {
 enum UltrawideDockOperation: Equatable, Sendable {
     case idle
     case placement
+    case freePlacement(aligned: Bool)
     case stack(existingCount: Int)
     case insert(rebalanced: Bool)
     case move
@@ -197,6 +200,7 @@ enum UltrawideDockCursor: Equatable, Sendable {
 
 enum UltrawideDockWindowCommitKind: Equatable, Sendable {
     case placement
+    case free
     case stack
 }
 
@@ -280,6 +284,10 @@ enum UltrawideDockEvent: Equatable, Sendable {
     case drag(to: CGFloat)
     case pointerUp(at: CGFloat)
     case scroll(delta: CGFloat)
+    /// Switches between row targets and free placement. The pointer's vertical position decides
+    /// this, but the reducer only ever sees the resulting bit: placement stays full-height, so a
+    /// second coordinate would be a mode flag wearing a coordinate's clothes.
+    case setFreeform(Bool)
     case cancel
 }
 
@@ -290,6 +298,7 @@ struct UltrawideDockInteraction {
     private static let maximumResizeHoldRadius: CGFloat = 0.04
     private static let stackZone: ClosedRange<CGFloat> = 0.22 ... 0.78
     private static let widthStops: [CGFloat] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 1]
+    private static let edgeAlignmentTolerance: CGFloat = 0.005
 
     let scene: UltrawideDockScene
     private(set) var output: UltrawideDockOutput = .idle
@@ -303,6 +312,10 @@ struct UltrawideDockInteraction {
     /// finished resize instead of silently trading it for whatever target sits under the pointer.
     private var heldResizeAtX: CGFloat?
     private var lastPointerX: CGFloat = 0.5
+    /// Guards the mode switch: toggling before the pointer has been anywhere must not conjure a
+    /// placement out of the default centre position.
+    private var hasPointerPosition = false
+    private var isFreeform = false
 
     init(scene: UltrawideDockScene, minimumWidth: CGFloat) throws {
         self.scene = scene
@@ -314,6 +327,7 @@ struct UltrawideDockInteraction {
         switch event {
         case let .move(position), let .drag(position):
             lastPointerX = position.clamped(to: 0 ... 1)
+            hasPointerPosition = true
             if let draggingDividerAfterID {
                 output = resizeDivider(after: draggingDividerAfterID, to: lastPointerX)
             } else if !isHoldingFinishedResize(at: lastPointerX) {
@@ -322,6 +336,7 @@ struct UltrawideDockInteraction {
             }
         case let .pointerDown(position):
             lastPointerX = position.clamped(to: 0 ... 1)
+            hasPointerPosition = true
             let target = interactionTarget(at: lastPointerX)
             if case let .divider(afterID) = target {
                 heldResizeAtX = nil
@@ -336,12 +351,21 @@ struct UltrawideDockInteraction {
             }
         case let .pointerUp(position):
             lastPointerX = position.clamped(to: 0 ... 1)
+            hasPointerPosition = true
             if draggingDividerAfterID != nil {
                 draggingDividerAfterID = nil
                 heldResizeAtX = output.operation == .resize ? lastPointerX : nil
             }
         case let .scroll(delta):
             output = adjust(by: delta)
+        case let .setFreeform(enabled):
+            guard enabled != isFreeform else { break }
+            isFreeform = enabled
+            // A divider drag owns the pointer until the button comes back up; wandering into the
+            // free lane mid-drag must not abandon the resize the user is still performing.
+            guard draggingDividerAfterID == nil, hasPointerPosition else { break }
+            heldResizeAtX = nil
+            output = selectTarget(at: lastPointerX)
         case .cancel:
             draggingDividerAfterID = nil
             heldResizeAtX = nil
@@ -363,6 +387,12 @@ struct UltrawideDockInteraction {
     }
 
     private func interactionTarget(at x: CGFloat) -> UltrawideDockTarget {
+        // Free placement outranks every row target, dividers included: the whole point of the mode
+        // is that nothing belonging to the row can be grabbed by accident.
+        if isFreeform {
+            return .free(position: x)
+        }
+
         if scene.slots.isEmpty || isOnlyCurrentWindowInScene {
             return .place(edge: standaloneEdge(at: x))
         }
@@ -390,6 +420,8 @@ struct UltrawideDockInteraction {
         switch target {
         case let .place(edge):
             return standaloneOutput(edge: edge)
+        case let .free(position):
+            return freeOutput(at: position)
         case let .insert(position):
             return placementOutput(at: position)
         case let .stack(slotID):
@@ -529,6 +561,68 @@ struct UltrawideDockInteraction {
         return 0
     }
 
+    /// Free placement: the span follows the pointer and nothing else is planned. Every row target
+    /// relates the incoming window to its neighbours — insertion is bounded by a free gap, a full
+    /// row rebalances, stacking adopts a frame — so "put it here and leave the rest alone" is only
+    /// expressible outside the engine. The single-window commit is what guarantees that: it never
+    /// produces a `HorizontalLayoutPlan`, so no other window can be staged for execution.
+    private func freeOutput(at x: CGFloat) -> UltrawideDockOutput {
+        let width = (requestedWidth ?? defaultFreeWidth).clamped(to: engine.minimumWidth ... 1)
+        let pointerOriginX = (x - width / 2).clamped(to: 0 ... max(0, 1 - width))
+        let alignedOriginX = alignedOriginX(near: pointerOriginX, width: width)
+        let frame = CGRect(x: alignedOriginX ?? pointerOriginX, y: 0, width: width, height: 1)
+
+        return UltrawideDockOutput(
+            target: .free(position: x),
+            operation: .freePlacement(aligned: alignedOriginX != nil),
+            previews: [UltrawideDockPreview(
+                id: scene.currentID,
+                memberIDs: [scene.currentID],
+                frame: frame,
+                containsCurrent: true
+            )],
+            commit: .window(id: scene.currentID, frame: frame, kind: .free),
+            cursor: .arrow
+        )
+    }
+
+    /// The window's own width, so dropping into the free lane starts out as "pick this up exactly
+    /// as it is". The wheel takes over from there.
+    private var defaultFreeWidth: CGFloat {
+        scene.windows.first { $0.id == scene.currentID }?.frame.width ?? 0.5
+    }
+
+    /// Snapping an edge onto a neighbouring window edge is pure geometry: it lines the free window
+    /// up with what is already there without that neighbour being planned, moved or resized.
+    private func alignedOriginX(near originX: CGFloat, width: CGFloat) -> CGFloat? {
+        let maximumOriginX = max(0, 1 - width)
+        var nearest: (originX: CGFloat, distance: CGFloat)?
+
+        for edge in alignmentEdges {
+            for candidate in [edge, edge - width] {
+                let clamped = candidate.clamped(to: 0 ... maximumOriginX)
+                guard abs(clamped - candidate) <= 0.000_001 else { continue }
+                let distance = abs(clamped - originX)
+                guard distance <= Self.edgeAlignmentTolerance else { continue }
+                if nearest == nil || distance < nearest!.distance {
+                    nearest = (clamped, distance)
+                }
+            }
+        }
+        return nearest?.originX
+    }
+
+    /// Both screen edges plus every real window edge — excluded windows included, since they are
+    /// exactly the ones a free placement is most likely to be lined up against.
+    private var alignmentEdges: [CGFloat] {
+        var edges: [CGFloat] = [0, 1]
+        for window in scene.windows where window.id != scene.currentID {
+            edges.append(window.frame.minX)
+            edges.append(window.frame.maxX)
+        }
+        return edges
+    }
+
     private func standaloneOutput(edge: UltrawideDockEdge) -> UltrawideDockOutput {
         let frame = standaloneFrame(edge: edge, width: requestedWidth ?? 0.5)
         return UltrawideDockOutput(
@@ -579,13 +673,20 @@ struct UltrawideDockInteraction {
         }
 
         switch output.target {
+        case .free:
+            requestedWidth = adjustedWidth(by: delta, default: defaultFreeWidth)
+            return freeOutput(at: lastPointerX)
         case .place, .insert:
-            let base = requestedWidth ?? currentPreviewWidth ?? 0.5
-            requestedWidth = Self.snapped((base + delta).clamped(to: engine.minimumWidth ... 1))
+            requestedWidth = adjustedWidth(by: delta, default: 0.5)
             return placementOutput(at: lastPointerX)
         default:
             return output
         }
+    }
+
+    private func adjustedWidth(by delta: CGFloat, default defaultWidth: CGFloat) -> CGFloat {
+        let base = requestedWidth ?? currentPreviewWidth ?? defaultWidth
+        return Self.snapped((base + delta).clamped(to: engine.minimumWidth ... 1))
     }
 
     /// Keeps the common fractions exactly reachable while the wheel is otherwise continuous.

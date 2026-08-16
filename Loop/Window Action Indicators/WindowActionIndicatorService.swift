@@ -60,21 +60,22 @@ final class WindowActionIndicatorService {
         ultrawideDockController.isActive
     }
 
-    /// Hover: maps compact horizontal pointer motion to a direct dock target.
-    func dockActionForMouseX(_ screenMouseX: CGFloat) -> WindowAction? {
-        ultrawideDockController.updateForMouseX(Double(screenMouseX))
+    /// Hover: maps compact horizontal pointer motion to a direct dock target, while the pointer's
+    /// height picks between the row and free placement.
+    func dockActionForMouse(_ pointer: CGPoint) -> WindowAction? {
+        ultrawideDockController.updateForMouse(pointer)
     }
 
-    func dockPointerDown(at screenMouseX: CGFloat) -> WindowAction? {
-        ultrawideDockController.pointerDown(at: Double(screenMouseX))
+    func dockPointerDown(at pointer: CGPoint) -> WindowAction? {
+        ultrawideDockController.pointerDown(at: pointer)
     }
 
-    func dockPointerDragged(to screenMouseX: CGFloat) -> WindowAction? {
-        ultrawideDockController.drag(to: Double(screenMouseX))
+    func dockPointerDragged(to pointer: CGPoint) -> WindowAction? {
+        ultrawideDockController.drag(to: pointer)
     }
 
-    func dockPointerUp(at screenMouseX: CGFloat) -> WindowAction? {
-        ultrawideDockController.pointerUp(at: Double(screenMouseX))
+    func dockPointerUp(at pointer: CGPoint) -> WindowAction? {
+        ultrawideDockController.pointerUp(at: pointer)
     }
 
     /// Scroll-wheel fine-tunes the current placement or divider.

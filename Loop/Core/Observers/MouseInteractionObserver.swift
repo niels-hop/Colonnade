@@ -22,12 +22,13 @@ final class MouseInteractionObserver {
     private let canSelectNextCycleitem: () -> Bool
     private let checkIfLoopOpen: () -> Bool
 
-    // Ultrawide Dock hooks. Hover selects a target; a real left-button drag owns a divider.
+    // Ultrawide Dock hooks. Hover selects a target; a real left-button drag owns a divider. The
+    // full pointer position is forwarded: its height picks between row and free placement.
     private let isDockActive: () -> Bool
-    private let dockMouseMoved: (CGFloat, UInt64) -> ()
-    private let dockPointerDown: (CGFloat, UInt64) -> ()
-    private let dockPointerDragged: (CGFloat, UInt64) -> ()
-    private let dockPointerUp: (CGFloat, UInt64) -> ()
+    private let dockMouseMoved: (CGPoint, UInt64) -> ()
+    private let dockPointerDown: (CGPoint, UInt64) -> ()
+    private let dockPointerDragged: (CGPoint, UInt64) -> ()
+    private let dockPointerUp: (CGPoint, UInt64) -> ()
     private let adjustDockSize: (Double, UInt64) -> ()
     private let dockEventSequence = OSAllocatedUnfairLock<UInt64>(initialState: 0)
 
@@ -57,10 +58,10 @@ final class MouseInteractionObserver {
         canSelectNextCycleitem: @escaping () -> Bool,
         checkIfLoopOpen: @escaping () -> Bool,
         isDockActive: @escaping () -> Bool,
-        dockMouseMoved: @escaping (CGFloat, UInt64) -> (),
-        dockPointerDown: @escaping (CGFloat, UInt64) -> (),
-        dockPointerDragged: @escaping (CGFloat, UInt64) -> (),
-        dockPointerUp: @escaping (CGFloat, UInt64) -> (),
+        dockMouseMoved: @escaping (CGPoint, UInt64) -> (),
+        dockPointerDown: @escaping (CGPoint, UInt64) -> (),
+        dockPointerDragged: @escaping (CGPoint, UInt64) -> (),
+        dockPointerUp: @escaping (CGPoint, UInt64) -> (),
         adjustDockSize: @escaping (Double, UInt64) -> ()
     ) {
         self.windowActionCache = windowActionCache
@@ -173,9 +174,9 @@ final class MouseInteractionObserver {
             // Divider dragging is distinct from hover; merely crossing a handle never resizes it.
             if isDockActive() {
                 if event.type == .leftMouseDragged {
-                    dockPointerDragged(currentMousePosition.x, dockSequence)
+                    dockPointerDragged(currentMousePosition, dockSequence)
                 } else {
-                    dockMouseMoved(currentMousePosition.x, dockSequence)
+                    dockMouseMoved(currentMousePosition, dockSequence)
                 }
                 return
             }
@@ -270,11 +271,11 @@ final class MouseInteractionObserver {
 
         if isDockActive() {
             guard checkIfLoopOpen() else { return .forward }
-            let mouseX = NSEvent.mouseLocation.x
+            let mouseLocation = NSEvent.mouseLocation
             if event.type == .leftMouseDown {
-                dockPointerDown(mouseX, nextDockEventSequence())
+                dockPointerDown(mouseLocation, nextDockEventSequence())
             } else {
-                dockPointerUp(mouseX, nextDockEventSequence())
+                dockPointerUp(mouseLocation, nextDockEventSequence())
             }
             return .ignore
         }

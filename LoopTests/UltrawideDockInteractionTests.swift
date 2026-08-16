@@ -384,6 +384,113 @@ final class UltrawideDockInteractionTests: XCTestCase {
         assertFrame(plan.snapshot.tiles[1].frame, x: 0.7, width: 0.3)
     }
 
+    // MARK: - Free placement
+
+    func testFreeformPlacesOverAFullRowWithoutPlanningAnything() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.5, zIndex: 0),
+            window(b, x: 0.5, width: 0.5, zIndex: 1),
+            window(current, x: 0, width: 0.5, zIndex: 2),
+        ])
+
+        _ = interaction.handle(.move(to: 0.5))
+        let free = interaction.handle(.setFreeform(true))
+
+        XCTAssertEqual(free.target, .free(position: 0.5))
+        guard case let .window(id, frame, kind) = free.commit else {
+            return XCTFail("Free placement must never produce a layout plan")
+        }
+        XCTAssertEqual(id, current)
+        XCTAssertEqual(kind, .free)
+        assertFrame(frame, x: 0.25, width: 0.5)
+    }
+
+    func testFreeformStartsAtTheWindowsOwnWidthAndScrollResizesIt() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.7, zIndex: 0),
+            window(current, x: 0.7, width: 0.3, zIndex: 1),
+        ])
+
+        _ = interaction.handle(.move(to: 0.4))
+        let free = interaction.handle(.setFreeform(true))
+        guard case let .window(_, frame, _) = free.commit else {
+            return XCTFail("Expected a free placement")
+        }
+        assertFrame(frame, x: 0.25, width: 0.3)
+
+        let widened = interaction.handle(.scroll(delta: 0.2))
+        guard case let .window(_, widenedFrame, kind) = widened.commit else {
+            return XCTFail("Scrolling must keep the placement free")
+        }
+        XCTAssertEqual(kind, .free)
+        assertFrame(widenedFrame, x: 0.15, width: 0.5)
+    }
+
+    func testFreeformAlignsToANeighbouringEdgeWithoutTouchingThatNeighbour() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.4, zIndex: 0),
+            window(b, x: 0.4, width: 0.6, zIndex: 1),
+        ])
+        let originalSlots = interaction.scene.slots
+
+        _ = interaction.handle(.setFreeform(true))
+        // A 0.5-wide window centred at 0.653 starts at 0.403 — inside the alignment tolerance of
+        // the boundary at 0.4, so it snaps flush against it.
+        let output = interaction.handle(.move(to: 0.653))
+
+        XCTAssertEqual(output.operation, .freePlacement(aligned: true))
+        guard case let .window(_, frame, _) = output.commit else {
+            return XCTFail("Expected a free placement")
+        }
+        assertFrame(frame, x: 0.4, width: 0.5)
+        XCTAssertEqual(interaction.scene.slots, originalSlots)
+    }
+
+    func testFreeformIgnoresDividersAndLeavingItRestoresRowTargets() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.5, zIndex: 0),
+            window(b, x: 0.5, width: 0.5, zIndex: 1),
+        ])
+
+        XCTAssertEqual(interaction.handle(.move(to: 0.5)).target, .divider(after: a))
+
+        _ = interaction.handle(.setFreeform(true))
+        let onDivider = interaction.handle(.move(to: 0.5))
+        XCTAssertEqual(onDivider.target, .free(position: 0.5))
+        _ = interaction.handle(.pointerDown(at: 0.5))
+        XCTAssertEqual(interaction.handle(.drag(to: 0.52)).target, .free(position: 0.52))
+
+        let back = interaction.handle(.setFreeform(false))
+        XCTAssertEqual(back.target, .divider(after: a))
+    }
+
+    func testFreeformSwitchMidDividerDragKeepsTheResize() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.5, zIndex: 0),
+            window(b, x: 0.5, width: 0.5, zIndex: 1),
+        ])
+
+        _ = interaction.handle(.move(to: 0.5))
+        _ = interaction.handle(.pointerDown(at: 0.5))
+        _ = interaction.handle(.drag(to: 0.62))
+
+        let duringDrag = interaction.handle(.setFreeform(true))
+
+        XCTAssertEqual(duringDrag.target, .divider(after: a))
+        XCTAssertEqual(duringDrag.operation, .resize)
+    }
+
+    func testFreeformBeforeAnyPointerMovementStaysNeutral() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 1, zIndex: 0),
+        ])
+
+        let output = interaction.handle(.setFreeform(true))
+
+        XCTAssertEqual(output.operation, .idle)
+        XCTAssertNil(output.commit)
+    }
+
     private func makeInteraction(
         windows: [UltrawideDockWindowSnapshot],
         currentID: HorizontalLayoutTileID? = nil

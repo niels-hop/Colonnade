@@ -119,37 +119,37 @@ final class LoopManager {
         checkIfLoopOpen: { [weak self] in self?.isLoopActiveAtomic ?? false },
         // Ultrawide Dock hooks: hover selects, while a left-button drag owns divider movement.
         isDockActive: { [weak self] in self?.isDockActiveAtomic ?? false },
-        dockMouseMoved: { [weak self] screenMouseX, sequence in
+        dockMouseMoved: { [weak self] pointer, sequence in
             Task { @MainActor in
                 guard let self, self.acceptDockEvent(sequence) else { return }
                 self.keybindTrigger.canPassthroughNextSpecialEvent = false
-                if let action = self.indicatorService.dockActionForMouseX(screenMouseX) {
+                if let action = self.indicatorService.dockActionForMouse(pointer) {
                     await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
                 }
             }
         },
-        dockPointerDown: { [weak self] screenMouseX, sequence in
+        dockPointerDown: { [weak self] pointer, sequence in
             Task { @MainActor in
                 guard let self, self.acceptDockEvent(sequence) else { return }
                 self.keybindTrigger.canPassthroughNextSpecialEvent = false
-                if let action = self.indicatorService.dockPointerDown(at: screenMouseX) {
+                if let action = self.indicatorService.dockPointerDown(at: pointer) {
                     await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
                 }
             }
         },
-        dockPointerDragged: { [weak self] screenMouseX, sequence in
+        dockPointerDragged: { [weak self] pointer, sequence in
             Task { @MainActor in
                 guard let self, self.acceptDockEvent(sequence) else { return }
                 self.keybindTrigger.canPassthroughNextSpecialEvent = false
-                if let action = self.indicatorService.dockPointerDragged(to: screenMouseX) {
+                if let action = self.indicatorService.dockPointerDragged(to: pointer) {
                     await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
                 }
             }
         },
-        dockPointerUp: { [weak self] screenMouseX, sequence in
+        dockPointerUp: { [weak self] pointer, sequence in
             Task { @MainActor in
                 guard let self, self.acceptDockEvent(sequence) else { return }
-                if let action = self.indicatorService.dockPointerUp(at: screenMouseX) {
+                if let action = self.indicatorService.dockPointerUp(at: pointer) {
                     await self.changeAction(action, disableHapticFeedback: true, canAdvanceCycle: false)
                 }
             }

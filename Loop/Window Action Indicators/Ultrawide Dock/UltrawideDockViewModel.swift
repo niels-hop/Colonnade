@@ -20,6 +20,9 @@ final class UltrawideDockViewModel: ObservableObject {
         let frame: CGRect
         let isCurrent: Bool
         let memberCount: Int
+        /// A free placement sits on top of the row instead of in it. Inside a gap it would look
+        /// exactly like an insertion, so it is drawn hovering above the other windows.
+        let isFloating: Bool
     }
 
     struct Divider: Identifiable {
@@ -38,6 +41,9 @@ final class UltrawideDockViewModel: ObservableObject {
     @Published private(set) var percentageFeedback = ""
     @Published private(set) var interactionHint = "Release applies · Esc cancels"
     @Published private(set) var cursor: UltrawideDockCursor = .arrow
+    /// Drives the free-placement lane in the view. It follows the pointer's mode, not the reducer's
+    /// output, so the lane also lights up on a screen where no row could be built.
+    @Published private(set) var isFreeformActive = false
 
     private let adapter = HorizontalLayoutRuntimeAdapter()
     private var runtime: HorizontalLayoutRuntimeSnapshot?
@@ -48,6 +54,9 @@ final class UltrawideDockViewModel: ObservableObject {
 
     private(set) var pendingExecution: HorizontalLayoutPendingExecution?
     private(set) var hasPendingCommit = false
+    /// Survives a reducer rebuild: the pointer stays in the free lane while the window changes, so
+    /// the mode has to be re-asserted on the fresh interaction instead of silently resetting.
+    private var isFreeformRequested = false
 
     init(
         startingAction _: WindowAction?,
@@ -99,6 +108,16 @@ final class UltrawideDockViewModel: ObservableObject {
     @discardableResult
     func adjustSize(by delta: Double) -> WindowAction? {
         dispatch(.scroll(delta: CGFloat(delta)))
+    }
+
+    /// Enters or leaves free placement. The controller derives this from the pointer's vertical
+    /// position and only calls in on an actual change.
+    @discardableResult
+    func setFreeform(_ enabled: Bool) -> WindowAction? {
+        guard isFreeformRequested != enabled else { return currentAction }
+        isFreeformRequested = enabled
+        isFreeformActive = enabled
+        return dispatch(.setFreeform(enabled))
     }
 
     func cancel() {
@@ -177,6 +196,11 @@ final class UltrawideDockViewModel: ObservableObject {
             scene: runtime.scene,
             minimumWidth: HorizontalLayoutRuntimeAdapter.minimumWidth
         )
+        // The fresh reducer has no pointer position yet, so this only restores the mode; the next
+        // pointer event is still what produces a target.
+        if isFreeformRequested {
+            interaction?.handle(.setFreeform(true))
+        }
         percentageFeedback = Self.percentages(runtime.scene.slots.map(\.frame))
     }
 
@@ -228,7 +252,7 @@ final class UltrawideDockViewModel: ObservableObject {
             }
             currentAction = HorizontalLayoutRuntimeAdapter.action(
                 for: actionFrame,
-                name: kind == .stack ? "ultrawide_stack" : "ultrawide_place"
+                name: Self.actionName(for: kind)
             )
             let memberCount: Int = if case let .stack(existingCount) = output.operation {
                 existingCount + 1
@@ -239,7 +263,8 @@ final class UltrawideDockViewModel: ObservableObject {
                 id: id,
                 frame: frame,
                 isCurrent: true,
-                memberCount: memberCount
+                memberCount: memberCount,
+                isFloating: kind == .free
             )]
             percentageFeedback = Self.percentages([frame])
             hasPendingCommit = true
@@ -273,7 +298,8 @@ final class UltrawideDockViewModel: ObservableObject {
                 id: tile.id,
                 frame: tile.frame,
                 isCurrent: members.contains(runtime.currentID),
-                memberCount: members.count
+                memberCount: members.count,
+                isFloating: false
             )
         }
 
@@ -316,9 +342,18 @@ final class UltrawideDockViewModel: ObservableObject {
         return result
     }
 
+    private static func actionName(for kind: UltrawideDockWindowCommitKind) -> String {
+        switch kind {
+        case .placement: "ultrawide_place"
+        case .free: "ultrawide_free"
+        case .stack: "ultrawide_stack"
+        }
+    }
+
     private static func targetID(_ target: UltrawideDockTarget?) -> String? {
         switch target {
         case let .place(edge): "place:\(edge)"
+        case .free: "free"
         case .insert: "insert"
         case let .stack(slotID): "stack:\(slotID.rawValue)"
         case let .current(slotID): "current:\(slotID.rawValue)"
@@ -333,7 +368,7 @@ final class UltrawideDockViewModel: ObservableObject {
         scene: UltrawideDockScene?
     ) -> CGFloat? {
         switch target {
-        case let .insert(position):
+        case let .insert(position), let .free(position):
             return position
         case let .divider(afterID):
             if case let .layout(plan, _) = commit,
@@ -361,6 +396,8 @@ final class UltrawideDockViewModel: ObservableObject {
         switch operation {
         case .idle: "Move to place · window center stacks"
         case .placement: "Place window"
+        case let .freePlacement(aligned):
+            aligned ? "Free placement · aligned to an edge" : "Free placement · nothing else moves"
         case let .stack(existingCount):
             existingCount == 1 ? "Stack on this window" : "Add to stack of \(existingCount)"
         case let .insert(rebalanced): rebalanced ? "Place alongside · row rebalances" : "Place in free space"
@@ -378,6 +415,7 @@ final class UltrawideDockViewModel: ObservableObject {
         case .resizeReady: "Hold click and drag · scroll fine-tunes · Esc cancels"
         case .resize: "Release applies · move away to pick something else"
         case .placement: "Scroll resizes · release applies · Esc cancels"
+        case .freePlacement: "Scroll resizes · move up to rejoin the row · Esc cancels"
         case let .insert(rebalanced):
             rebalanced
                 ? "Row splits evenly · drag a divider afterwards · Esc cancels"

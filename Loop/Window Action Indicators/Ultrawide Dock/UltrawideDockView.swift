@@ -12,16 +12,9 @@ struct UltrawideDockView: View {
     @ObservedObject private var viewModel: UltrawideDockViewModel
 
     private let screen: NSScreen?
-    private let baseDockWidth: CGFloat = 600
-    private let baseDockHeight: CGFloat = 202
     private let cornerRadius: CGFloat = 10
 
-    private var dockWidth: CGFloat {
-        guard let screen else { return baseDockWidth }
-        let aspectRatio = screen.frame.width / screen.frame.height
-        guard aspectRatio >= 2 else { return baseDockWidth }
-        return baseDockWidth * min(aspectRatio / 1.6, 1.33)
-    }
+    private var dockWidth: CGFloat { UltrawideDockMetrics.dockWidth(for: screen) }
 
     init(viewModel: UltrawideDockViewModel, screen: NSScreen?) {
         self.viewModel = viewModel
@@ -32,11 +25,13 @@ struct UltrawideDockView: View {
         ZStack {
             dockBackground
 
-            VStack(spacing: 8) {
+            VStack(spacing: UltrawideDockMetrics.sectionSpacing) {
                 GeometryReader { geometry in
                     screenMap(size: geometry.size)
                 }
-                .frame(maxHeight: .infinity)
+                .frame(height: UltrawideDockMetrics.mapHeight)
+
+                freeLane
 
                 VStack(spacing: 2) {
                     HStack(spacing: 8) {
@@ -56,18 +51,44 @@ struct UltrawideDockView: View {
                         .lineLimit(1)
                 }
                 .padding(.horizontal, 4)
-                .frame(height: 32)
+                .frame(height: UltrawideDockMetrics.footerHeight)
             }
-            .padding(10)
+            .padding(UltrawideDockMetrics.contentPadding)
         }
-        .frame(width: dockWidth, height: baseDockHeight)
+        .frame(width: dockWidth, height: UltrawideDockMetrics.dockHeight)
         .shadow(radius: 10)
-        .padding(20)
+        .padding(UltrawideDockMetrics.shadowPadding)
         .fixedSize()
         .animation(luminareAnimation, value: [accentColorController.color1, accentColorController.color2])
         .animation(luminareAnimation, value: viewModel.slots.count)
         .animation(luminareAnimation, value: viewModel.activeTargetID)
+        .animation(luminareAnimation, value: viewModel.isFreeformActive)
         .animation(luminareAnimation, value: viewModel.previewFrames.map(\.frame))
+    }
+
+    /// The lane the pointer drops into for a free placement. It is always visible, because a mode
+    /// reachable only by moving the mouse somewhere is a mode nobody finds by accident.
+    private var freeLane: some View {
+        let active = viewModel.isFreeformActive
+        return ZStack {
+            RoundedRectangle(cornerRadius: 7)
+                .fill(active ? accentColorController.color1.opacity(0.22) : Color.black.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7)
+                        .stroke(
+                            active ? accentColorController.color1 : Color.white.opacity(0.16),
+                            style: StrokeStyle(lineWidth: active ? 2 : 1, dash: active ? [] : [4, 3])
+                        )
+                )
+
+            Label(
+                active ? "Free placement · nothing else moves" : "Move down for free placement",
+                systemImage: active ? "rectangle.on.rectangle" : "arrow.down"
+            )
+            .font(.system(size: 10, weight: active ? .semibold : .medium))
+            .foregroundStyle(active ? .primary : .secondary)
+        }
+        .frame(height: UltrawideDockMetrics.freeLaneHeight)
     }
 
     @ViewBuilder
@@ -206,7 +227,11 @@ struct UltrawideDockView: View {
         _ preview: UltrawideDockViewModel.PreviewFrame,
         mapSize: CGSize
     ) -> some View {
-        RoundedRectangle(cornerRadius: 5)
+        // A floating preview is inset and lifted so it reads as lying on top of the row. Inside a
+        // free gap it would otherwise be pixel-identical to an insertion, which is the one thing it
+        // is not: nothing around it moves.
+        let verticalInset: CGFloat = preview.isFloating ? 9 : 0
+        return RoundedRectangle(cornerRadius: preview.isFloating ? 7 : 5)
             .fill(
                 LinearGradient(
                     colors: [accentColorController.color1, accentColorController.color2],
@@ -216,7 +241,7 @@ struct UltrawideDockView: View {
             )
             .opacity(preview.isCurrent ? 0.88 : 0.5)
             .overlay(
-                RoundedRectangle(cornerRadius: 5)
+                RoundedRectangle(cornerRadius: preview.isFloating ? 7 : 5)
                     .stroke(Color.white.opacity(0.68), lineWidth: preview.isCurrent ? 2 : 1)
             )
             .overlay {
@@ -228,10 +253,15 @@ struct UltrawideDockView: View {
             }
             .frame(
                 width: max(0, preview.frame.width * mapSize.width),
-                height: max(0, preview.frame.height * mapSize.height)
+                height: max(0, preview.frame.height * mapSize.height - verticalInset * 2)
             )
             .position(x: preview.frame.midX * mapSize.width, y: preview.frame.midY * mapSize.height)
-            .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
-            .zIndex(preview.isCurrent ? 1000 : 900)
+            .shadow(
+                color: Color.black.opacity(preview.isFloating ? 0.5 : 0.3),
+                radius: preview.isFloating ? 9 : 4,
+                x: 0,
+                y: preview.isFloating ? 4 : 2
+            )
+            .zIndex(preview.isFloating ? 1300 : (preview.isCurrent ? 1000 : 900))
     }
 }
