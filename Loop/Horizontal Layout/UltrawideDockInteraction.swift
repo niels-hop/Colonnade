@@ -20,10 +20,16 @@ struct UltrawideDockSlot: Equatable, Identifiable, Sendable {
 /// A dock scene groups windows with the same full-height frame into one horizontal slot. The
 /// horizontal engine still sees a non-overlapping row, while the interaction layer can place
 /// multiple windows in one slot without moving any of its existing members.
+///
+/// Windows that genuinely overlap cannot all be part of one row. Instead of rejecting the whole
+/// scene — which used to leave the dock completely inert — the conflicting ones are excluded from
+/// the row. They are never planned and never moved, but callers must keep drawing them: showing
+/// free space where a real window sits would be worse than the row being incomplete.
 struct UltrawideDockScene: Equatable, Sendable {
     let windows: [UltrawideDockWindowSnapshot]
     let currentID: HorizontalLayoutTileID
     let slots: [UltrawideDockSlot]
+    let excludedWindowIDs: [HorizontalLayoutTileID]
     let layout: HorizontalLayoutSnapshot
 
     init(
@@ -53,7 +59,7 @@ struct UltrawideDockScene: Equatable, Sendable {
             }
         }
 
-        let rawSlots = grouped.map { group -> UltrawideDockSlot in
+        let candidates = grouped.map { group -> UltrawideDockSlot in
             let members = group.members.sorted(by: Self.zOrder)
             return UltrawideDockSlot(
                 id: members[0].id,
@@ -61,9 +67,50 @@ struct UltrawideDockScene: Equatable, Sendable {
                 frame: group.frame
             )
         }
-        let rawSlotsByID = Dictionary(uniqueKeysWithValues: rawSlots.map { ($0.id, $0) })
+
+        // Widest first: a single narrow window straddling a boundary should lose its place in the
+        // row, not evict the two large windows it happens to overlap.
+        let others = candidates
+            .filter { !$0.contains(currentID) }
+            .sorted { lhs, rhs in
+                if lhs.frame.width != rhs.frame.width { return lhs.frame.width > rhs.frame.width }
+                if lhs.frame.minX != rhs.frame.minX { return lhs.frame.minX < rhs.frame.minX }
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
+
+        var accepted: [UltrawideDockSlot] = []
+        var excluded: [UltrawideDockSlot] = []
+        for candidate in others {
+            let conflicts = accepted.contains {
+                Self.framesConflict($0.frame, candidate.frame, tolerance: frameTolerance)
+            }
+            if conflicts { excluded.append(candidate) } else { accepted.append(candidate) }
+        }
+
+        // The current window is the incoming one, so it goes last and never pushes an existing
+        // window out of the row. If it does not fit it simply stays outside, ready to be placed.
+        if let currentCandidate = candidates.first(where: { $0.contains(currentID) }) {
+            let conflicts = accepted.contains {
+                Self.framesConflict($0.frame, currentCandidate.frame, tolerance: frameTolerance)
+            }
+            if conflicts {
+                let bystanders = currentCandidate.memberIDs.filter { $0 != currentID }
+                if let representative = bystanders.first {
+                    excluded.append(UltrawideDockSlot(
+                        id: representative,
+                        memberIDs: bystanders,
+                        frame: currentCandidate.frame
+                    ))
+                }
+            } else {
+                accepted.append(currentCandidate)
+            }
+        }
+
+        let ordered = accepted.sorted { $0.frame.minX < $1.frame.minX }
+        let orderedByID = Dictionary(uniqueKeysWithValues: ordered.map { ($0.id, $0) })
         let layout = try HorizontalLayoutRuntimeGeometry.makeSnapshot(
-            from: rawSlots.map { HorizontalLayoutTile(id: $0.id, frame: $0.frame) },
+            from: ordered.map { HorizontalLayoutTile(id: $0.id, frame: $0.frame) },
             adjacencyTolerance: frameTolerance
         )
 
@@ -71,9 +118,12 @@ struct UltrawideDockScene: Equatable, Sendable {
         self.currentID = currentID
         self.layout = layout
         self.slots = layout.tiles.compactMap { tile in
-            guard let slot = rawSlotsByID[tile.id] else { return nil }
+            guard let slot = orderedByID[tile.id] else { return nil }
             return UltrawideDockSlot(id: slot.id, memberIDs: slot.memberIDs, frame: tile.frame)
         }
+        self.excludedWindowIDs = excluded
+            .sorted { $0.frame.minX < $1.frame.minX }
+            .flatMap(\.memberIDs)
     }
 
     var currentSlot: UltrawideDockSlot? {
@@ -102,30 +152,15 @@ struct UltrawideDockScene: Equatable, Sendable {
             abs(lhs.minY - rhs.minY) <= tolerance &&
             abs(lhs.height - rhs.height) <= tolerance
     }
-}
 
-enum UltrawideDockSceneBuilder {
-    /// A manually moved current window may overlap an otherwise valid row. Treat it as the incoming
-    /// window in that case, so the dock can repair its position without normalizing its neighbours.
-    static func makeRuntimeScene(
-        windows: [UltrawideDockWindowSnapshot],
-        currentID: HorizontalLayoutTileID,
-        frameTolerance: CGFloat
-    ) throws -> UltrawideDockScene {
-        do {
-            return try UltrawideDockScene(
-                windows: windows,
-                currentID: currentID,
-                frameTolerance: frameTolerance
-            )
-        } catch {
-            guard windows.contains(where: { $0.id == currentID }) else { throw error }
-            return try UltrawideDockScene(
-                windows: windows.filter { $0.id != currentID },
-                currentID: currentID,
-                frameTolerance: frameTolerance
-            )
-        }
+    /// Padding-sized intersections are bridged by the runtime geometry, so only a real overlap
+    /// counts as a conflict.
+    private static func framesConflict(
+        _ lhs: CGRect,
+        _ rhs: CGRect,
+        tolerance: CGFloat
+    ) -> Bool {
+        min(lhs.maxX, rhs.maxX) - max(lhs.minX, rhs.minX) > tolerance
     }
 }
 
@@ -251,16 +286,22 @@ enum UltrawideDockEvent: Equatable, Sendable {
 /// Pure event reducer for the dock. Callers provide one immutable scene and feed pointer events;
 /// every observable preview and commit plan comes back through `output`.
 struct UltrawideDockInteraction {
-    private static let dividerHitRadius: CGFloat = 0.018
+    private static let maximumDividerHitRadius: CGFloat = 0.03
+    private static let maximumResizeHoldRadius: CGFloat = 0.04
     private static let stackZone: ClosedRange<CGFloat> = 0.22 ... 0.78
-    private static let standaloneStops: [CGFloat] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 1]
+    private static let widthStops: [CGFloat] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 1]
 
     let scene: UltrawideDockScene
     private(set) var output: UltrawideDockOutput = .idle
 
     private let engine: HorizontalLayoutEngine
     private var draggingDividerAfterID: HorizontalLayoutTileID?
-    private var standaloneWidth: CGFloat = 0.5
+    /// `nil` lets the geometry decide: half the screen for a standalone placement, the whole free
+    /// gap for an insertion. Scrolling pins it to an explicit fraction of the screen.
+    private var requestedWidth: CGFloat?
+    /// Where the pointer was when a divider drag ended. Small movements around that spot keep the
+    /// finished resize instead of silently trading it for whatever target sits under the pointer.
+    private var heldResizeAtX: CGFloat?
     private var lastPointerX: CGFloat = 0.5
 
     init(scene: UltrawideDockScene, minimumWidth: CGFloat) throws {
@@ -271,17 +312,19 @@ struct UltrawideDockInteraction {
     @discardableResult
     mutating func handle(_ event: UltrawideDockEvent) -> UltrawideDockOutput {
         switch event {
-        case let .move(position):
+        case let .move(position), let .drag(position):
             lastPointerX = position.clamped(to: 0 ... 1)
             if let draggingDividerAfterID {
                 output = resizeDivider(after: draggingDividerAfterID, to: lastPointerX)
-            } else {
+            } else if !isHoldingFinishedResize(at: lastPointerX) {
+                heldResizeAtX = nil
                 output = selectTarget(at: lastPointerX)
             }
         case let .pointerDown(position):
             lastPointerX = position.clamped(to: 0 ... 1)
             let target = interactionTarget(at: lastPointerX)
             if case let .divider(afterID) = target {
+                heldResizeAtX = nil
                 draggingDividerAfterID = afterID
                 output = UltrawideDockOutput(
                     target: target,
@@ -291,26 +334,32 @@ struct UltrawideDockInteraction {
                     cursor: .resizeLeftRight
                 )
             }
-        case let .drag(position):
-            lastPointerX = position.clamped(to: 0 ... 1)
-            if let draggingDividerAfterID {
-                output = resizeDivider(after: draggingDividerAfterID, to: lastPointerX)
-            } else {
-                output = selectTarget(at: lastPointerX)
-            }
         case let .pointerUp(position):
             lastPointerX = position.clamped(to: 0 ... 1)
             if draggingDividerAfterID != nil {
-                self.draggingDividerAfterID = nil
+                draggingDividerAfterID = nil
+                heldResizeAtX = output.operation == .resize ? lastPointerX : nil
             }
         case let .scroll(delta):
             output = adjust(by: delta)
         case .cancel:
             draggingDividerAfterID = nil
-            standaloneWidth = 0.5
+            heldResizeAtX = nil
+            requestedWidth = nil
             output = .idle
         }
         return output
+    }
+
+    /// A finished resize survives pointer jitter, but moving away deliberately still picks a new
+    /// target — the row underneath is unchanged until the trigger is released.
+    private func isHoldingFinishedResize(at x: CGFloat) -> Bool {
+        guard let heldResizeAtX, case let .divider(afterID) = output.target else { return false }
+        let radius = min(
+            Self.maximumResizeHoldRadius,
+            0.25 * narrowestTileWidth(around: afterID, in: currentPlan?.snapshot ?? scene.layout)
+        )
+        return abs(x - heldResizeAtX) <= radius
     }
 
     private func interactionTarget(at x: CGFloat) -> UltrawideDockTarget {
@@ -319,7 +368,7 @@ struct UltrawideDockInteraction {
         }
 
         if let divider = nearestDivider(to: x),
-           abs(divider.position - x) <= Self.dividerHitRadius {
+           abs(divider.position - x) <= dividerHitRadius(after: divider.afterID) {
             return .divider(after: divider.afterID)
         }
 
@@ -417,9 +466,22 @@ struct UltrawideDockInteraction {
             guard !base.snapshot.tiles.isEmpty else {
                 return standaloneOutput(edge: standaloneEdge(at: x))
             }
-            let plan = try engine.plan(.insert(scene.currentID, near: x), from: base.snapshot)
             var members = base.membersByTileID
             members[scene.currentID] = [scene.currentID]
+
+            // Free space is placed explicitly rather than through `.insert`, so the scroll wheel can
+            // size the incoming window instead of it always swallowing the entire gap.
+            if let span = insertionSpan(at: x, in: base.snapshot) {
+                let plan = try engine.plan(.place(scene.currentID, at: span), from: base.snapshot)
+                return layoutOutput(
+                    target: .insert(position: x),
+                    operation: .insert(rebalanced: false),
+                    plan: plan,
+                    membersByTileID: members
+                )
+            }
+
+            let plan = try engine.plan(.insert(scene.currentID, near: x), from: base.snapshot)
             return layoutOutput(
                 target: .insert(position: x),
                 operation: .insert(rebalanced: plan.adjustments.contains(.fullRowRebalanced)),
@@ -437,8 +499,38 @@ struct UltrawideDockInteraction {
         }
     }
 
+    /// The free gap nearest the pointer, narrowed to the requested width and kept inside that gap.
+    /// Returns `nil` when no gap can hold a window, which is what makes the row rebalance instead.
+    private func insertionSpan(
+        at x: CGFloat,
+        in snapshot: HorizontalLayoutSnapshot
+    ) -> HorizontalLayoutSpan? {
+        let gaps = engine.freeSpans(in: snapshot).filter { $0.width >= engine.minimumWidth }
+        guard let gap = gaps.min(by: {
+            Self.distance(from: x, to: $0) < Self.distance(from: x, to: $1)
+        }) else {
+            return nil
+        }
+
+        // Subtracting the widths first keeps an exact fit exactly at the gap's origin: rounding the
+        // other way round would push the span a fraction outside the gap and reject the placement.
+        let width = (requestedWidth ?? gap.width).clamped(to: engine.minimumWidth ... gap.width)
+        let maximumOriginX = max(gap.x, gap.x + (gap.width - width))
+        let originX = (x - width / 2).clamped(to: gap.x ... maximumOriginX)
+        return HorizontalLayoutSpan(
+            x: originX,
+            width: min(width, gap.x + gap.width - originX)
+        )
+    }
+
+    private static func distance(from x: CGFloat, to span: HorizontalLayoutSpan) -> CGFloat {
+        if x < span.x { return span.x - x }
+        if x > span.x + span.width { return x - (span.x + span.width) }
+        return 0
+    }
+
     private func standaloneOutput(edge: UltrawideDockEdge) -> UltrawideDockOutput {
-        let frame = standaloneFrame(edge: edge, width: standaloneWidth)
+        let frame = standaloneFrame(edge: edge, width: requestedWidth ?? 0.5)
         return UltrawideDockOutput(
             target: .place(edge: edge),
             operation: .placement,
@@ -486,14 +578,28 @@ struct UltrawideDockInteraction {
             return resizeDivider(after: afterID, to: tile.frame.maxX + delta)
         }
 
-        guard case let .place(edge) = output.target else { return output }
-        standaloneWidth = (standaloneWidth + delta).clamped(to: engine.minimumWidth ... 1)
-        if let stop = Self.standaloneStops.min(by: {
-            abs($0 - standaloneWidth) < abs($1 - standaloneWidth)
-        }), abs(stop - standaloneWidth) <= 0.015 {
-            standaloneWidth = stop
+        switch output.target {
+        case .place, .insert:
+            let base = requestedWidth ?? currentPreviewWidth ?? 0.5
+            requestedWidth = Self.snapped((base + delta).clamped(to: engine.minimumWidth ... 1))
+            return placementOutput(at: lastPointerX)
+        default:
+            return output
         }
-        return standaloneOutput(edge: edge)
+    }
+
+    /// Keeps the common fractions exactly reachable while the wheel is otherwise continuous.
+    private static func snapped(_ width: CGFloat) -> CGFloat {
+        guard let stop = widthStops.min(by: { abs($0 - width) < abs($1 - width) }),
+              abs(stop - width) <= 0.015
+        else {
+            return width
+        }
+        return stop
+    }
+
+    private var currentPreviewWidth: CGFloat? {
+        output.previews.first { $0.containsCurrent }?.frame.width
     }
 
     private func layoutOutput(
@@ -532,6 +638,27 @@ struct UltrawideDockInteraction {
     private var currentPlan: HorizontalLayoutPlan? {
         guard case let .layout(plan, _) = output.commit else { return nil }
         return plan
+    }
+
+    /// Wide enough to grab without precision aiming, but never so wide that it swallows the stack
+    /// zone of a narrow neighbour.
+    private func dividerHitRadius(after afterID: HorizontalLayoutTileID) -> CGFloat {
+        min(
+            Self.maximumDividerHitRadius,
+            0.2 * narrowestTileWidth(around: afterID, in: scene.layout)
+        )
+    }
+
+    private func narrowestTileWidth(
+        around afterID: HorizontalLayoutTileID,
+        in snapshot: HorizontalLayoutSnapshot
+    ) -> CGFloat {
+        guard let index = snapshot.tiles.firstIndex(where: { $0.id == afterID }),
+              snapshot.tiles.indices.contains(index + 1)
+        else {
+            return 1
+        }
+        return min(snapshot.tiles[index].frame.width, snapshot.tiles[index + 1].frame.width)
     }
 
     private func nearestDivider(to x: CGFloat) -> (afterID: HorizontalLayoutTileID, position: CGFloat)? {

@@ -8,6 +8,9 @@ final class UltrawideDockViewModel: ObservableObject {
         let frame: CGRect
         let containsCurrent: Bool
         let zIndex: Int
+        /// Overlapping windows that the row cannot represent. They are drawn so the dock never shows
+        /// free space where a real window is, but they are never a target and never get moved.
+        let isExcluded: Bool
 
         var stackCount: Int { memberIDs.count }
     }
@@ -136,11 +139,12 @@ final class UltrawideDockViewModel: ObservableObject {
                     memberIDs: [$0.id],
                     frame: $0.normalizedFrame,
                     containsCurrent: $0.isCurrent,
-                    zIndex: $0.zIndex
+                    zIndex: $0.zIndex,
+                    isExcluded: true
                 )
             }
             dividers = []
-            operationTitle = window == nil ? "No movable window selected" : "Overlapping row needs a clear slot"
+            operationTitle = window == nil ? "No movable window selected" : "No usable row on this screen"
             interactionHint = "Esc cancels"
             percentageFeedback = Self.percentages(slots.map(\.frame))
             return
@@ -153,7 +157,19 @@ final class UltrawideDockViewModel: ObservableObject {
                 memberIDs: slot.memberIDs,
                 frame: slot.frame,
                 containsCurrent: slot.contains(runtime.currentID),
-                zIndex: memberWindows.map(\.zIndex).min() ?? 0
+                zIndex: memberWindows.map(\.zIndex).min() ?? 0,
+                isExcluded: false
+            )
+        }
+        slots += runtime.scene.excludedWindowIDs.compactMap { windowID in
+            guard let window = runtime.windows.first(where: { $0.id == windowID }) else { return nil }
+            return SlotFrame(
+                id: window.id,
+                memberIDs: [window.id],
+                frame: window.normalizedFrame,
+                containsCurrent: false,
+                zIndex: window.zIndex,
+                isExcluded: true
             )
         }
         dividers = Self.dividers(in: runtime.scene.layout)
@@ -161,7 +177,7 @@ final class UltrawideDockViewModel: ObservableObject {
             scene: runtime.scene,
             minimumWidth: HorizontalLayoutRuntimeAdapter.minimumWidth
         )
-        percentageFeedback = Self.percentages(slots.map(\.frame))
+        percentageFeedback = Self.percentages(runtime.scene.slots.map(\.frame))
     }
 
     @discardableResult
@@ -245,7 +261,10 @@ final class UltrawideDockViewModel: ObservableObject {
             in: runtime.scene
         )
 
-        guard !changes.windowIDs.isEmpty else { return }
+        guard !changes.windowIDs.isEmpty else {
+            percentageFeedback = Self.percentages(runtime.scene.slots.map(\.frame))
+            return
+        }
 
         previewFrames = plan.snapshot.tiles.compactMap { tile in
             guard changes.tileIDs.contains(tile.id) else { return nil }
@@ -357,7 +376,12 @@ final class UltrawideDockViewModel: ObservableObject {
         switch operation {
         case .stack: "Release stacks · existing windows stay put · Esc cancels"
         case .resizeReady: "Hold click and drag · scroll fine-tunes · Esc cancels"
-        case .resize: "Release applies · Esc cancels"
+        case .resize: "Release applies · move away to pick something else"
+        case .placement: "Scroll resizes · release applies · Esc cancels"
+        case let .insert(rebalanced):
+            rebalanced
+                ? "Row splits evenly · drag a divider afterwards · Esc cancels"
+                : "Scroll resizes · release applies · Esc cancels"
         case .current: "Move away or press Esc"
         case .unavailable: "Choose more space · Esc cancels"
         default: "Release applies · Esc cancels"

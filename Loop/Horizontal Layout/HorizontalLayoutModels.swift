@@ -105,6 +105,9 @@ public enum HorizontalLayoutQuickProfile: Equatable, Sendable {
 public enum HorizontalLayoutIntent: Equatable, Sendable {
     case moveDivider(after: HorizontalLayoutTileID, to: CGFloat)
     case insert(HorizontalLayoutTileID, near: CGFloat)
+    /// Insert at an explicit span instead of letting the row decide the width. The span must be
+    /// entirely free, so this never displaces an existing tile.
+    case place(HorizontalLayoutTileID, at: HorizontalLayoutSpan)
     case swap(HorizontalLayoutTileID, HorizontalLayoutTileID)
     case move(HorizontalLayoutTileID, toIndex: Int)
     case replace(

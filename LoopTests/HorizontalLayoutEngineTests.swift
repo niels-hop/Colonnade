@@ -160,6 +160,44 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         }
     }
 
+    func testPlaceAcceptsOnlyAFreeSpanThatFitsTheMinimumWidth() throws {
+        let engine = try HorizontalLayoutEngine(minimumWidth: 0.1)
+        let incoming = HorizontalLayoutTileID(rawValue: "incoming")
+        let input = try snapshot([
+            tile(a, x: 0, width: 0.37),
+            tile(b, x: 0.8, width: 0.2),
+        ])
+
+        let plan = try engine.plan(
+            .place(incoming, at: HorizontalLayoutSpan(x: 0.37, width: 0.43)),
+            from: input
+        )
+        XCTAssertEqual(plan.snapshot.tiles.map(\.id), [a, incoming, b])
+        assertFrame(plan.snapshot.tiles[1], x: 0.37, width: 0.43)
+        assertInvariants(plan)
+
+        XCTAssertThrowsError(try engine.plan(
+            .place(incoming, at: HorizontalLayoutSpan(x: 0.3, width: 0.3)),
+            from: input
+        )) { error in
+            XCTAssertEqual(error as? HorizontalLayoutError, .destinationOccupied)
+        }
+
+        XCTAssertThrowsError(try engine.plan(
+            .place(incoming, at: HorizontalLayoutSpan(x: 0.5, width: 0.05)),
+            from: input
+        )) { error in
+            XCTAssertEqual(error as? HorizontalLayoutError, .invalidDestination)
+        }
+
+        XCTAssertThrowsError(try engine.plan(
+            .place(a, at: HorizontalLayoutSpan(x: 0.4, width: 0.3)),
+            from: input
+        )) { error in
+            XCTAssertEqual(error as? HorizontalLayoutError, .duplicateTileID(a))
+        }
+    }
+
     func testBalanceWholeRowAndContiguousRangePreserveOuterBounds() throws {
         let engine = try HorizontalLayoutEngine(minimumWidth: 0.1)
         let input = try snapshot([

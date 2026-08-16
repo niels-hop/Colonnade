@@ -246,21 +246,42 @@ final class UltrawideDockInteractionTests: XCTestCase {
         XCTAssertTrue(membersByTileID.values.contains([a]))
     }
 
-    func testPartialOverlapIsRejectedInsteadOfSilentlyMovingWindows() {
-        XCTAssertThrowsError(try UltrawideDockScene(
-            windows: [
-                window(a, x: 0, width: 0.6, zIndex: 0),
-                window(b, x: 0.5, width: 0.5, zIndex: 1),
-            ],
-            currentID: a,
-            frameTolerance: 0.001
-        )) { error in
-            XCTAssertEqual(error as? HorizontalLayoutError, .overlappingOrUnordered(b))
+    func testPartialOverlapExcludesOneWindowInsteadOfDisablingTheDock() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.6, zIndex: 0),
+            window(b, x: 0.5, width: 0.5, zIndex: 1),
+        ])
+
+        // The narrower window loses its place in the row, but it is never planned and therefore
+        // never moved — the dock stays usable instead of going inert.
+        XCTAssertEqual(interaction.scene.slots.map(\.id), [a])
+        XCTAssertEqual(interaction.scene.excludedWindowIDs, [b])
+
+        let output = interaction.handle(.move(to: 0.8))
+        guard case let .layout(plan, membersByTileID) = output.commit else {
+            return XCTFail("Expected the dock to still offer a placement")
         }
+        XCTAssertFalse(plan.snapshot.tiles.contains { $0.id == b })
+        XCTAssertFalse(membersByTileID.values.flatMap { $0 }.contains(b))
+    }
+
+    func testOneNarrowOverlappingWindowDoesNotEvictTheWideOnesAroundIt() throws {
+        let scene = try UltrawideDockScene(
+            windows: [
+                window(a, x: 0, width: 0.5, zIndex: 2),
+                window(current, x: 0.45, width: 0.1, zIndex: 0),
+                window(b, x: 0.55, width: 0.45, zIndex: 1),
+            ],
+            currentID: HorizontalLayoutTileID(rawValue: "absent"),
+            frameTolerance: 0.001
+        )
+
+        XCTAssertEqual(scene.slots.map(\.id), [a, b])
+        XCTAssertEqual(scene.excludedWindowIDs, [current])
     }
 
     func testCurrentOverlappingWindowCanReenterAnOtherwiseValidRow() throws {
-        let scene = try UltrawideDockSceneBuilder.makeRuntimeScene(
+        let scene = try UltrawideDockScene(
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 1),
                 window(b, x: 0.5, width: 0.5, zIndex: 2),
@@ -272,6 +293,95 @@ final class UltrawideDockInteractionTests: XCTestCase {
 
         XCTAssertEqual(scene.slots.map(\.id), [a, b])
         XCTAssertNil(scene.currentSlot)
+        XCTAssertTrue(scene.excludedWindowIDs.isEmpty)
+    }
+
+    func testFinishedResizeSurvivesPointerJitterAfterTheButtonIsReleased() throws {
+        var interaction = try makeInteraction(
+            windows: [
+                window(a, x: 0, width: 0.5, zIndex: 0),
+                window(b, x: 0.5, width: 0.5, zIndex: 1),
+            ],
+            currentID: a
+        )
+
+        _ = interaction.handle(.move(to: 0.5))
+        _ = interaction.handle(.pointerDown(at: 0.5))
+        _ = interaction.handle(.drag(to: 0.7))
+        _ = interaction.handle(.pointerUp(at: 0.7))
+
+        let jittered = interaction.handle(.move(to: 0.702))
+
+        XCTAssertEqual(jittered.operation, .resize)
+        guard case let .layout(plan, _) = jittered.commit else {
+            return XCTFail("Expected the finished resize to survive")
+        }
+        assertFrame(plan.snapshot.tiles[0].frame, x: 0, width: 0.7)
+    }
+
+    func testMovingAwayAfterAResizeStillPicksANewTarget() throws {
+        var interaction = try makeInteraction(
+            windows: [
+                window(a, x: 0, width: 0.5, zIndex: 0),
+                window(b, x: 0.5, width: 0.5, zIndex: 1),
+            ],
+            currentID: a
+        )
+
+        _ = interaction.handle(.move(to: 0.5))
+        _ = interaction.handle(.pointerDown(at: 0.5))
+        _ = interaction.handle(.drag(to: 0.7))
+        _ = interaction.handle(.pointerUp(at: 0.7))
+
+        let moved = interaction.handle(.move(to: 0.75))
+
+        XCTAssertEqual(moved.target, .stack(slotID: b))
+    }
+
+    func testScrollResizesAWindowBeingInsertedIntoFreeSpace() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.5, zIndex: 0),
+        ])
+
+        _ = interaction.handle(.move(to: 0.8))
+        let scrolled = interaction.handle(.scroll(delta: -0.2))
+
+        guard case let .layout(plan, _) = scrolled.commit else {
+            return XCTFail("Expected a narrower insertion")
+        }
+        assertFrame(plan.snapshot.tiles[0].frame, x: 0, width: 0.5)
+        assertFrame(plan.snapshot.tiles[1].frame, x: 0.65, width: 0.3)
+    }
+
+    /// A gap whose width does not round-trip cleanly through subtraction. Computing the placement
+    /// bounds in the wrong order produces an inverted range here, so this pins the exact fit.
+    func testInsertionFillsAGapWithAnAwkwardBoundaryExactly() throws {
+        for tileWidth in [0.1, 0.37, 0.45] {
+            var interaction = try makeInteraction(windows: [
+                window(a, x: 0, width: tileWidth, zIndex: 0),
+            ])
+
+            let output = interaction.handle(.move(to: 0.9))
+
+            guard case let .layout(plan, _) = output.commit else {
+                return XCTFail("Expected the free gap after \(tileWidth) to be filled, not rejected")
+            }
+            assertFrame(plan.snapshot.tiles[1].frame, x: tileWidth, width: 1 - tileWidth)
+        }
+    }
+
+    func testInsertionWidthStaysInsideItsFreeGap() throws {
+        var interaction = try makeInteraction(windows: [
+            window(a, x: 0, width: 0.7, zIndex: 0),
+        ])
+
+        _ = interaction.handle(.move(to: 0.9))
+        let scrolled = interaction.handle(.scroll(delta: 0.5))
+
+        guard case let .layout(plan, _) = scrolled.commit else {
+            return XCTFail("Expected an insertion clamped to the free gap")
+        }
+        assertFrame(plan.snapshot.tiles[1].frame, x: 0.7, width: 0.3)
     }
 
     private func makeInteraction(

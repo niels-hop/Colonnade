@@ -23,6 +23,8 @@ public struct HorizontalLayoutEngine: Sendable {
             return try moveDivider(after: id, to: position, in: snapshot)
         case let .insert(id, position):
             return try insert(id, near: position, in: snapshot)
+        case let .place(id, span):
+            return try place(id, at: span, in: snapshot)
         case let .swap(first, second):
             return try swap(first, second, in: snapshot)
         case let .move(id, index):
@@ -112,6 +114,33 @@ public struct HorizontalLayoutEngine: Sendable {
 
         adjustments.append(.fullRowRebalanced)
         return try makePlan(equalTiles(ids: ids, x: 0, width: 1), adjustments: adjustments)
+    }
+
+    private func place(
+        _ id: HorizontalLayoutTileID,
+        at span: HorizontalLayoutSpan,
+        in snapshot: HorizontalLayoutSnapshot
+    ) throws -> HorizontalLayoutPlan {
+        guard !id.rawValue.isEmpty else {
+            throw HorizontalLayoutError.emptyTileID
+        }
+        guard !snapshot.tiles.contains(where: { $0.id == id }) else {
+            throw HorizontalLayoutError.duplicateTileID(id)
+        }
+        guard span.x.isFinite,
+              span.width.isFinite,
+              span.x >= 0,
+              span.width >= minimumWidth,
+              span.x + span.width <= 1
+        else {
+            throw HorizontalLayoutError.invalidDestination
+        }
+        guard snapshot.tiles.allSatisfy({ !$0.frame.intersects(span.frame) }) else {
+            throw HorizontalLayoutError.destinationOccupied
+        }
+
+        let tiles = (snapshot.tiles + [tile(id, x: span.x, width: span.width)]).sortedByPosition()
+        return try makePlan(tiles, adjustments: [.insertedIntoFreeSpace(span)])
     }
 
     private func swap(
@@ -279,7 +308,9 @@ public struct HorizontalLayoutEngine: Sendable {
         }
     }
 
-    private func freeSpans(in snapshot: HorizontalLayoutSnapshot) -> [HorizontalLayoutSpan] {
+    /// Every horizontal range not covered by a tile. Callers use this to offer explicit placements
+    /// inside free space instead of accepting whatever width `insert` picks.
+    public func freeSpans(in snapshot: HorizontalLayoutSnapshot) -> [HorizontalLayoutSpan] {
         var spans: [HorizontalLayoutSpan] = []
         var cursor: CGFloat = 0
 

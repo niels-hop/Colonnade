@@ -14,7 +14,11 @@ final class UltrawideDockController {
 
     private var controller: NSWindowController?
     private var viewModel: UltrawideDockViewModel?
+    /// Maps pointer movement onto the mini-screen. Anchored on the panel, not on the pointer.
     private var activationMouseX: CGFloat = 0
+    /// Where the pointer actually was at activation. Only the dead zone uses this, so opening the
+    /// dock near a screen edge still requires real movement before anything is selected.
+    private var activationPointerX: CGFloat = 0
     private var interactionSpan: CGFloat = 1
     private var hasLeftDeadZone = false
 
@@ -85,7 +89,13 @@ final class UltrawideDockController {
 
         // Keep the user's cursor exactly where it was. Horizontal motion from this activation
         // point maps across the mini-screen, which keeps the two-keys-plus-mouse gesture compact.
-        activationMouseX = pointer.x
+        //
+        // The anchor is the panel's centre, not the raw pointer: near a screen edge the panel gets
+        // clamped away from the cursor, and anchoring on the pointer would then put the highlighted
+        // target somewhere other than where the cursor sits on the mini-screen. Unclamped, the two
+        // are identical.
+        activationMouseX = originX + panelWidth / 2
+        activationPointerX = pointer.x
         interactionSpan = max(1, dockWidth - 20)
         hasLeftDeadZone = false
 
@@ -127,7 +137,7 @@ final class UltrawideDockController {
     func updateForMouseX(_ screenMouseX: Double) -> WindowAction? {
         let screenX = CGFloat(screenMouseX)
         if !hasLeftDeadZone {
-            guard abs(screenX - activationMouseX) >= Self.pointerDeadZone else {
+            guard abs(screenX - activationPointerX) >= Self.pointerDeadZone else {
                 return viewModel?.currentAction
             }
             hasLeftDeadZone = true

@@ -3,8 +3,9 @@ import Foundation
 
 /// Pure geometry used by the Accessibility adapter and its standalone tests.
 enum HorizontalLayoutRuntimeGeometry {
-    /// Bridges only tiny visual gaps introduced by configured inner padding. Real free space remains
-    /// explicit and overlapping rows are rejected by `HorizontalLayoutSnapshot`.
+    /// Bridges only the tiny gaps and rounding-sized intersections introduced by configured inner
+    /// padding. Real free space remains explicit and genuinely overlapping rows are rejected by
+    /// `HorizontalLayoutSnapshot`.
     static func makeSnapshot(
         from input: [HorizontalLayoutTile],
         adjacencyTolerance: CGFloat
@@ -20,11 +21,15 @@ enum HorizontalLayoutRuntimeGeometry {
         var frames = sorted.map(\.frame)
         for index in 0 ..< frames.count - 1 {
             let gap = frames[index + 1].minX - frames[index].maxX
-            guard gap >= 0 else {
+            guard abs(gap) <= adjacencyTolerance else {
+                // A real overlap is reported rather than repaired; a real gap stays a real gap.
+                if gap < 0 { return try HorizontalLayoutSnapshot(tiles: sorted) }
+                continue
+            }
+            let boundary = (frames[index].maxX + frames[index + 1].minX) / 2
+            guard boundary > frames[index].minX, boundary < frames[index + 1].maxX else {
                 return try HorizontalLayoutSnapshot(tiles: sorted)
             }
-            guard gap <= adjacencyTolerance else { continue }
-            let boundary = (frames[index].maxX + frames[index + 1].minX) / 2
             frames[index].size.width = boundary - frames[index].minX
             let nextMaxX = frames[index + 1].maxX
             frames[index + 1].origin.x = boundary

@@ -111,6 +111,11 @@ struct UltrawideDockView: View {
         let stackTarget = viewModel.activeTargetID == "stack:\(slot.id.rawValue)"
         let currentTarget = viewModel.activeTargetID == "current:\(slot.id.rawValue)"
         let targetColor = stackTarget ? accentColorController.color1 : Color.white.opacity(0.32)
+        // An excluded window is real but outside the row: shown so its space never looks free,
+        // drawn flatter so it reads as "not part of this layout".
+        let fill = slot.isExcluded
+            ? Color.gray.opacity(0.22)
+            : Color.gray.opacity(slot.containsCurrent ? 0.52 : 0.4)
         let frameSize = CGSize(
             width: max(0, slot.frame.width * mapSize.width),
             height: max(0, slot.frame.height * mapSize.height)
@@ -126,12 +131,18 @@ struct UltrawideDockView: View {
             }
 
             RoundedRectangle(cornerRadius: 5)
-                .fill(Color.gray.opacity(slot.containsCurrent ? 0.52 : 0.4))
+                .fill(fill)
                 .overlay(
                     RoundedRectangle(cornerRadius: 5)
-                        .stroke(targetColor, lineWidth: stackTarget || currentTarget ? 2.5 : 1)
+                        .stroke(
+                            targetColor,
+                            style: StrokeStyle(
+                                lineWidth: stackTarget || currentTarget ? 2.5 : 1,
+                                dash: slot.isExcluded ? [3, 3] : []
+                            )
+                        )
                 )
-                .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
+                .shadow(color: Color.black.opacity(slot.isExcluded ? 0 : 0.2), radius: 2, x: 0, y: 1)
 
             if stackTarget {
                 VStack(spacing: 3) {

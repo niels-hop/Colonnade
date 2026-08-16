@@ -128,7 +128,7 @@ struct HorizontalLayoutRuntimeAdapter {
         windowsByID[currentID] = currentWindow
 
         do {
-            let scene = try UltrawideDockSceneBuilder.makeRuntimeScene(
+            let scene = try UltrawideDockScene(
                 windows: displayWindows.map {
                     UltrawideDockWindowSnapshot(id: $0.id, frame: $0.normalizedFrame, zIndex: $0.zIndex)
                 },
@@ -146,8 +146,8 @@ struct HorizontalLayoutRuntimeAdapter {
             )
             return HorizontalLayoutRuntimeCapture(displayWindows: displayWindows, snapshot: runtime)
         } catch {
-            // Exact overlaps are grouped into stacks by `UltrawideDockScene`. Other overlaps remain
-            // invalid because silently repairing partially intersecting windows would be destructive.
+            // `UltrawideDockScene` stacks exact overlaps and excludes partially intersecting windows
+            // from the row, so this is only reached for genuinely unusable geometry.
             return HorizontalLayoutRuntimeCapture(displayWindows: displayWindows, snapshot: nil)
         }
     }
