@@ -296,7 +296,9 @@ enum UltrawideDockEvent: Equatable, Sendable {
 struct UltrawideDockInteraction {
     private static let maximumDividerHitRadius: CGFloat = 0.03
     private static let maximumResizeHoldRadius: CGFloat = 0.04
+    private static let clickMovementTolerance: CGFloat = 0.01
     private static let stackZone: ClosedRange<CGFloat> = 0.22 ... 0.78
+    private static let clickWidthCycle: [CGFloat] = [0.5, 1 / 3, 0.25]
     private static let widthStops: [CGFloat] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 1]
     private static let edgeAlignmentTolerance: CGFloat = 0.005
 
@@ -311,6 +313,10 @@ struct UltrawideDockInteraction {
     /// Where the pointer was when a divider drag ended. Small movements around that spot keep the
     /// finished resize instead of silently trading it for whatever target sits under the pointer.
     private var heldResizeAtX: CGFloat?
+    /// A button press becomes a size-cycle click only when it comes back up without a deliberate
+    /// horizontal drag. Divider presses keep their existing drag-only behavior.
+    private var pointerDownX: CGFloat?
+    private var pointerTravelSinceDown: CGFloat = 0
     private var lastPointerX: CGFloat = 0.5
     /// Guards the mode switch: toggling before the pointer has been anywhere must not conjure a
     /// placement out of the default centre position.
@@ -325,9 +331,21 @@ struct UltrawideDockInteraction {
     @discardableResult
     mutating func handle(_ event: UltrawideDockEvent) -> UltrawideDockOutput {
         switch event {
-        case let .move(position), let .drag(position):
+        case let .move(position):
             lastPointerX = position.clamped(to: 0 ... 1)
             hasPointerPosition = true
+            if let draggingDividerAfterID {
+                output = resizeDivider(after: draggingDividerAfterID, to: lastPointerX)
+            } else if !isHoldingFinishedResize(at: lastPointerX) {
+                heldResizeAtX = nil
+                output = selectTarget(at: lastPointerX)
+            }
+        case let .drag(position):
+            lastPointerX = position.clamped(to: 0 ... 1)
+            hasPointerPosition = true
+            if let pointerDownX {
+                pointerTravelSinceDown = max(pointerTravelSinceDown, abs(lastPointerX - pointerDownX))
+            }
             if let draggingDividerAfterID {
                 output = resizeDivider(after: draggingDividerAfterID, to: lastPointerX)
             } else if !isHoldingFinishedResize(at: lastPointerX) {
@@ -337,6 +355,8 @@ struct UltrawideDockInteraction {
         case let .pointerDown(position):
             lastPointerX = position.clamped(to: 0 ... 1)
             hasPointerPosition = true
+            pointerDownX = lastPointerX
+            pointerTravelSinceDown = 0
             let target = interactionTarget(at: lastPointerX)
             if case let .divider(afterID) = target {
                 heldResizeAtX = nil
@@ -352,10 +372,19 @@ struct UltrawideDockInteraction {
         case let .pointerUp(position):
             lastPointerX = position.clamped(to: 0 ... 1)
             hasPointerPosition = true
+            if let pointerDownX {
+                pointerTravelSinceDown = max(pointerTravelSinceDown, abs(lastPointerX - pointerDownX))
+            }
             if draggingDividerAfterID != nil {
                 draggingDividerAfterID = nil
                 heldResizeAtX = output.operation == .resize ? lastPointerX : nil
+            } else if pointerDownX != nil,
+                      pointerTravelSinceDown <= Self.clickMovementTolerance {
+                heldResizeAtX = nil
+                output = cyclePlacementWidth()
             }
+            pointerDownX = nil
+            pointerTravelSinceDown = 0
         case let .scroll(delta):
             output = adjust(by: delta)
         case let .setFreeform(enabled):
@@ -369,6 +398,8 @@ struct UltrawideDockInteraction {
         case .cancel:
             draggingDividerAfterID = nil
             heldResizeAtX = nil
+            pointerDownX = nil
+            pointerTravelSinceDown = 0
             requestedWidth = nil
             output = .idle
         }
@@ -682,6 +713,21 @@ struct UltrawideDockInteraction {
         default:
             return output
         }
+    }
+
+    /// A normal click selects the next common full-screen fraction. The width is sticky, so the
+    /// existing horizontal pointer mapping can keep positioning that same shape without changing
+    /// any of its target zones.
+    private mutating func cyclePlacementWidth() -> UltrawideDockOutput {
+        let currentWidth = requestedWidth ?? currentPreviewWidth ?? 0.5
+        if let index = Self.clickWidthCycle.firstIndex(where: {
+            abs($0 - currentWidth) <= 0.015
+        }) {
+            requestedWidth = Self.clickWidthCycle[(index + 1) % Self.clickWidthCycle.count]
+        } else {
+            requestedWidth = Self.clickWidthCycle[0]
+        }
+        return selectTarget(at: lastPointerX)
     }
 
     private func adjustedWidth(by delta: CGFloat, default defaultWidth: CGFloat) -> CGFloat {

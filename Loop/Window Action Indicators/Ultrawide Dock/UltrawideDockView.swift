@@ -249,6 +249,14 @@ struct UltrawideDockView: View {
                     Image(systemName: "rectangle.stack.fill")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.85))
+                } else if preview.isCurrent,
+                          let fraction = Self.commonFractionLabel(for: preview.frame.width) {
+                    Text(fraction)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(.black.opacity(0.22), in: Capsule())
                 }
             }
             .frame(
@@ -263,5 +271,14 @@ struct UltrawideDockView: View {
                 y: preview.isFloating ? 4 : 2
             )
             .zIndex(preview.isFloating ? 1300 : (preview.isCurrent ? 1000 : 900))
+    }
+
+    private static func commonFractionLabel(for width: CGFloat) -> String? {
+        let fractions: [(width: CGFloat, label: String)] = [
+            (0.5, "1/2"),
+            (1 / 3, "1/3"),
+            (0.25, "1/4"),
+        ]
+        return fractions.first { abs($0.width - width) <= 0.005 }?.label
     }
 }

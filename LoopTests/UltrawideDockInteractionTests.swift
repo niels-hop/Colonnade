@@ -55,6 +55,41 @@ final class UltrawideDockInteractionTests: XCTestCase {
         assertWindowCommit(adjusted, x: 0, width: 2 / 3)
     }
 
+    func testClickCyclesStandaloneWidthThroughHalfThirdQuarter() throws {
+        var interaction = try makeInteraction(windows: [])
+
+        _ = interaction.handle(.move(to: 0.1))
+        _ = interaction.handle(.pointerDown(at: 0.1))
+        assertWindowCommit(interaction.handle(.pointerUp(at: 0.1)), x: 0, width: 1 / 3)
+
+        _ = interaction.handle(.pointerDown(at: 0.1))
+        assertWindowCommit(interaction.handle(.pointerUp(at: 0.1)), x: 0, width: 0.25)
+
+        _ = interaction.handle(.pointerDown(at: 0.1))
+        assertWindowCommit(interaction.handle(.pointerUp(at: 0.1)), x: 0, width: 0.5)
+    }
+
+    func testClickSelectedWidthFollowsLaterHorizontalMouseMovement() throws {
+        var interaction = try makeInteraction(windows: [])
+
+        _ = interaction.handle(.move(to: 0.1))
+        _ = interaction.handle(.pointerDown(at: 0.1))
+        _ = interaction.handle(.pointerUp(at: 0.1))
+
+        assertWindowCommit(interaction.handle(.move(to: 0.9)), x: 2 / 3, width: 1 / 3)
+    }
+
+    func testPlacementDragDoesNotAlsoCycleWidthOnRelease() throws {
+        var interaction = try makeInteraction(windows: [])
+
+        _ = interaction.handle(.move(to: 0.1))
+        _ = interaction.handle(.pointerDown(at: 0.1))
+        _ = interaction.handle(.drag(to: 0.9))
+        let released = interaction.handle(.pointerUp(at: 0.9))
+
+        assertWindowCommit(released, x: 0.5, width: 0.5)
+    }
+
     func testOccupiedTileCenterStacksWithoutChangingExistingSlots() throws {
         let windows = [
             window(a, x: 0, width: 0.5, zIndex: 0),

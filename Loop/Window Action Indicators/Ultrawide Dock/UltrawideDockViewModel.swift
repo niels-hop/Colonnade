@@ -39,7 +39,7 @@ final class UltrawideDockViewModel: ObservableObject {
     @Published private(set) var activeTargetPosition: CGFloat?
     @Published private(set) var operationTitle = "Move to place · window center stacks"
     @Published private(set) var percentageFeedback = ""
-    @Published private(set) var interactionHint = "Release applies · Esc cancels"
+    @Published private(set) var interactionHint = "Click: 1/2 → 1/3 → 1/4 · scroll fine-tunes · Esc cancels"
     @Published private(set) var cursor: UltrawideDockCursor = .arrow
     /// Drives the free-placement lane in the view. It follows the pointer's mode, not the reducer's
     /// output, so the lane also lights up on a screen where no row could be built.
@@ -136,7 +136,7 @@ final class UltrawideDockViewModel: ObservableObject {
         activeTargetPosition = nil
         cursor = .arrow
         operationTitle = "Move to place · window center stacks"
-        interactionHint = "Release applies · Esc cancels"
+        interactionHint = "Click: 1/2 → 1/3 → 1/4 · scroll fine-tunes · Esc cancels"
 
         guard let screen else {
             runtime = nil
@@ -411,15 +411,16 @@ final class UltrawideDockViewModel: ObservableObject {
 
     private static func hint(for operation: UltrawideDockOperation) -> String {
         switch operation {
+        case .idle: "Click: 1/2 → 1/3 → 1/4 · scroll fine-tunes · Esc cancels"
         case .stack: "Release stacks · existing windows stay put · Esc cancels"
         case .resizeReady: "Hold click and drag · scroll fine-tunes · Esc cancels"
         case .resize: "Release applies · move away to pick something else"
-        case .placement: "Scroll resizes · release applies · Esc cancels"
-        case .freePlacement: "Scroll resizes · move up to rejoin the row · Esc cancels"
+        case .placement: "Click: 1/2 → 1/3 → 1/4 · scroll fine-tunes · release applies"
+        case .freePlacement: "Click cycles size · scroll fine-tunes · move up to rejoin row"
         case let .insert(rebalanced):
             rebalanced
                 ? "Row splits evenly · drag a divider afterwards · Esc cancels"
-                : "Scroll resizes · release applies · Esc cancels"
+                : "Click: 1/2 → 1/3 → 1/4 · scroll fine-tunes · release applies"
         case .current: "Move away or press Esc"
         case .unavailable: "Choose more space · Esc cancels"
         default: "Release applies · Esc cancels"
