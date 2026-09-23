@@ -1,6 +1,6 @@
 //
 //  WindowAction+Image.swift
-//  Loop
+//  Colonnade
 //
 //  Created by phlpsong on 2024/3/30.
 //

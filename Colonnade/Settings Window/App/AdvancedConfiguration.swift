@@ -1,6 +1,6 @@
 //
 //  AdvancedConfiguration.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2024-04-26.
 //

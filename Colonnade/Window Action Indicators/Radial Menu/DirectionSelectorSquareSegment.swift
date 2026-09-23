@@ -1,6 +1,6 @@
 //
 //  DirectionSelectorSquareSegment.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2023-08-19.
 //

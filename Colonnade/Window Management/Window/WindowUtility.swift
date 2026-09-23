@@ -1,6 +1,6 @@
 //
 //  WindowUtility.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2025-09-06.
 //

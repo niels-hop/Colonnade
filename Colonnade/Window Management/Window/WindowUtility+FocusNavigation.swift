@@ -1,6 +1,6 @@
 //
 //  WindowUtility+FocusNavigation.swift
-//  Loop
+//  Colonnade
 //
 //  Created by cipher-shad0w on 2025-10-30.
 //

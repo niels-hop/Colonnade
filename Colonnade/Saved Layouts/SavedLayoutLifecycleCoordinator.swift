@@ -1,6 +1,6 @@
 //
 //  SavedLayoutLifecycleCoordinator.swift
-//  Loop
+//  Colonnade
 //
 //  Debounced launch, wake, display-change, and Space-change restore integration.
 //

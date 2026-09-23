@@ -1,6 +1,6 @@
 //
 //  TriggerKeyTimeoutTimer.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kami on 06/01/2026.
 //

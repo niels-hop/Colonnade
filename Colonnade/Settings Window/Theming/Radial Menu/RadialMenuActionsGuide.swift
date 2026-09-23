@@ -1,6 +1,6 @@
 //
 //  RadialMenuActionsGuide.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2026-01-01.
 //

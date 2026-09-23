@@ -1,6 +1,6 @@
 //
 //  SavedLayoutManager.swift
-//  Loop
+//  Colonnade
 //
 //  Small save/restore coordinator built on Window Awareness and WindowActionEngine.
 //

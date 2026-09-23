@@ -1,6 +1,6 @@
 //
 //  CycleActionConfigurationView.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2024-05-03.
 //

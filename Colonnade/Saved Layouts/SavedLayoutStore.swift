@@ -1,6 +1,6 @@
 //
 //  SavedLayoutStore.swift
-//  Loop
+//  Colonnade
 //
 //  Atomic, per-account persistence for saved layouts and their privacy salt.
 //

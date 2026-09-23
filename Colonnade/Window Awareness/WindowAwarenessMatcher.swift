@@ -1,6 +1,6 @@
 //
 //  WindowAwarenessMatcher.swift
-//  Loop
+//  Colonnade
 //
 //  Conservative pure matching and reconciliation for persisted window snapshots.
 //

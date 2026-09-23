@@ -1,6 +1,6 @@
 //
 //  SLSWindowTags.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2026-04-29.
 //

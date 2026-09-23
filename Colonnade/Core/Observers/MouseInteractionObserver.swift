@@ -1,6 +1,6 @@
 //
 //  MouseInteractionObserver.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2025-11-11.
 //

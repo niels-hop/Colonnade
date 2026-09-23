@@ -1,6 +1,6 @@
 //
 //  WindowAwarenessModels.swift
-//  Loop
+//  Colonnade
 //
 //  Persistent, privacy-conscious descriptions of Loop-managed windows.
 //

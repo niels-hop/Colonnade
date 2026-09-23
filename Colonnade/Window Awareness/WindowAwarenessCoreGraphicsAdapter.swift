@@ -1,6 +1,6 @@
 //
 //  WindowAwarenessCoreGraphicsAdapter.swift
-//  Loop
+//  Colonnade
 //
 //  Ephemeral CoreGraphics bindings kept outside the persistent awareness model.
 //

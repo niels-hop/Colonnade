@@ -1,6 +1,6 @@
 //
 //  WallpaperProcessor.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kami on 27/06/2024.
 //

@@ -1,6 +1,6 @@
 //
 //  StashedWindowInfo.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Guillaume Clédat on 28/05/2025.
 //

@@ -1,6 +1,6 @@
 //
 //  SkyLightBridgedSPI.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2026-07-02.
 //  Thanks to Stephan Casas for originally showing me these private space-switching APIs :)

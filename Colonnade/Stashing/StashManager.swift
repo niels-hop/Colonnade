@@ -1,6 +1,6 @@
 //
 //  StashManager.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Guillaume Clédat on 22/05/2025.
 //

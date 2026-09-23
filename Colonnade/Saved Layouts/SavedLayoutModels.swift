@@ -1,6 +1,6 @@
 //
 //  SavedLayoutModels.swift
-//  Loop
+//  Colonnade
 //
 //  Durable, privacy-conscious models for the three fixed saved-layout slots.
 //

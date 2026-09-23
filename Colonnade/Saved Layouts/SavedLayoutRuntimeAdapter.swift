@@ -1,6 +1,6 @@
 //
 //  SavedLayoutRuntimeAdapter.swift
-//  Loop
+//  Colonnade
 //
 //  Ephemeral bindings from manageable windows to privacy-conscious awareness identities.
 //

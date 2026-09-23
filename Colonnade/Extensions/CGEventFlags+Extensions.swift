@@ -1,6 +1,6 @@
 //
 //  CGEventFlags+Extensions.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2025-10-11.
 //

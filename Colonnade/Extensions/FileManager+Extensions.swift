@@ -1,6 +1,6 @@
 //
 //  FileManager+Extensions.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2026-02-25.
 //

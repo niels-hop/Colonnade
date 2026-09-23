@@ -1,6 +1,6 @@
 //
 //  ActionPreview.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2026-03-09.
 //

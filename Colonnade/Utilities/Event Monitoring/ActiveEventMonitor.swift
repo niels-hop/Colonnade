@@ -1,6 +1,6 @@
 //
 //  ActiveEventMonitor.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2025-10-12.
 //

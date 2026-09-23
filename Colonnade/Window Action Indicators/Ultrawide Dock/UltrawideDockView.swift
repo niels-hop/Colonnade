@@ -1,6 +1,6 @@
 //
 //  UltrawideDockView.swift
-//  Loop
+//  Colonnade
 //
 
 import Luminare

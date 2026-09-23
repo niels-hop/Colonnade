@@ -1,6 +1,6 @@
 //
 //  PaddingPreview.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2024-02-01.
 //

@@ -1,6 +1,6 @@
 //
 //  CustomWindowActionAnchor.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2024-01-01.
 //

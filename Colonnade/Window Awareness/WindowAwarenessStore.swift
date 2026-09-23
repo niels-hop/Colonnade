@@ -1,6 +1,6 @@
 //
 //  WindowAwarenessStore.swift
-//  Loop
+//  Colonnade
 //
 //  Atomic local persistence and schema migration for window awareness snapshots.
 //

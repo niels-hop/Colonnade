@@ -1,6 +1,6 @@
 //
 //  AppDelegate+UNNotifications.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2024-06-03.
 //

@@ -1,6 +1,6 @@
 //
 //  StashActionConfigurationView.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Guillaume Clédat on 19/06/2025.
 //

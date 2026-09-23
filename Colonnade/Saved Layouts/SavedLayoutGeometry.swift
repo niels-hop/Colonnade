@@ -1,6 +1,6 @@
 //
 //  SavedLayoutGeometry.swift
-//  Loop
+//  Colonnade
 //
 //  Pure full-height rail normalization shared by capture and standalone tests.
 //
