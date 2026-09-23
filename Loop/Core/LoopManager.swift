@@ -22,7 +22,6 @@ final class LoopManager {
 
     private let windowActionCache = WindowActionCache()
     private let indicatorService = WindowActionIndicatorService()
-    private let updater = Updater.shared
 
     private var accessibilityCheckerTask: Task<(), Never>?
 
@@ -326,17 +325,6 @@ extension LoopManager {
                 _ = try? await WindowActionEngine.shared.apply(context: resizeContext)
             }
 
-            // A neutral dock open/close is a cancellation, not a completed window action.
-            if !wasDockActive || hasPendingDockCommit {
-                Defaults[.timesLooped] += 1
-                IconManager.checkIfUnlockedNewIcon()
-            }
-        }
-
-        Task {
-            if updater.shouldAutoPresentUpdateWindow {
-                await updater.showUpdateWindowIfEligible()
-            }
         }
     }
 }

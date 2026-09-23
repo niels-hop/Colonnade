@@ -15,6 +15,7 @@ struct BehaviorConfigurationView: View {
     @Default(.launchAtLogin) var launchAtLogin
     @Default(.startHidden) var startHidden
     @Default(.hideMenuBarIcon) var hideMenuBarIcon
+    @Default(.showDockIcon) var showDockIcon
     @Default(.animationConfiguration) var animationConfiguration
     @Default(.windowSnapping) var windowSnapping
     @Default(.suppressMissionControlOnTopDrag) var suppressMissionControlOnTopDrag
@@ -30,15 +31,6 @@ struct BehaviorConfigurationView: View {
     @Default(.stashedWindowVisiblePadding) var stashedWindowVisiblePadding
     @Default(.animateStashedWindows) var animateStashedWindows
     @Default(.shiftFocusWhenStashed) var shiftFocusWhenStashed
-    @Default(.ultrawideDockTriggerMode) var ultrawideDockTriggerMode
-    @Default(.savedLayoutWorkName) var savedLayoutWorkName
-    @Default(.savedLayoutFocusName) var savedLayoutFocusName
-    @Default(.savedLayoutMacBookName) var savedLayoutMacBookName
-    @Default(.defaultSavedLayoutSlot) var defaultSavedLayoutSlot
-    @Default(.restoreSavedLayoutOnLaunch) var restoreSavedLayoutOnLaunch
-    @Default(.restoreSavedLayoutOnWake) var restoreSavedLayoutOnWake
-    @Default(.restoreSavedLayoutOnDisplayChange) var restoreSavedLayoutOnDisplayChange
-    @Default(.restoreSavedLayoutOnSpaceChange) var restoreSavedLayoutOnSpaceChange
 
     @State private var isPaddingConfigurationViewPresented = false
 
@@ -46,7 +38,6 @@ struct BehaviorConfigurationView: View {
         LuminareForm {
             generalSection
             windowSection
-            ultrawideDockSection
             cursorSection
             windowSnappingSection
             stageManagerSection
@@ -57,9 +48,7 @@ struct BehaviorConfigurationView: View {
             value: [
                 AnyHashable(resizeWindowUnderCursor),
                 AnyHashable(windowSnapping),
-                AnyHashable(respectStageManager),
-                AnyHashable(ultrawideDockTriggerMode),
-                AnyHashable(defaultSavedLayoutSlot)
+                AnyHashable(respectStageManager)
             ]
         )
     }
@@ -71,6 +60,8 @@ struct BehaviorConfigurationView: View {
             LuminareToggle("Start hidden", isOn: $startHidden)
 
             LuminareToggle("Hide menu bar icon", isOn: $hideMenuBarIcon)
+
+            LuminareToggle("Show in Dock", isOn: $showDockIcon)
 
             LuminareSliderPicker(
                 "Animation speed",
@@ -102,55 +93,6 @@ struct BehaviorConfigurationView: View {
         }
     }
 
-    private var ultrawideDockSection: some View {
-        LuminareSection(String(localized: "Ultrawide Dock", comment: "Section header shown in settings")) {
-            LuminareSliderPicker(
-                UltrawideDockTriggerMode.allCases,
-                selection: $ultrawideDockTriggerMode
-            ) { item in
-                Text(item.label)
-            } label: {
-                Text("Trigger mode")
-            }
-
-            Text(ultrawideDockTriggerMode.caption)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-
-            Divider()
-
-            LuminareTextField(
-                "Work slot",
-                text: Binding<String?>(get: { savedLayoutWorkName }, set: { savedLayoutWorkName = $0 ?? "" })
-            )
-            LuminareTextField(
-                "Focus slot",
-                text: Binding<String?>(get: { savedLayoutFocusName }, set: { savedLayoutFocusName = $0 ?? "" })
-            )
-            LuminareTextField(
-                "MacBook slot",
-                text: Binding<String?>(get: { savedLayoutMacBookName }, set: { savedLayoutMacBookName = $0 ?? "" })
-            )
-
-            LuminareSliderPicker(
-                SavedLayoutSlot.fixedSlots,
-                selection: $defaultSavedLayoutSlot
-            ) { slot in
-                Text(slot.displayName)
-            } label: {
-                Text("Default layout")
-            }
-
-            LuminareToggle("Restore on launch or login", isOn: $restoreSavedLayoutOnLaunch)
-            LuminareToggle("Restore after wake", isOn: $restoreSavedLayoutOnWake)
-            LuminareToggle("Restore when displays change", isOn: $restoreSavedLayoutOnDisplayChange)
-            LuminareToggle("Restore when Spaces change", isOn: $restoreSavedLayoutOnSpaceChange)
-        }
-    }
-
     private var cursorSection: some View {
         LuminareSection(String(localized: "Cursor", comment: "Section header shown in settings")) {
             // This can only be enabled when the preview is visible.
@@ -177,7 +119,7 @@ struct BehaviorConfigurationView: View {
                         Text("Enable window snapping")
                             .padding(.trailing, 4)
                             .luminareToolTip(attachedTo: .topTrailing) {
-                                Text("macOS's \"Tile by dragging windows to screen edges\" feature is currently\nenabled, which will conflict with Loop's window snapping functionality.")
+                                Text("macOS's \"Tile by dragging windows to screen edges\" feature is currently\nenabled, which will conflict with Colonnade's window snapping functionality.")
                                     .padding(6)
                             }
                     } else {

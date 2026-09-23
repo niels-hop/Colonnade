@@ -1,6 +1,6 @@
 //
 //  UltrawideDockController.swift
-//  Loop
+//  Colonnade
 //
 
 import Defaults
@@ -10,7 +10,11 @@ import SwiftUI
 /// Panel geometry shared by the controller, which sizes the panel and maps the pointer onto it, and
 /// the view, which draws it. The free-placement lane only works if both agree on where it sits.
 enum UltrawideDockMetrics {
-    static let baseDockWidth: CGFloat = 600
+    /// User-configurable in Settings → Dock. Read live so a change applies the next time the dock opens.
+    static var baseDockWidth: CGFloat {
+        min(max(CGFloat(Defaults[.ultrawideDockBaseWidth]), 400), 1000)
+    }
+
     static let mapHeight: CGFloat = 142
     static let freeLaneHeight: CGFloat = 34
     static let footerHeight: CGFloat = 32
@@ -70,7 +74,7 @@ final class UltrawideDockController {
             return false
         case .automatic:
             guard let screen else { return false }
-            return screen.frame.width / screen.frame.height >= 2
+            return screen.frame.width / screen.frame.height >= Defaults[.ultrawideDockAutomaticAspectRatio]
         }
     }
 
@@ -137,7 +141,9 @@ final class UltrawideDockController {
         activationPointerY = pointer.y
         freeLaneBoundaryY = pointer.y - UltrawideDockMetrics.freeLaneDistanceBelowCentre
         isFreeform = false
-        interactionSpan = max(1, dockWidth - 20)
+        // Higher sensitivity means less mouse travel to sweep across the whole mini-screen.
+        let sensitivity = min(max(CGFloat(Defaults[.ultrawideDockPointerSensitivity]), 0.25), 4)
+        interactionSpan = max(1, (dockWidth - 20) / sensitivity)
         hasLeftDeadZone = false
 
         NSAnimationContext.runAnimationGroup { context in

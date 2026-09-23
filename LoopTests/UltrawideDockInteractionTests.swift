@@ -69,6 +69,18 @@ final class UltrawideDockInteractionTests: XCTestCase {
         assertWindowCommit(interaction.handle(.pointerUp(at: 0.1)), x: 0, width: 0.5)
     }
 
+    func testClickFollowsConfiguredWidthCycle() throws {
+        var interaction = try makeInteraction(windows: [], clickWidthCycle: [1 / 3, 0.5, 2 / 3])
+
+        // The default half-width placement is part of this cycle, so the first click steps past it.
+        _ = interaction.handle(.move(to: 0.1))
+        _ = interaction.handle(.pointerDown(at: 0.1))
+        assertWindowCommit(interaction.handle(.pointerUp(at: 0.1)), x: 0, width: 2 / 3)
+
+        _ = interaction.handle(.pointerDown(at: 0.1))
+        assertWindowCommit(interaction.handle(.pointerUp(at: 0.1)), x: 0, width: 1 / 3)
+    }
+
     func testClickSelectedWidthFollowsLaterHorizontalMouseMovement() throws {
         var interaction = try makeInteraction(windows: [])
 
@@ -528,14 +540,15 @@ final class UltrawideDockInteractionTests: XCTestCase {
 
     private func makeInteraction(
         windows: [UltrawideDockWindowSnapshot],
-        currentID: HorizontalLayoutTileID? = nil
+        currentID: HorizontalLayoutTileID? = nil,
+        clickWidthCycle: [CGFloat] = UltrawideDockInteraction.defaultClickWidthCycle
     ) throws -> UltrawideDockInteraction {
         let scene = try UltrawideDockScene(
             windows: windows,
             currentID: currentID ?? current,
             frameTolerance: 0.001
         )
-        return try UltrawideDockInteraction(scene: scene, minimumWidth: 0.1)
+        return try UltrawideDockInteraction(scene: scene, minimumWidth: 0.1, clickWidthCycle: clickWidthCycle)
     }
 
     private func window(

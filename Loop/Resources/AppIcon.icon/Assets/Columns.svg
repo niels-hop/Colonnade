@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Three full-height columns: a wide screen divided horizontally, the middle one being placed. -->
+  <rect x="202" y="262" width="150" height="500" rx="40" fill="#FFFFFF" fill-opacity="0.55"/>
+  <rect x="374" y="262" width="276" height="500" rx="40" fill="#FFFFFF"/>
+  <rect x="672" y="262" width="150" height="500" rx="40" fill="#FFFFFF" fill-opacity="0.55"/>
+</svg>

@@ -28,9 +28,34 @@ public enum UltrawideDockTriggerMode: String, Defaults.Serializable, CaseIterabl
 
     var caption: LocalizedStringKey {
         switch self {
-        case .automatic: "The dock replaces the radial menu on screens with an aspect ratio of 2:1 or wider."
-        case .alwaysOn: "The dock always replaces the radial menu, regardless of the screen's aspect ratio."
-        case .never: "The radial menu is used on every screen."
+        case .automatic: "The dock is used on wide screens. Narrower screens fall back to the radial menu."
+        case .alwaysOn: "The dock is used on every screen, including a MacBook's built-in display."
+        case .never: "The dock is turned off and the radial menu is used on every screen."
+        }
+    }
+}
+
+/// The widths a click in the dock steps through, as fractions of the screen width.
+public enum UltrawideDockClickCycle: String, Defaults.Serializable, CaseIterable, Identifiable {
+    case halfThirdQuarter
+    case thirdHalfTwoThirds
+    case halfTwoThirdsThird
+
+    public var id: Self { self }
+
+    var widths: [CGFloat] {
+        switch self {
+        case .halfThirdQuarter: [0.5, 1 / 3, 0.25]
+        case .thirdHalfTwoThirds: [1 / 3, 0.5, 2 / 3]
+        case .halfTwoThirdsThird: [0.5, 2 / 3, 1 / 3]
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .halfThirdQuarter: "½ → ⅓ → ¼"
+        case .thirdHalfTwoThirds: "⅓ → ½ → ⅔"
+        case .halfTwoThirdsThird: "½ → ⅔ → ⅓"
         }
     }
 }
@@ -38,11 +63,8 @@ public enum UltrawideDockTriggerMode: String, Defaults.Serializable, CaseIterabl
 // MARK: - UI-configurable Settings
 
 extension Defaults.Keys {
-    // Icon
-    static let currentIcon = Key<String>("currentIcon", default: "AppIcon-Classic", iCloud: true)
-    static let timesLooped = Key<Int>("timesLooped", default: 0, iCloud: true)
+    // App
     static let showDockIcon = Key<Bool>("showDockIcon", default: false, iCloud: true)
-    static let notificationWhenIconUnlocked = Key<Bool>("notificationWhenIconUnlocked", default: true, iCloud: true)
 
     // Accent Color
     static let accentColorMode: Key<AccentColorOption> = Key("accentColorMode", default: .system, iCloud: true)
@@ -57,7 +79,14 @@ extension Defaults.Keys {
     static let radialMenuActions = Key<[RadialMenuAction]>("radialMenuActions", default: RadialMenuAction.defaultRadialMenuActions, iCloud: true)
 
     // Ultrawide Dock
-    static let ultrawideDockTriggerMode = Key<UltrawideDockTriggerMode>("ultrawideDockTriggerMode", default: .automatic, iCloud: true)
+    static let ultrawideDockTriggerMode = Key<UltrawideDockTriggerMode>("ultrawideDockTriggerMode", default: .alwaysOn, iCloud: true)
+    /// In `.automatic` mode, the narrowest aspect ratio (width / height) that still counts as "wide".
+    static let ultrawideDockAutomaticAspectRatio = Key<Double>("ultrawideDockAutomaticAspectRatio", default: 2.0, iCloud: true)
+    /// Width of the dock panel on a regular screen, in points. Wide screens scale it up proportionally.
+    static let ultrawideDockBaseWidth = Key<Double>("ultrawideDockBaseWidth", default: 600, iCloud: true)
+    /// How far the pointer travels across the mini-screen per point of mouse movement.
+    static let ultrawideDockPointerSensitivity = Key<Double>("ultrawideDockPointerSensitivity", default: 1.0, iCloud: true)
+    static let ultrawideDockClickCycle = Key<UltrawideDockClickCycle>("ultrawideDockClickCycle", default: .halfThirdQuarter, iCloud: true)
     static let savedLayoutWorkName = Key<String>("savedLayoutWorkName", default: "Work", iCloud: false)
     static let savedLayoutFocusName = Key<String>("savedLayoutFocusName", default: "Focus", iCloud: false)
     static let savedLayoutMacBookName = Key<String>("savedLayoutMacBookName", default: "MacBook", iCloud: false)
@@ -123,46 +152,40 @@ extension Defaults.Keys {
     static let excludedApps = Key<[URL]>("excludedApps", default: [], iCloud: true)
 
     // About
-    #if RELEASE
-        static let includeDevelopmentVersions = Key<Bool>("includeDevelopmentVersions", default: false, iCloud: true)
-    #else
-        /// Development versions should check for development updates by default.
-        static let includeDevelopmentVersions = Key<Bool>("includeDevelopmentVersions", default: true, iCloud: true)
-    #endif
-    static let automaticallyUpdate = Key<Bool>("automaticallyUpdate", default: false, iCloud: true)
+    static let checkForUpdatesAutomatically = Key<Bool>("checkForUpdatesAutomatically", default: true, iCloud: false)
 }
 
 // MARK: - Hidden Settings
 
 extension Defaults.Keys {
     /// Lock radial menu to the center of the screen
-    /// Adjust with `defaults write com.MrKai77.Loop lockRadialMenuToCenter -bool true`
-    /// Reset with `defaults delete com.MrKai77.Loop lockRadialMenuToCenter`
+    /// Adjust with `defaults write com.nielshop.Colonnade lockRadialMenuToCenter -bool true`
+    /// Reset with `defaults delete com.nielshop.Colonnade lockRadialMenuToCenter`
     static let lockRadialMenuToCenter = Key<Bool>("lockRadialMenuToCenter", default: false, iCloud: true)
 
     /// Minimum screen size, defined in inches on the diagonal, for which padding will be applied on windows.
-    /// Adjust with `defaults write com.MrKai77.Loop paddingMinimumScreenSize -float x`
-    /// Reset with `defaults delete com.MrKai77.Loop paddingMinimumScreenSize`
+    /// Adjust with `defaults write com.nielshop.Colonnade paddingMinimumScreenSize -float x`
+    /// Reset with `defaults delete com.nielshop.Colonnade paddingMinimumScreenSize`
     static let paddingMinimumScreenSize = Key<CGFloat>("paddingMinimumScreenSize", default: 0, iCloud: true)
 
     /// Ignore the notch height when calculating top padding, so the effective
     /// distance from the screen top matches non-notch displays.
-    /// Adjust with `defaults write com.MrKai77.Loop ignoreNotch -bool true`
-    /// Reset with `defaults delete com.MrKai77.Loop ignoreNotch`
+    /// Adjust with `defaults write com.nielshop.Colonnade ignoreNotch -bool true`
+    /// Reset with `defaults delete com.nielshop.Colonnade ignoreNotch`
     static let ignoreNotch = Key<Bool>("ignoreNotch", default: false, iCloud: true)
 
     /// Snap threshold for window snapping, defined in points.
-    /// Adjust with `defaults write com.MrKai77.Loop snapThreshold -float x`
-    /// Reset with `defaults delete com.MrKai77.Loop snapThreshold`
+    /// Adjust with `defaults write com.nielshop.Colonnade snapThreshold -float x`
+    /// Reset with `defaults delete com.nielshop.Colonnade snapThreshold`
     static let snapThreshold = Key<CGFloat>("snapThreshold", default: 2, iCloud: true)
 
     /// Whether to ignore low power mode for certain features, such as window animations.
-    /// Adjust with `defaults write com.MrKai77.Loop ignoreLowPowerMode -bool x`
-    /// Reset with `defaults delete com.MrKai77.Loop ignoreLowPowerMode`
+    /// Adjust with `defaults write com.nielshop.Colonnade ignoreLowPowerMode -bool x`
+    /// Reset with `defaults delete com.nielshop.Colonnade ignoreLowPowerMode`
     static let ignoreLowPowerMode = Key<Bool>("ignoreLowPowerMode", default: false, iCloud: true)
 
-    /// Adjust with `defaults write com.MrKai77.Loop previewStartingPosition [option]`
-    /// Reset with `defaults delete com.MrKai77.Loop previewStartingPosition`
+    /// Adjust with `defaults write com.nielshop.Colonnade previewStartingPosition [option]`
+    /// Reset with `defaults delete com.nielshop.Colonnade previewStartingPosition`
     ///
     /// Available options:
     /// - `screenCenter`: Center of the screen
@@ -170,14 +193,10 @@ extension Defaults.Keys {
     /// - `actionCenter`: Center of the selected action (e.g. for left half, it will grow from the center of that left half)
     static let previewStartingPosition = Key<PreviewStartingPosition>("previewStartingPosition", default: .actionCenter, iCloud: true)
 
-    /// Disable automatic updates with `defaults write com.MrKai77.Loop updatesEnabled -bool false`
-    /// Reset with `defaults delete com.MrKai77.Loop updatesEnabled`
-    static let updatesEnabled = Key<Bool>("updatesEnabled", default: true, iCloud: true)
-
-    /// Trigger key timeout, defined in seconds. Automatically closes Loop if no action is taken within the specified time.
-    /// When set to 0 (default: disabled), the feature is disabled and Loop stays open until manually closed.
-    /// Adjust with `defaults write com.MrKai77.Loop triggerKeyTimeout -float x`
-    /// Reset with `defaults delete com.MrKai77.Loop triggerKeyTimeout`
+    /// Trigger key timeout, defined in seconds. Automatically closes Colonnade if no action is taken within the specified time.
+    /// When set to 0 (default: disabled), the feature is disabled and Colonnade stays open until manually closed.
+    /// Adjust with `defaults write com.nielshop.Colonnade triggerKeyTimeout -float x`
+    /// Reset with `defaults delete com.nielshop.Colonnade triggerKeyTimeout`
     static let triggerKeyTimeout = Key<Double>("triggerKeyTimeout", default: 0, iCloud: true)
 
     // Migrator

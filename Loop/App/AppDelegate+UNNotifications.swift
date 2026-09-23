@@ -12,14 +12,9 @@ import UserNotifications
 extension AppDelegate: UNUserNotificationCenterDelegate {
     func userNotificationCenter(
         _: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse,
+        didReceive _: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> ()
     ) {
-        if response.actionIdentifier == "setIconAction",
-           let icon = response.notification.request.content.userInfo["icon"] as? String {
-            IconManager.setAppIcon(to: icon)
-        }
-
         completionHandler()
     }
 
@@ -46,20 +41,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         }
     }
 
-    private static func registerNotificationCategories() {
-        let setIconAction = UNNotificationAction(
-            identifier: "setIconAction",
-            title: String(localized: "Set Current Icon", comment: "Label for a button that lets the user set their icon for Loop"),
-            options: .destructive
-        )
-        let notificationCategory = UNNotificationCategory(
-            identifier: "icon_unlocked",
-            actions: [setIconAction],
-            intentIdentifiers: []
-        )
-        UNUserNotificationCenter.current().setNotificationCategories([notificationCategory])
-    }
-
     static func areNotificationsEnabled() -> Bool {
         let group = DispatchGroup()
         group.enter()
@@ -84,7 +65,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         )
 
         requestNotificationAuthorization()
-        registerNotificationCategories()
 
         UNUserNotificationCenter.current().add(request)
     }

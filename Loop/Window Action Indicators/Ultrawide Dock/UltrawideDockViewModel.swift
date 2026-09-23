@@ -1,3 +1,4 @@
+import Defaults
 import SwiftUI
 
 @MainActor
@@ -194,7 +195,8 @@ final class UltrawideDockViewModel: ObservableObject {
         dividers = Self.dividers(in: runtime.scene.layout)
         interaction = try? UltrawideDockInteraction(
             scene: runtime.scene,
-            minimumWidth: HorizontalLayoutRuntimeAdapter.minimumWidth
+            minimumWidth: HorizontalLayoutRuntimeAdapter.minimumWidth,
+            clickWidthCycle: Defaults[.ultrawideDockClickCycle].widths
         )
         // The fresh reducer has no pointer position yet, so this only restores the mode; the next
         // pointer event is still what produces a target.

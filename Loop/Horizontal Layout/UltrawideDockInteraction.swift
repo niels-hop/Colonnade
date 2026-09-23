@@ -298,7 +298,7 @@ struct UltrawideDockInteraction {
     private static let maximumResizeHoldRadius: CGFloat = 0.04
     private static let clickMovementTolerance: CGFloat = 0.01
     private static let stackZone: ClosedRange<CGFloat> = 0.22 ... 0.78
-    private static let clickWidthCycle: [CGFloat] = [0.5, 1 / 3, 0.25]
+    static let defaultClickWidthCycle: [CGFloat] = [0.5, 1 / 3, 0.25]
     private static let widthStops: [CGFloat] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 1]
     private static let edgeAlignmentTolerance: CGFloat = 0.005
 
@@ -306,6 +306,8 @@ struct UltrawideDockInteraction {
     private(set) var output: UltrawideDockOutput = .idle
 
     private let engine: HorizontalLayoutEngine
+    /// Widths a click steps through, as fractions of the screen. Injected so the reducer stays pure.
+    private let clickWidthCycle: [CGFloat]
     private var draggingDividerAfterID: HorizontalLayoutTileID?
     /// `nil` lets the geometry decide: half the screen for a standalone placement, the whole free
     /// gap for an insertion. Scrolling pins it to an explicit fraction of the screen.
@@ -323,9 +325,14 @@ struct UltrawideDockInteraction {
     private var hasPointerPosition = false
     private var isFreeform = false
 
-    init(scene: UltrawideDockScene, minimumWidth: CGFloat) throws {
+    init(
+        scene: UltrawideDockScene,
+        minimumWidth: CGFloat,
+        clickWidthCycle: [CGFloat] = UltrawideDockInteraction.defaultClickWidthCycle
+    ) throws {
         self.scene = scene
         self.engine = try HorizontalLayoutEngine(minimumWidth: minimumWidth)
+        self.clickWidthCycle = clickWidthCycle.isEmpty ? Self.defaultClickWidthCycle : clickWidthCycle
     }
 
     @discardableResult
@@ -720,12 +727,12 @@ struct UltrawideDockInteraction {
     /// any of its target zones.
     private mutating func cyclePlacementWidth() -> UltrawideDockOutput {
         let currentWidth = requestedWidth ?? currentPreviewWidth ?? 0.5
-        if let index = Self.clickWidthCycle.firstIndex(where: {
+        if let index = clickWidthCycle.firstIndex(where: {
             abs($0 - currentWidth) <= 0.015
         }) {
-            requestedWidth = Self.clickWidthCycle[(index + 1) % Self.clickWidthCycle.count]
+            requestedWidth = clickWidthCycle[(index + 1) % clickWidthCycle.count]
         } else {
-            requestedWidth = Self.clickWidthCycle[0]
+            requestedWidth = clickWidthCycle[0]
         }
         return selectTarget(at: lastPointerX)
     }

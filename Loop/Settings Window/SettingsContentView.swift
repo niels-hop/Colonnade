@@ -24,9 +24,10 @@ struct SettingsContentView: View {
     var body: some View {
         LuminareDividedStack {
             LuminareSidebar {
-                LuminareSidebarSection("Theming", selection: $model.currentTab, items: SettingsTab.themingTabs)
-                LuminareSidebarSection("Settings", selection: $model.currentTab, items: SettingsTab.settingsTabs)
-                LuminareSidebarSection("\(Bundle.main.appName)", selection: $model.currentTab, items: SettingsTab.loopTabs)
+                LuminareSidebarSection("Dock", selection: $model.currentTab, items: SettingsTab.dockTabs)
+                LuminareSidebarSection("Controls", selection: $model.currentTab, items: SettingsTab.controlTabs)
+                LuminareSidebarSection("Appearance", selection: $model.currentTab, items: SettingsTab.appearanceTabs)
+                LuminareSidebarSection("\(Bundle.main.appName)", selection: $model.currentTab, items: SettingsTab.appTabs)
             }
             .frame(width: 230)
             .padding(.top, titleBarHeight)
@@ -76,14 +77,16 @@ struct SettingsContentView: View {
                 // We use an overlay instead of a ZStack so the inspector’s contents
                 // don’t influence the layout of the surrounding views (mainly as a precaution)
                 Color.clear.overlay {
-                    if model.showPreview || showRadialMenuGuide {
+                    if model.currentTab.showsDockIllustration {
+                        DockIllustrationView()
+                    } else if model.showPreview || showRadialMenuGuide {
                         PreviewView(viewModel: model.previewViewModel)
                             .onGeometryChange(for: CGSize.self, of: \.size) {
                                 model.setPreviewBounds(CGRect(origin: .zero, size: $0))
                             }
                     }
 
-                    if model.showRadialMenu {
+                    if model.showRadialMenu, !model.currentTab.showsDockIllustration {
                         RadialMenuView(viewModel: model.radialMenuViewModel)
                             .allowsHitTesting(false)
                     }
@@ -92,7 +95,7 @@ struct SettingsContentView: View {
                         RadialMenuActionsGuide()
                     }
                 }
-                .animation(animation, value: [model.showRadialMenu, model.showPreview])
+                .animation(animation, value: [model.showRadialMenu, model.showPreview, model.currentTab.showsDockIllustration])
                 .padding(12)
                 .frame(width: 520)
             }

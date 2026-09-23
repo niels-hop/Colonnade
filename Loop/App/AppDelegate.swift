@@ -44,7 +44,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         DataPatcher.run()
-        IconManager.refreshCurrentAppIcon()
         LaunchAtLoginManager.shared.start()
 
         UNUserNotificationCenter.current().delegate = self
@@ -68,15 +67,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             StashManager.shared.start()
             AccessibilityManager.requestAccess()
             SavedLayoutLifecycleCoordinator.shared.start()
-
-            // Wait for the app to settle before showing the update window
-            try? await Task.sleep(for: .seconds(5))
-            await Updater.shared.fetchLatestInfo()
-            await Updater.shared.showUpdateWindowIfEligible()
+            ReleaseChecker.shared.start()
         }
     }
 
-    /// Subscribes to the terminate notification so this instance shuts down when a newer Loop instance launches.
+    /// Subscribes to the terminate notification so this instance shuts down when a newer Colonnade instance launches.
     private func registerTerminateObserver() {
         terminateObserver = DistributedNotificationCenter.default().addObserver(
             forName: Self.terminateNotificationName,
@@ -91,12 +86,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
-            log.info("Received terminate broadcast from newer Loop instance, shutting down")
+            log.info("Received terminate broadcast from newer Colonnade instance, shutting down")
             NSApp.terminate(nil)
         }
     }
 
-    /// Sends the terminate notification to any other running Loop instances, and returns their PIDs.
+    /// Sends the terminate notification to any other running Colonnade instances, and returns their PIDs.
     @discardableResult
     private func broadcastTerminateToOtherInstances() -> [pid_t] {
         let currentPID = ProcessInfo.processInfo.processIdentifier
@@ -107,11 +102,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         guard !otherInstances.isEmpty else {
-            log.info("No other Loop instances found")
+            log.info("No other Colonnade instances found")
             return []
         }
 
-        log.info("Found \(otherInstances.count) other Loop instance(s), broadcasting terminate notification")
+        log.info("Found \(otherInstances.count) other Colonnade instance(s), broadcasting terminate notification")
 
         DistributedNotificationCenter.default().post(
             name: Self.terminateNotificationName,
@@ -131,7 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         while ContinuousClock.now < deadline {
             let allGone = pids.allSatisfy { NSRunningApplication(processIdentifier: $0) == nil }
             if allGone {
-                log.info("All prior Loop instances have exited")
+                log.info("All prior Colonnade instances have exited")
                 return
             }
             try? await Task.sleep(for: .milliseconds(100))
@@ -139,7 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let surviving = pids.filter { NSRunningApplication(processIdentifier: $0) != nil }
         if !surviving.isEmpty {
-            log.warn("Timed out waiting for prior Loop instances to exit, force killing \(surviving.count) instance(s)")
+            log.warn("Timed out waiting for prior Colonnade instances to exit, force killing \(surviving.count) instance(s)")
             for pid in surviving {
                 kill(pid, SIGKILL)
             }
@@ -179,6 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         WindowDragManager.shared.shutdown()
         StashManager.shared.shutdown()
         SavedLayoutLifecycleCoordinator.shared.stop()
+        ReleaseChecker.shared.stop()
         return .terminateNow
     }
 

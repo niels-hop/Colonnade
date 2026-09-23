@@ -1,6 +1,6 @@
 //
 //  SettingsTab.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kai Azim on 2025-12-05.
 //
@@ -13,13 +13,15 @@ import SwiftUI
 enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
     var id: String { title }
 
-    case icon
-    case accentColor
-    case radialMenu
-    case preview
+    case dock
+    case layouts
 
-    case behavior
     case keybinds
+    case behavior
+
+    case accentColor
+    case preview
+    case radialMenu
 
     case advanced
     case excludedApps
@@ -31,18 +33,20 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
 
     var color: Color {
         switch self {
-        case .icon:
-            Color(#colorLiteral(red: 0.2235294118, green: 0.3843137255, blue: 0.6274509804, alpha: 1))
-        case .accentColor:
-            Color(#colorLiteral(red: 0.8235294118, green: 0.3529411765, blue: 0.337254902, alpha: 1))
-        case .radialMenu:
-            Color(#colorLiteral(red: 0.8078431373, green: 0.6235294118, blue: 0.3254901961, alpha: 1))
-        case .preview:
-            Color(#colorLiteral(red: 0.2901960784, green: 0.5647058824, blue: 0.7882352941, alpha: 1))
-        case .behavior:
-            Color(#colorLiteral(red: 0.4373228079, green: 0.6609574352, blue: 0.2663080928, alpha: 1))
+        case .dock:
+            Color(#colorLiteral(red: 0.2549019608, green: 0.4705882353, blue: 0.7843137255, alpha: 1))
+        case .layouts:
+            Color(#colorLiteral(red: 0.2901960784, green: 0.5647058824, blue: 0.5294117647, alpha: 1))
         case .keybinds:
             Color(#colorLiteral(red: 0.3882352941, green: 0.2823529412, blue: 0.1960784314, alpha: 1))
+        case .behavior:
+            Color(#colorLiteral(red: 0.4373228079, green: 0.6609574352, blue: 0.2663080928, alpha: 1))
+        case .accentColor:
+            Color(#colorLiteral(red: 0.8235294118, green: 0.3529411765, blue: 0.337254902, alpha: 1))
+        case .preview:
+            Color(#colorLiteral(red: 0.2901960784, green: 0.5647058824, blue: 0.7882352941, alpha: 1))
+        case .radialMenu:
+            Color(#colorLiteral(red: 0.8078431373, green: 0.6235294118, blue: 0.3254901961, alpha: 1))
         case .advanced:
             Color(#colorLiteral(red: 0.4823529412, green: 0.4745098039, blue: 0.6588235294, alpha: 1))
         case .excludedApps:
@@ -54,12 +58,13 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
 
     var title: String {
         switch self {
-        case .icon: .init(localized: "Settings tab: Icon", defaultValue: "Icon")
-        case .accentColor: .init(localized: "Settings tab: Accent Color", defaultValue: "Accent Color")
-        case .radialMenu: .init(localized: "Settings tab: Radial Menu", defaultValue: "Radial Menu")
-        case .preview: .init(localized: "Settings tab: Preview", defaultValue: "Preview")
+        case .dock: .init(localized: "Settings tab: Dock", defaultValue: "Dock")
+        case .layouts: .init(localized: "Settings tab: Layouts", defaultValue: "Layouts")
+        case .keybinds: .init(localized: "Settings tab: Trigger & Shortcuts", defaultValue: "Trigger & Shortcuts")
         case .behavior: .init(localized: "Settings tab: Behavior", defaultValue: "Behavior")
-        case .keybinds: .init(localized: "Settings tab: Keybindings", defaultValue: "Keybinds")
+        case .accentColor: .init(localized: "Settings tab: Accent Color", defaultValue: "Accent Color")
+        case .preview: .init(localized: "Settings tab: Preview", defaultValue: "Preview")
+        case .radialMenu: .init(localized: "Settings tab: Radial Menu", defaultValue: "Radial Menu")
         case .advanced: .init(localized: "Settings tab: Advanced", defaultValue: "Advanced")
         case .excludedApps: .init(localized: "Settings tab: Excluded Apps", defaultValue: "Excluded Apps")
         case .about: .init(localized: "Settings tab: About", defaultValue: "About")
@@ -68,12 +73,13 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
 
     var image: Image {
         switch self {
-        case .icon: Image(systemName: "sparkles")
-        case .accentColor: Image(systemName: "paintbrush.pointed.fill")
-        case .radialMenu: Image(.loop)
-        case .preview: Image(systemName: "inset.filled.center.rectangle")
-        case .behavior: Image(systemName: "gearshape.fill")
+        case .dock: Image(systemName: "rectangle.split.3x1.fill")
+        case .layouts: Image(systemName: "rectangle.3.group.fill")
         case .keybinds: Image(systemName: "keyboard.fill")
+        case .behavior: Image(systemName: "gearshape.fill")
+        case .accentColor: Image(systemName: "paintbrush.pointed.fill")
+        case .preview: Image(systemName: "inset.filled.center.rectangle")
+        case .radialMenu: Image(systemName: "circle.dashed")
         case .advanced: Image(systemName: "wrench.adjustable.fill")
         case .excludedApps: Image(systemName: "xmark.octagon.fill")
         case .about: Image(systemName: "info.circle.fill")
@@ -82,28 +88,35 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
 
     var showIndicator: Bool {
         switch self {
-        case .about: Updater.shared.updateState == .available
+        case .about: ReleaseChecker.shared.isUpdateAvailable
         default: false
         }
     }
 
+    /// Tabs whose inspector shows the dock demo instead of the radial menu and preview.
+    var showsDockIllustration: Bool {
+        self == .dock || self == .layouts
+    }
+
     @ViewBuilder func view() -> some View {
         switch self {
-        case .icon: IconConfigurationView()
-        case .accentColor: AccentColorConfigurationView()
-        case .radialMenu: RadialMenuConfigurationView()
-        case .preview: PreviewConfigurationView()
-        case .behavior: BehaviorConfigurationView()
+        case .dock: DockConfigurationView()
+        case .layouts: LayoutsConfigurationView()
         case .keybinds: KeybindsConfigurationView()
+        case .behavior: BehaviorConfigurationView()
+        case .accentColor: AccentColorConfigurationView()
+        case .preview: PreviewConfigurationView()
+        case .radialMenu: RadialMenuConfigurationView()
         case .advanced: AdvancedConfigurationView()
         case .excludedApps: ExcludedAppsConfigurationView()
         case .about: AboutConfigurationView()
         }
     }
 
-    static let themingTabs: [Self] = [.icon, .accentColor, .radialMenu, .preview]
-    static let settingsTabs: [Self] = [.behavior, .keybinds]
-    static let loopTabs: [Self] = [.advanced, .excludedApps, .about]
+    static let dockTabs: [Self] = [.dock, .layouts]
+    static let controlTabs: [Self] = [.keybinds, .behavior]
+    static let appearanceTabs: [Self] = [.accentColor, .preview, .radialMenu]
+    static let appTabs: [Self] = [.advanced, .excludedApps, .about]
 }
 
 struct SettingsTabIconView: View {

@@ -14,54 +14,15 @@
 		484C54052F8A000100000001 /* UltrawideDockInteraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484C54152F8A000100000001 /* UltrawideDockInteraction.swift */; };
 		2A28492B2F22B4B700F6CE42 /* Scribe in Frameworks */ = {isa = PBXBuildFile; productRef = 2A28492A2F22B4B700F6CE42 /* Scribe */; };
 		2A28B6292EE5050C00A1E26B /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 2A28B6282EE5050C00A1E26B /* Defaults */; };
-		2A86890D2F80968A005B521B /* LoopDockTile.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2A8689072F809625005B521B /* LoopDockTile.plugin */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		2AC4F4A82FDCAF1F00CB2FBE /* Scribe in Frameworks */ = {isa = PBXBuildFile; productRef = 2AF9238D2F540B1300F467FD /* Scribe */; };
 		2AC4F62C2FDCAF7100CB2FBE /* Luminare in Frameworks */ = {isa = PBXBuildFile; productRef = 2AC4F62B2FDCAF7100CB2FBE /* Luminare */; };
-		2AE091C72F81A22800EF6149 /* Scribe in Frameworks */ = {isa = PBXBuildFile; productRef = 2AE091C62F81A22800EF6149 /* Scribe */; };
-		2AF923902F540B2200F467FD /* Scribe in Frameworks */ = {isa = PBXBuildFile; productRef = 2AF9238F2F540B2200F467FD /* Scribe */; };
-		3ED0A7B92F21DF6800A58629 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 3ED0A7B82F21DF6800A58629 /* ZIPFoundation */; };
-		B1AA00412F30000100AABBCC /* LoopUpdaterHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = B1AA00012F30000100AABBCC /* LoopUpdaterHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F06D768A2DFF7A77007EEDA9 /* SkyLight.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F06D76892DFF7A77007EEDA9 /* SkyLight.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		2A8689102F809800005B521B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = A8E59C2D297F5E9A0064D4BA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 2A8689062F809625005B521B;
-			remoteInfo = LoopDockTile;
-		};
-		B1AA00512F30000100AABBCC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = A8E59C2D297F5E9A0064D4BA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B1AA00112F30000100AABBCC;
-			remoteInfo = LoopUpdaterHelper;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		2A86890C2F80967B005B521B /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				2A86890D2F80968A005B521B /* LoopDockTile.plugin in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B1AA00612F30000100AABBCC /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = Contents/Library/LaunchServices;
-			dstSubfolderSpec = 1;
-			files = (
-				B1AA00412F30000100AABBCC /* LoopUpdaterHelper in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -71,61 +32,30 @@
 		484C54132F8A000100000001 /* HorizontalLayoutRuntimeGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutRuntimeGeometry.swift"; sourceTree = SOURCE_ROOT; };
 		484C54142F8A000100000001 /* HorizontalLayoutExecutionCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutExecutionCore.swift"; sourceTree = SOURCE_ROOT; };
 		484C54152F8A000100000001 /* UltrawideDockInteraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/UltrawideDockInteraction.swift"; sourceTree = SOURCE_ROOT; };
-		2A8689072F809625005B521B /* LoopDockTile.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LoopDockTile.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		A848130C2BD1A8D100B02E93 /* .github */ = {isa = PBXFileReference; lastKnownFileType = folder; path = .github; sourceTree = "<group>"; };
 		A86AFD7529888B29008F4892 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		A883642E298B7288005D6C19 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		A894B0C52C4B31AA00B4CE6F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
 		A8E59C35297F5E9A0064D4BA /* Loop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Loop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8E6D1FC2A4155DC005751D4 /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
-		B1AA00012F30000100AABBCC /* LoopUpdaterHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = LoopUpdaterHelper; sourceTree = BUILT_PRODUCTS_DIR; };
-		B1AA00802F30000100AABBCC /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		F06D76892DFF7A77007EEDA9 /* SkyLight.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SkyLight.framework; path = ../../../../System/Library/PrivateFrameworks/SkyLight.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2A5DD5CC2F5D270C0077AB3C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = B1AA00112F30000100AABBCC /* LoopUpdaterHelper */;
-		};
-		2A6A87F22F4D20F4004E995D /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				LoopSupportPaths.swift,
-				PrivilegedInstallerProtocol.swift,
-			);
-			target = B1AA00112F30000100AABBCC /* LoopUpdaterHelper */;
-		};
 		A8C751FF2D7BA98600B58784 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Config.xcconfig,
 				Local.xcconfig,
 				Info.plist,
-				"Resources/AppIcon-Black Hole.icon",
-				"Resources/AppIcon-Black.icon",
-				"Resources/AppIcon-Holo.icon",
-				"Resources/AppIcon-Keycap.icon",
-				"Resources/AppIcon-Loop Master.icon",
-				"Resources/AppIcon-Meta Loop.icon",
-				"Resources/AppIcon-Rose Pine.icon",
-				"Resources/AppIcon-Summer.icon",
-				"Resources/AppIcon-Synthwave Sunset.icon",
-				"Resources/AppIcon-White.icon",
 			);
 			target = A8E59C34297F5E9A0064D4BA /* Loop */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		2A6A87F02F4D20D2004E995D /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2A6A87F22F4D20F4004E995D /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
-		2A86890E2F809700005B521B /* LoopDockTile */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = LoopDockTile; sourceTree = "<group>"; };
 		484C54202F8A000100000001 /* LoopTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = LoopTests; sourceTree = "<group>"; };
 		A8C751AC2D7BA98600B58784 /* Loop */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A8C751FF2D7BA98600B58784 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Loop; sourceTree = "<group>"; };
-		B1AA00022F30000100AABBCC /* LoopUpdaterHelper */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2A5DD5CC2F5D270C0077AB3C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = LoopUpdaterHelper; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,14 +63,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		2A8689042F809625005B521B /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				2AE091C72F81A22800EF6149 /* Scribe in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -152,16 +74,7 @@
 				2A28B6292EE5050C00A1E26B /* Defaults in Frameworks */,
 				2A28492B2F22B4B700F6CE42 /* Scribe in Frameworks */,
 				F06D768A2DFF7A77007EEDA9 /* SkyLight.framework in Frameworks */,
-				3ED0A7B92F21DF6800A58629 /* ZIPFoundation in Frameworks */,
 				2AC4F62C2FDCAF7100CB2FBE /* Luminare in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B1AA00102F30000100AABBCC /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				2AF923902F540B2200F467FD /* Scribe in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -173,7 +86,6 @@
 			children = (
 				F06D76892DFF7A77007EEDA9 /* SkyLight.framework */,
 				A883642E298B7288005D6C19 /* ServiceManagement.framework */,
-				B1AA00802F30000100AABBCC /* Security.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -187,11 +99,8 @@
 				A894B0C52C4B31AA00B4CE6F /* CONTRIBUTING.md */,
 				A8C751AC2D7BA98600B58784 /* Loop */,
 				484C54202F8A000100000001 /* LoopTests */,
-				B1AA00022F30000100AABBCC /* LoopUpdaterHelper */,
-				2A86890E2F809700005B521B /* LoopDockTile */,
 				A8E59C36297F5E9A0064D4BA /* Products */,
 				A883642D298B7288005D6C19 /* Frameworks */,
-				2A6A87F02F4D20D2004E995D /* Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -200,8 +109,6 @@
 			children = (
 				A8E59C35297F5E9A0064D4BA /* Loop.app */,
 				484C54102F8A000100000001 /* LoopHorizontalLayoutTests.xctest */,
-				B1AA00012F30000100AABBCC /* LoopUpdaterHelper */,
-				2A8689072F809625005B521B /* LoopDockTile.plugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -231,53 +138,24 @@
 			productReference = 484C54102F8A000100000001 /* LoopHorizontalLayoutTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		2A8689062F809625005B521B /* LoopDockTile */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 2A8689082F809625005B521B /* Build configuration list for PBXNativeTarget "LoopDockTile" */;
-			buildPhases = (
-				2A8689032F809625005B521B /* Sources */,
-				2A8689042F809625005B521B /* Frameworks */,
-				2A8689052F809625005B521B /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				2A86890E2F809700005B521B /* LoopDockTile */,
-			);
-			name = LoopDockTile;
-			packageProductDependencies = (
-				2AE091C62F81A22800EF6149 /* Scribe */,
-			);
-			productName = LoopDockTile;
-			productReference = 2A8689072F809625005B521B /* LoopDockTile.plugin */;
-			productType = "com.apple.product-type.bundle";
-		};
 		A8E59C34297F5E9A0064D4BA /* Loop */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A8E59C44297F5E9B0064D4BA /* Build configuration list for PBXNativeTarget "Loop" */;
 			buildPhases = (
 				A8E59C31297F5E9A0064D4BA /* Sources */,
 				A8E59C32297F5E9A0064D4BA /* Frameworks */,
-				B1AA00612F30000100AABBCC /* CopyFiles */,
-				2A86890C2F80967B005B521B /* CopyFiles */,
 				A8E59C33297F5E9A0064D4BA /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				B1AA00712F30000100AABBCC /* PBXTargetDependency */,
-				2A8689112F809800005B521B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				2A6A87F02F4D20D2004E995D /* Shared */,
 				A8C751AC2D7BA98600B58784 /* Loop */,
 			);
 			name = Loop;
 			packageProductDependencies = (
 				2A28B6282EE5050C00A1E26B /* Defaults */,
-				3ED0A7B82F21DF6800A58629 /* ZIPFoundation */,
 				2A28492A2F22B4B700F6CE42 /* Scribe */,
 				2AF9238D2F540B1300F467FD /* Scribe */,
 				2AC4F62B2FDCAF7100CB2FBE /* Luminare */,
@@ -285,29 +163,6 @@
 			productName = WindowManager;
 			productReference = A8E59C35297F5E9A0064D4BA /* Loop.app */;
 			productType = "com.apple.product-type.application";
-		};
-		B1AA00112F30000100AABBCC /* LoopUpdaterHelper */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = B1AA00212F30000100AABBCC /* Build configuration list for PBXNativeTarget "LoopUpdaterHelper" */;
-			buildPhases = (
-				B1AA00122F30000100AABBCC /* Sources */,
-				B1AA00102F30000100AABBCC /* Frameworks */,
-				B1AA00132F30000100AABBCC /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				B1AA00022F30000100AABBCC /* LoopUpdaterHelper */,
-			);
-			name = LoopUpdaterHelper;
-			packageProductDependencies = (
-				2AF9238F2F540B2200F467FD /* Scribe */,
-			);
-			productName = LoopUpdaterHelper;
-			productReference = B1AA00012F30000100AABBCC /* LoopUpdaterHelper */;
-			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -319,17 +174,11 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
-					2A8689062F809625005B521B = {
-						CreatedOnToolsVersion = 26.4;
-					};
 					484C54402F8A000100000001 = {
 						CreatedOnToolsVersion = 26.4;
 					};
 					A8E59C34297F5E9A0064D4BA = {
 						CreatedOnToolsVersion = 14.2;
-					};
-					B1AA00112F30000100AABBCC = {
-						CreatedOnToolsVersion = 16.0;
 					};
 				};
 			};
@@ -356,7 +205,6 @@
 			mainGroup = A8E59C2C297F5E9A0064D4BA;
 			packageReferences = (
 				2A28B6272EE5050C00A1E26B /* XCRemoteSwiftPackageReference "Defaults" */,
-				3ED0A7B72F21DF6800A58629 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 				2AF9238C2F540B1300F467FD /* XCRemoteSwiftPackageReference "Scribe" */,
 				2AC4F62A2FDCAF7100CB2FBE /* XCRemoteSwiftPackageReference "Luminare" */,
 			);
@@ -366,8 +214,6 @@
 			targets = (
 				A8E59C34297F5E9A0064D4BA /* Loop */,
 				484C54402F8A000100000001 /* LoopHorizontalLayoutTests */,
-				B1AA00112F30000100AABBCC /* LoopUpdaterHelper */,
-				2A8689062F809625005B521B /* LoopDockTile */,
 			);
 		};
 /* End PBXProject section */
@@ -380,21 +226,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		2A8689052F809625005B521B /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		A8E59C33297F5E9A0064D4BA /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B1AA00132F30000100AABBCC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -416,21 +248,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		2A8689032F809625005B521B /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		A8E59C31297F5E9A0064D4BA /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B1AA00122F30000100AABBCC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -440,16 +258,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		2A8689112F809800005B521B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 2A8689062F809625005B521B /* LoopDockTile */;
-			targetProxy = 2A8689102F809800005B521B /* PBXContainerItemProxy */;
-		};
-		B1AA00712F30000100AABBCC /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = B1AA00112F30000100AABBCC /* LoopUpdaterHelper */;
-			targetProxy = B1AA00512F30000100AABBCC /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -489,75 +297,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
-			};
-			name = Development;
-		};
-		2A8689092F809625005B521B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Manual;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.DockTile;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				WRAPPER_EXTENSION = plugin;
-			};
-			name = Debug;
-		};
-		2A86890A2F809625005B521B /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Manual;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.DockTile;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				WRAPPER_EXTENSION = plugin;
-			};
-			name = Release;
-		};
-		2A86890B2F809625005B521B /* Development */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Manual;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.DockTile;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				WRAPPER_EXTENSION = plugin;
 			};
 			name = Development;
 		};
@@ -630,9 +369,9 @@
 		2AC87FA62F09E3A600082F90 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-Developer";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -801,9 +540,9 @@
 		A8E59C45297F5E9B0064D4BA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-Developer";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -838,9 +577,9 @@
 		A8E59C46297F5E9B0064D4BA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-Classic";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -872,98 +611,6 @@
 			};
 			name = Release;
 		};
-		B1AA00312F30000100AABBCC /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				AUTOMATION_APPLE_EVENTS = NO;
-				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = NO;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = LoopUpdaterHelper/Info.plist;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.UpdaterHelper;
-				PRODUCT_NAME = LoopUpdaterHelper;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		B1AA00322F30000100AABBCC /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				AUTOMATION_APPLE_EVENTS = NO;
-				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = NO;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = LoopUpdaterHelper/Info.plist;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.UpdaterHelper;
-				PRODUCT_NAME = LoopUpdaterHelper;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
-		B1AA00332F30000100AABBCC /* Development */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				AUTOMATION_APPLE_EVENTS = NO;
-				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = NO;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = LoopUpdaterHelper/Info.plist;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.UpdaterHelper;
-				PRODUCT_NAME = LoopUpdaterHelper;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
-			};
-			name = Development;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -973,16 +620,6 @@
 				484C54702F8A000100000001 /* Debug */,
 				484C54712F8A000100000001 /* Release */,
 				484C54722F8A000100000001 /* Development */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		2A8689082F809625005B521B /* Build configuration list for PBXNativeTarget "LoopDockTile" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				2A8689092F809625005B521B /* Debug */,
-				2A86890A2F809625005B521B /* Release */,
-				2A86890B2F809625005B521B /* Development */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1003,16 +640,6 @@
 				A8E59C45297F5E9B0064D4BA /* Debug */,
 				A8E59C46297F5E9B0064D4BA /* Release */,
 				2AC87FA62F09E3A600082F90 /* Development */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		B1AA00212F30000100AABBCC /* Build configuration list for PBXNativeTarget "LoopUpdaterHelper" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				B1AA00312F30000100AABBCC /* Debug */,
-				B1AA00322F30000100AABBCC /* Release */,
-				B1AA00332F30000100AABBCC /* Development */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1044,14 +671,6 @@
 				kind = branch;
 			};
 		};
-		3ED0A7B72F21DF6800A58629 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.20;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1069,25 +688,10 @@
 			package = 2AC4F62A2FDCAF7100CB2FBE /* XCRemoteSwiftPackageReference "Luminare" */;
 			productName = Luminare;
 		};
-		2AE091C62F81A22800EF6149 /* Scribe */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2AF9238C2F540B1300F467FD /* XCRemoteSwiftPackageReference "Scribe" */;
-			productName = Scribe;
-		};
 		2AF9238D2F540B1300F467FD /* Scribe */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2AF9238C2F540B1300F467FD /* XCRemoteSwiftPackageReference "Scribe" */;
 			productName = Scribe;
-		};
-		2AF9238F2F540B2200F467FD /* Scribe */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 2AF9238C2F540B1300F467FD /* XCRemoteSwiftPackageReference "Scribe" */;
-			productName = Scribe;
-		};
-		3ED0A7B82F21DF6800A58629 /* ZIPFoundation */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 3ED0A7B72F21DF6800A58629 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
-			productName = ZIPFoundation;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

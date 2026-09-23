@@ -33,7 +33,7 @@ final class SettingsWindowManager: ObservableObject {
     @Published var showRadialMenu: Bool = true
     @Published var showPreview: Bool = true
 
-    @Published var currentTab: SettingsTab = .icon {
+    @Published var currentTab: SettingsTab = .dock {
         didSet {
             if currentTab == .radialMenu {
                 showRadialMenu = true

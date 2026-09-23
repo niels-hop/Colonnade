@@ -17,7 +17,7 @@ extension Bundle {
     }
 
     var bundleID: String {
-        getInfo("CFBundleIdentifier") ?? Bundle.main.bundleIdentifier ?? "com.MrKai77.loop"
+        getInfo("CFBundleIdentifier") ?? Bundle.main.bundleIdentifier ?? "com.nielshop.Colonnade"
     }
 
     var copyright: String {
