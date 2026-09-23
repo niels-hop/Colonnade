@@ -20,13 +20,11 @@ struct PaddingPreview: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
+                // Full-height columns, the way Colonnade divides the screen.
                 HStack(spacing: model.window / 2) {
                     blurredWindow()
-
-                    VStack(spacing: model.window / 2) {
-                        blurredWindow()
-                        blurredWindow()
-                    }
+                    blurredWindow()
+                    blurredWindow()
                 }
                 .padding(.top, model.totalTopPadding / 2)
                 .padding(.bottom, model.bottom / 2)

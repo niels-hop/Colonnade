@@ -62,6 +62,15 @@ struct DockIllustrationView: View {
         }
     }
 
+    /// Follows the accent color settings, including the gradient toggle.
+    private var accentGradient: LinearGradient {
+        LinearGradient(
+            colors: [accentColorController.color1, accentColorController.color2],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
     private var screen: some View {
         GeometryReader { proxy in
             let size = proxy.size
@@ -91,10 +100,10 @@ struct DockIllustrationView: View {
 
                 let target = steps[stepIndex].target
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(accentColorController.color1.opacity(0.35))
+                    .fill(accentGradient.opacity(0.35))
                     .overlay {
                         RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(accentColorController.color1, lineWidth: 2)
+                            .strokeBorder(accentGradient, lineWidth: 2)
                     }
                     .frame(
                         width: max(0, (target.upperBound - target.lowerBound) * (size.width - inset * 2) - 4),
