@@ -3,8 +3,9 @@
 # Bouwt Colonnade met een stabiel code-signing certificaat en installeert de app in
 # /Applications, zodat alle macOS-accounts op deze Mac dezelfde build draaien.
 #
-# Het certificaat komt uit Colonnade/Local.xcconfig (CODE_SIGN_IDENTITY = ...), of uit de
-# omgevingsvariabele SIGN_IDENTITY. Zie README.md, sectie "Building from source".
+# Het certificaat komt uit Colonnade/Local.xcconfig (CODE_SIGN_IDENTITY = ...). Zie README.md,
+# sectie "Building from source". Het wordt bewust niet op de command line meegegeven: dan zou het
+# ook voor de Swift-package-targets gelden, en die weigeren te tekenen zonder development team.
 #
 # Gebruik:
 #   ./scripts/deploy.sh            # Release build -> /Applications/Colonnade.app
@@ -23,10 +24,11 @@ cd "$REPO_ROOT"
 # 1. Bepaal en controleer het signing-certificaat.
 #    Geen -v: een self-signed cert is "untrusted" en valt buiten de valid-only lijst,
 #    maar codesign kan er prima mee tekenen (TCC pint de leaf-hash, niet de CA-trust).
-if [[ -z "${SIGN_IDENTITY:-}" && -f "$LOCAL_XCCONFIG" ]]; then
+SIGN_IDENTITY=""
+if [[ -f "$LOCAL_XCCONFIG" ]]; then
     SIGN_IDENTITY="$(awk -F' *= *' '/^CODE_SIGN_IDENTITY/{print $2; exit}' "$LOCAL_XCCONFIG")"
 fi
-if [[ -z "${SIGN_IDENTITY:-}" || "$SIGN_IDENTITY" == "-" ]]; then
+if [[ -z "$SIGN_IDENTITY" || "$SIGN_IDENTITY" == "-" ]]; then
     echo "FOUT: geen stabiel signing-certificaat ingesteld."
     echo "      Zet 'CODE_SIGN_IDENTITY = <naam>' in Colonnade/Local.xcconfig (zie README.md)."
     echo "      Met ad-hoc signing vergeet macOS de Toegankelijkheid-toestemming bij elke build."
@@ -42,7 +44,7 @@ fi
 #    Xcode anders interactief wil laten goedkeuren; in een CLI-build slaan we die check over.
 echo "==> Bouwen ($CONFIG, getekend met '$SIGN_IDENTITY')..."
 xcodebuild -project Colonnade.xcodeproj -scheme Colonnade -configuration "$CONFIG" \
-    -skipMacroValidation CODE_SIGN_IDENTITY="$SIGN_IDENTITY" build
+    -skipMacroValidation build
 
 # 3. Vind de gebouwde app.
 BUILT_DIR="$(xcodebuild -project Colonnade.xcodeproj -scheme Colonnade -configuration "$CONFIG" -showBuildSettings 2>/dev/null \
