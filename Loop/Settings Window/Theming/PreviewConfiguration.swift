@@ -38,7 +38,7 @@ struct PreviewConfigurationView: View {
                         }
                     )
                 ) {
-                    Text("Show preview when looping")
+                    Text("Show preview while placing")
                         .padding(.trailing, 4)
                         .luminareToolTip(attachedTo: .topTrailing, hidden: previewVisibility) {
                             Text("Window snapping will still use the preview.")

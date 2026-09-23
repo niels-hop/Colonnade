@@ -111,7 +111,7 @@ struct KeybindsConfigurationView: View {
                             Text("Always start cycles from first item")
                                 .padding(.trailing, 4)
                                 .luminareToolTip(attachedTo: .topTrailing) {
-                                    Text("By default, Loop resumes cycles from where you last left off in each window.")
+                                    Text("By default, cycles resume from where you last left off in each window.")
                                         .padding(6)
                                 }
                         }
