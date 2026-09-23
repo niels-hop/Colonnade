@@ -136,7 +136,7 @@ struct PaddingConfigurationView: View {
     func screenSidesPaddingConfiguration() -> some View {
         Group {
             LuminareSlider(
-                String(localized: "Top", comment: "Label for a slider in Loop’s padding settings"),
+                String(localized: "Top", comment: "Label for a slider in the padding settings"),
                 value: $paddingModel.top.doubleBinding,
                 in: range,
                 format: .number.precision(.fractionLength(0...1)),
@@ -148,7 +148,7 @@ struct PaddingConfigurationView: View {
             .luminareSliderLayout(.compact(textBoxWidth: 76))
 
             LuminareSlider(
-                String(localized: "Bottom", comment: "Label for a slider in Loop’s padding settings"),
+                String(localized: "Bottom", comment: "Label for a slider in the padding settings"),
                 value: $paddingModel.bottom.doubleBinding,
                 in: range,
                 format: .number.precision(.fractionLength(0...1)),
@@ -160,7 +160,7 @@ struct PaddingConfigurationView: View {
             .luminareSliderLayout(.compact(textBoxWidth: 76))
 
             LuminareSlider(
-                String(localized: "Right", comment: "Label for a slider in Loop’s padding settings"),
+                String(localized: "Right", comment: "Label for a slider in the padding settings"),
                 value: $paddingModel.right.doubleBinding,
                 in: range,
                 format: .number.precision(.fractionLength(0...1)),
@@ -172,7 +172,7 @@ struct PaddingConfigurationView: View {
             .luminareSliderLayout(.compact(textBoxWidth: 76))
 
             LuminareSlider(
-                String(localized: "Left", comment: "Label for a slider in Loop’s padding settings"),
+                String(localized: "Left", comment: "Label for a slider in the padding settings"),
                 value: $paddingModel.left.doubleBinding,
                 in: range,
                 format: .number.precision(.fractionLength(0...1)),
@@ -188,7 +188,7 @@ struct PaddingConfigurationView: View {
     func screenInsetsPaddingConfiguration() -> some View {
         Group {
             LuminareSlider(
-                String(localized: "Window gaps", comment: "Label for a slider in Loop’s padding settings"),
+                String(localized: "Window gaps", comment: "Label for a slider in the padding settings"),
                 value: $paddingModel.window.doubleBinding,
                 in: range,
                 format: .number.precision(.fractionLength(0...1)),
@@ -207,7 +207,7 @@ struct PaddingConfigurationView: View {
                 onEditingChanged: handleSliderEditingChanged,
                 onEditingCommit: commitSliderChanges
             ) {
-                Text("External bar", comment: "Label for a slider in Loop’s padding settings")
+                Text("External bar", comment: "Label for a slider in the padding settings")
                     .padding(.trailing, 4)
                     .luminareToolTip(attachedTo: .topTrailing) {
                         Text("Use this if you are using a custom menubar.")

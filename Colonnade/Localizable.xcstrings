@@ -1419,6 +1419,16 @@
         }
       }
     },
+    "Always On" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altijd aan"
+          }
+        }
+      }
+    },
     "Always start cycles from first item" : {
       "localizations" : {
         "ar" : {
@@ -1771,6 +1781,16 @@
         }
       }
     },
+    "Appearance" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weergave"
+          }
+        }
+      }
+    },
     "Apply padding" : {
       "localizations" : {
         "ar" : {
@@ -1943,6 +1963,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按下滾輪時延遲觸發"
+          }
+        }
+      }
+    },
+    "Automatic" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch"
+          }
+        }
+      }
+    },
+    "Automatic restore" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch terugzetten"
           }
         }
       }
@@ -2924,6 +2964,26 @@
         }
       }
     },
+    "Built on Loop" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebouwd op Loop"
+          }
+        }
+      }
+    },
+    "By default, cycles resume from where you last left off in each window." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standaard gaan cycli per venster verder waar je gebleven was."
+          }
+        }
+      }
+    },
     "Cancel" : {
       "comment" : "The \"Cancel\" and \"Reset\" buttons in the reset radial menu actions alert.",
       "localizations" : {
@@ -3190,6 +3250,36 @@
         }
       }
     },
+    "Change…" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig…"
+          }
+        }
+      }
+    },
+    "Check for Updates" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek naar updates"
+          }
+        }
+      }
+    },
+    "Check for updates automatically" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch zoeken naar updates"
+          }
+        }
+      }
+    },
     "Check for Updates…" : {
       "comment" : "Button to check for updates in menubar dropdown menu",
       "localizations" : {
@@ -3275,6 +3365,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "檢查更新…"
+          }
+        }
+      }
+    },
+    "Check your internet connection and try again." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controleer je internetverbinding en probeer het opnieuw."
+          }
+        }
+      }
+    },
+    "Checking…" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezig met zoeken…"
           }
         }
       }
@@ -3367,6 +3477,36 @@
         }
       }
     },
+    "Click cycles widths" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klikken wisselt breedte"
+          }
+        }
+      }
+    },
+    "Click or scroll to change the width" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klik of scroll om de breedte te wijzigen"
+          }
+        }
+      }
+    },
+    "Click to change the width" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klik om de breedte te wijzigen"
+          }
+        }
+      }
+    },
     "Close" : {
       "comment" : "Label for a button that closes a modal window",
       "localizations" : {
@@ -3452,6 +3592,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "關閉"
+          }
+        }
+      }
+    },
+    "Colonnade %@ is available" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colonnade %@ is beschikbaar"
+          }
+        }
+      }
+    },
+    "Colonnade %@ is the latest version." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colonnade %@ is de nieuwste versie."
+          }
+        }
+      }
+    },
+    "Colonnade is a fork of Loop by Kai Azim, released under the GNU General Public License v3.0. Its window engine, settings framework and much more come from the Loop project." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colonnade is een fork van Loop door Kai Azim, uitgebracht onder de GNU General Public License v3.0. De venstermotor, het instellingenframework en nog veel meer komen uit het Loop-project."
+          }
+        }
+      }
+    },
+    "Colonnade is free and open source. Found a bug or have an idea? Let us know on GitHub." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colonnade is gratis en open source. Een bug gevonden of een idee? Laat het weten op GitHub."
           }
         }
       }
@@ -3630,6 +3810,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "設定…"
+          }
+        }
+      }
+    },
+    "Controls" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bediening"
           }
         }
       }
@@ -3896,6 +4086,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "圓角半徑"
+          }
+        }
+      }
+    },
+    "Couldn't check for updates" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kan niet zoeken naar updates"
+          }
+        }
+      }
+    },
+    "Couldn't check. Try again" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoeken mislukt. Probeer opnieuw"
+          }
+        }
+      }
+    },
+    "Created Loop, the app Colonnade is built on" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maakte Loop, de app waarop Colonnade is gebouwd"
           }
         }
       }
@@ -4964,6 +5184,16 @@
         }
       }
     },
+    "Default layout" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standaardindeling"
+          }
+        }
+      }
+    },
     "Disable cursor interaction" : {
       "localizations" : {
         "ar" : {
@@ -5140,6 +5370,26 @@
         }
       }
     },
+    "Dock" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock"
+          }
+        }
+      }
+    },
+    "Dock size" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grootte van het dock"
+          }
+        }
+      }
+    },
     "Double-click to trigger" : {
       "localizations" : {
         "ar" : {
@@ -5224,6 +5474,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按兩下來觸發"
+          }
+        }
+      }
+    },
+    "Download %@" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download %@"
+          }
+        }
+      }
+    },
+    "Download %@…" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download %@…"
+          }
+        }
+      }
+    },
+    "Download the new version from GitHub and replace the app in your Applications folder." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download de nieuwe versie van GitHub en vervang de app in je map Apps."
+          }
+        }
+      }
+    },
+    "Drag a divider to resize neighbours. Move down to place freely." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep een scheidingslijn om buren te verbreden. Beweeg omlaag om vrij te plaatsen."
           }
         }
       }
@@ -5582,6 +5872,16 @@
         }
       }
     },
+    "Everyone who made Loop what it is" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iedereen die Loop heeft gemaakt tot wat het is"
+          }
+        }
+      }
+    },
     "Export" : {
       "localizations" : {
         "ar" : {
@@ -5936,6 +6236,16 @@
         }
       }
     },
+    "Feel" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gevoel"
+          }
+        }
+      }
+    },
     "Fill Available Space" : {
       "comment" : "Window action",
       "localizations" : {
@@ -6021,6 +6331,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "填充可用空白"
+          }
+        }
+      }
+    },
+    "Fill the free space" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vul de vrije ruimte"
           }
         }
       }
@@ -6644,6 +6964,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取得右側焦點"
+          }
+        }
+      }
+    },
+    "Focus slot" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plek Focus"
           }
         }
       }
@@ -8423,6 +8753,26 @@
         }
       }
     },
+    "Hold %@" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Houd %@ ingedrukt"
+          }
+        }
+      }
+    },
+    "Hold the trigger, move the mouse, release." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trigger inhouden, muis bewegen, loslaten."
+          }
+        }
+      }
+    },
     "Horizontal Center Half" : {
       "comment" : "Window action",
       "localizations" : {
@@ -8775,6 +9125,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "水平三等分"
+          }
+        }
+      }
+    },
+    "Horizontal window management for wide screens" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Horizontaal vensterbeheer voor brede schermen"
+          }
+        }
+      }
+    },
+    "How it works" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zo werkt het"
           }
         }
       }
@@ -9484,6 +9854,16 @@
         }
       }
     },
+    "Insert beside a window" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voeg in naast een venster"
+          }
+        }
+      }
+    },
     "Instant" : {
       "comment" : "Animation speed setting",
       "localizations" : {
@@ -9840,6 +10220,16 @@
         }
       }
     },
+    "Later" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        }
+      }
+    },
     "Launch at login" : {
       "localizations" : {
         "ar" : {
@@ -9924,6 +10314,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隨macOS啟動"
+          }
+        }
+      }
+    },
+    "Layouts" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indelingen"
           }
         }
       }
@@ -10724,6 +11124,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "關聯觸發鍵"
+          }
+        }
+      }
+    },
+    "Loop contributors" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bijdragers aan Loop"
+          }
+        }
+      }
+    },
+    "Loop design" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontwerp Loop"
+          }
+        }
+      }
+    },
+    "Loop development" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ontwikkeling Loop"
+          }
+        }
+      }
+    },
+    "MacBook slot" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plek MacBook"
           }
         }
       }
@@ -11705,6 +12145,16 @@
         }
       }
     },
+    "Move down to place freely" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beweeg omlaag om vrij te plaatsen"
+          }
+        }
+      }
+    },
     "Move Left" : {
       "comment" : "Window action",
       "localizations" : {
@@ -11879,6 +12329,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "向右移動"
+          }
+        }
+      }
+    },
+    "Move the mouse sideways" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beweeg de muis zijwaarts"
           }
         }
       }
@@ -12323,6 +12783,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用游標所在的屏幕"
+          }
+        }
+      }
+    },
+    "Never" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nooit"
           }
         }
       }
@@ -13123,6 +13593,16 @@
         }
       }
     },
+    "Open Download Page" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open downloadpagina"
+          }
+        }
+      }
+    },
     "Options" : {
       "comment" : "Section header shown in settings",
       "localizations" : {
@@ -13478,6 +13958,16 @@
         }
       }
     },
+    "Pick a column, a gap or a window to stack on. Windows always fill the full height." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies een kolom, een lege plek of een venster om op te stapelen. Vensters vullen altijd de volle hoogte."
+          }
+        }
+      }
+    },
     "Please include at least one modifier key." : {
       "comment" : "An error message displayed when a custom keybind is created but does not include at least one modifier key.",
       "localizations" : {
@@ -13563,6 +14053,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "請包括至少一個修飾鍵。"
+          }
+        }
+      }
+    },
+    "Pointer sensitivity" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gevoeligheid aanwijzer"
           }
         }
       }
@@ -14092,6 +14592,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "點按“添加”來添加應用程式"
+          }
+        }
+      }
+    },
+    "Press Escape to cancel." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Druk op Escape om te annuleren."
           }
         }
       }
@@ -14895,6 +15405,26 @@
         }
       }
     },
+    "Release to place the window" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laat los om het venster te plaatsen"
+          }
+        }
+      }
+    },
+    "Releases" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Releases"
+          }
+        }
+      }
+    },
     "Remove" : {
       "comment" : "Used to remove items from a list",
       "localizations" : {
@@ -14980,6 +15510,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除"
+          }
+        }
+      }
+    },
+    "Report an Issue" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meld een probleem"
           }
         }
       }
@@ -15599,6 +16139,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "避開台前調度區域"
+          }
+        }
+      }
+    },
+    "Restore after wake" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terugzetten na sluimer"
+          }
+        }
+      }
+    },
+    "Restore defaults" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standaardwaarden herstellen"
+          }
+        }
+      }
+    },
+    "Restore on launch or login" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terugzetten bij starten of inloggen"
+          }
+        }
+      }
+    },
+    "Restore when displays change" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terugzetten als schermen veranderen"
+          }
+        }
+      }
+    },
+    "Restore when Spaces change" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terugzetten als Spaces veranderen"
           }
         }
       }
@@ -16398,6 +16988,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "秒"
+          }
+        }
+      }
+    },
+    "Save %@" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar %@"
+          }
+        }
+      }
+    },
+    "Save the current arrangement of your windows to a slot from the menu bar, and restore it whenever you need it." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewaar de huidige indeling van je vensters in een plek via de menubalk en zet hem terug wanneer je wilt."
           }
         }
       }
@@ -17285,6 +17895,16 @@
         }
       }
     },
+    "Settings tab: Dock" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock"
+          }
+        }
+      }
+    },
     "Settings tab: Excluded Apps" : {
       "localizations" : {
         "ar" : {
@@ -17369,6 +17989,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "排除的應用程式"
+          }
+        }
+      }
+    },
+    "Settings tab: Layouts" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indelingen"
           }
         }
       }
@@ -17549,6 +18179,16 @@
         }
       }
     },
+    "Settings tab: Trigger & Shortcuts" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trigger & sneltoetsen"
+          }
+        }
+      }
+    },
     "Settings…" : {
       "localizations" : {
         "ar" : {
@@ -17721,6 +18361,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收納時移動焦點"
+          }
+        }
+      }
+    },
+    "Show in Dock" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon in Dock"
+          }
+        }
+      }
+    },
+    "Show preview while placing" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon voorvertoning tijdens plaatsen"
           }
         }
       }
@@ -18701,6 +19361,16 @@
         }
       }
     },
+    "Slots" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plekken"
+          }
+        }
+      }
+    },
     "Smaller" : {
       "comment" : "Window action",
       "localizations" : {
@@ -19053,6 +19723,16 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Space Switching"
+          }
+        }
+      }
+    },
+    "Stack on an existing window" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stapel op een bestaand venster"
           }
         }
       }
@@ -19937,6 +20617,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此按鍵綁定已被另一個收納按键绑定占用。"
+          }
+        }
+      }
+    },
+    "The dock appears as a miniature of your screen." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het dock verschijnt als miniatuur van je scherm."
+          }
+        }
+      }
+    },
+    "The dock is turned off and the radial menu is used on every screen." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het dock staat uit en op elk scherm wordt het radiaalmenu gebruikt."
+          }
+        }
+      }
+    },
+    "The dock is used on every screen, including a MacBook's built-in display." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het dock wordt op elk scherm gebruikt, ook op het ingebouwde scherm van een MacBook."
+          }
+        }
+      }
+    },
+    "The dock is used on wide screens. Narrower screens fall back to the radial menu." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Het dock wordt gebruikt op brede schermen. Smallere schermen gebruiken het radiaalmenu."
+          }
+        }
+      }
+    },
+    "the trigger key" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "de triggertoets"
           }
         }
       }
@@ -21449,6 +22179,16 @@
         }
       }
     },
+    "Trigger key" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Triggertoets"
+          }
+        }
+      }
+    },
     "Trigger Key" : {
       "comment" : "Section header shown in settings",
       "localizations" : {
@@ -22246,6 +22986,26 @@
         }
       }
     },
+    "Use the dock" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik het dock"
+          }
+        }
+      }
+    },
+    "Use the Dock" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gebruik het dock"
+          }
+        }
+      }
+    },
     "Use this if you are using a custom menubar." : {
       "localizations" : {
         "ar" : {
@@ -22779,6 +23539,16 @@
         }
       }
     },
+    "When to use the dock" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wanneer het dock gebruiken"
+          }
+        }
+      }
+    },
     "Whether to allow Mission Control to open when windows\nare dragged to the top of the screen." : {
       "comment" : "A tooltip that explains the purpose of the \"Suppress Mission Control\" toggle in the Behavior Configuration view.",
       "localizations" : {
@@ -22864,6 +23634,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "是否允許在拖動視窗至螢幕頂部時觸發調度中心。"
+          }
+        }
+      }
+    },
+    "Wide from aspect ratio" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breed vanaf beeldverhouding"
           }
         }
       }
@@ -23311,6 +24091,16 @@
         }
       }
     },
+    "Work slot" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plek Werk"
+          }
+        }
+      }
+    },
     "X" : {
       "comment" : "X axis label",
       "localizations" : {
@@ -23751,6 +24541,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你無法匯出不存在的東西！"
+          }
+        }
+      }
+    },
+    "You're up to date" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je bent up-to-date"
           }
         }
       }

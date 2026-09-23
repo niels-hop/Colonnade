@@ -174,7 +174,7 @@ private extension Migrator {
         let savePanel = NSSavePanel()
         savePanel.directoryURL = Defaults[.lastMigratorURL] ?? documentsDirectory
         savePanel.title = .init(localized: "Export keybinds")
-        savePanel.nameFieldStringValue = "Loop Keybinds.json"
+        savePanel.nameFieldStringValue = "Colonnade Keybinds.json"
         savePanel.canCreateDirectories = true
         savePanel.showsTagField = false
 

@@ -84,8 +84,10 @@ struct DockConfigurationView: View {
 
     /// e.g. "⌃ ⌥" for the modifiers, or the key names for anything else.
     private var triggerDescription: String {
+        // macOS lists modifiers as ⌃ ⌥ ⇧ ⌘; anything else follows them.
+        let order: [CGKeyCode] = [.kVK_Function, .kVK_Control, .kVK_Option, .kVK_Shift, .kVK_Command]
         let names = triggerKey
-            .sorted()
+            .sorted { (order.firstIndex(of: $0.baseModifier) ?? order.count) < (order.firstIndex(of: $1.baseModifier) ?? order.count) }
             .compactMap { key -> String? in
                 switch key.baseModifier {
                 case .kVK_Function: "fn"

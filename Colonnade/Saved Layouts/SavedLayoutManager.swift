@@ -286,7 +286,7 @@ private extension SavedLayoutRestoreReport.Issue {
     var feedbackDescription: String {
         switch self {
         case .accessibilityNotGranted: "Accessibility permission is required."
-        case .loopIsActive: "Release Loop's trigger before restoring."
+        case .loopIsActive: "Release the trigger before restoring."
         case .missingDisplay: "A saved display is not connected."
         case .ambiguousDisplay: "The connected displays cannot be identified safely."
         case .missingWindow: "A saved window is not currently visible."
