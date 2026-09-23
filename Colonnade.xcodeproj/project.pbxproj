@@ -26,17 +26,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		484C54102F8A000100000001 /* LoopHorizontalLayoutTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LoopHorizontalLayoutTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		484C54112F8A000100000001 /* HorizontalLayoutModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutModels.swift"; sourceTree = SOURCE_ROOT; };
-		484C54122F8A000100000001 /* HorizontalLayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutEngine.swift"; sourceTree = SOURCE_ROOT; };
-		484C54132F8A000100000001 /* HorizontalLayoutRuntimeGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutRuntimeGeometry.swift"; sourceTree = SOURCE_ROOT; };
-		484C54142F8A000100000001 /* HorizontalLayoutExecutionCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/HorizontalLayoutExecutionCore.swift"; sourceTree = SOURCE_ROOT; };
-		484C54152F8A000100000001 /* UltrawideDockInteraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Loop/Horizontal Layout/UltrawideDockInteraction.swift"; sourceTree = SOURCE_ROOT; };
+		484C54102F8A000100000001 /* ColonnadeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ColonnadeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		484C54112F8A000100000001 /* HorizontalLayoutModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Colonnade/Horizontal Layout/HorizontalLayoutModels.swift"; sourceTree = SOURCE_ROOT; };
+		484C54122F8A000100000001 /* HorizontalLayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Colonnade/Horizontal Layout/HorizontalLayoutEngine.swift"; sourceTree = SOURCE_ROOT; };
+		484C54132F8A000100000001 /* HorizontalLayoutRuntimeGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Colonnade/Horizontal Layout/HorizontalLayoutRuntimeGeometry.swift"; sourceTree = SOURCE_ROOT; };
+		484C54142F8A000100000001 /* HorizontalLayoutExecutionCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Colonnade/Horizontal Layout/HorizontalLayoutExecutionCore.swift"; sourceTree = SOURCE_ROOT; };
+		484C54152F8A000100000001 /* UltrawideDockInteraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Colonnade/Horizontal Layout/UltrawideDockInteraction.swift"; sourceTree = SOURCE_ROOT; };
 		A848130C2BD1A8D100B02E93 /* .github */ = {isa = PBXFileReference; lastKnownFileType = folder; path = .github; sourceTree = "<group>"; };
 		A86AFD7529888B29008F4892 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		A883642E298B7288005D6C19 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 		A894B0C52C4B31AA00B4CE6F /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
-		A8E59C35297F5E9A0064D4BA /* Loop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Loop.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A8E59C35297F5E9A0064D4BA /* Colonnade.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Colonnade.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8E6D1FC2A4155DC005751D4 /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		F06D76892DFF7A77007EEDA9 /* SkyLight.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SkyLight.framework; path = ../../../../System/Library/PrivateFrameworks/SkyLight.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -49,13 +49,13 @@
 				Local.xcconfig,
 				Info.plist,
 			);
-			target = A8E59C34297F5E9A0064D4BA /* Loop */;
+			target = A8E59C34297F5E9A0064D4BA /* Colonnade */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		484C54202F8A000100000001 /* LoopTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = LoopTests; sourceTree = "<group>"; };
-		A8C751AC2D7BA98600B58784 /* Loop */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A8C751FF2D7BA98600B58784 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Loop; sourceTree = "<group>"; };
+		484C54202F8A000100000001 /* ColonnadeTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ColonnadeTests; sourceTree = "<group>"; };
+		A8C751AC2D7BA98600B58784 /* Colonnade */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A8C751FF2D7BA98600B58784 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Colonnade; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,8 +97,8 @@
 				A8E6D1FC2A4155DC005751D4 /* .gitignore */,
 				A86AFD7529888B29008F4892 /* README.md */,
 				A894B0C52C4B31AA00B4CE6F /* CONTRIBUTING.md */,
-				A8C751AC2D7BA98600B58784 /* Loop */,
-				484C54202F8A000100000001 /* LoopTests */,
+				A8C751AC2D7BA98600B58784 /* Colonnade */,
+				484C54202F8A000100000001 /* ColonnadeTests */,
 				A8E59C36297F5E9A0064D4BA /* Products */,
 				A883642D298B7288005D6C19 /* Frameworks */,
 			);
@@ -107,8 +107,8 @@
 		A8E59C36297F5E9A0064D4BA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A8E59C35297F5E9A0064D4BA /* Loop.app */,
-				484C54102F8A000100000001 /* LoopHorizontalLayoutTests.xctest */,
+				A8E59C35297F5E9A0064D4BA /* Colonnade.app */,
+				484C54102F8A000100000001 /* ColonnadeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -116,9 +116,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		484C54402F8A000100000001 /* LoopHorizontalLayoutTests */ = {
+		484C54402F8A000100000001 /* ColonnadeTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 484C54802F8A000100000001 /* Build configuration list for PBXNativeTarget "LoopHorizontalLayoutTests" */;
+			buildConfigurationList = 484C54802F8A000100000001 /* Build configuration list for PBXNativeTarget "ColonnadeTests" */;
 			buildPhases = (
 				484C54502F8A000100000001 /* Sources */,
 				484C54302F8A000100000001 /* Frameworks */,
@@ -129,18 +129,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				484C54202F8A000100000001 /* LoopTests */,
+				484C54202F8A000100000001 /* ColonnadeTests */,
 			);
-			name = LoopHorizontalLayoutTests;
+			name = ColonnadeTests;
 			packageProductDependencies = (
 			);
-			productName = LoopHorizontalLayoutTests;
-			productReference = 484C54102F8A000100000001 /* LoopHorizontalLayoutTests.xctest */;
+			productName = ColonnadeTests;
+			productReference = 484C54102F8A000100000001 /* ColonnadeTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		A8E59C34297F5E9A0064D4BA /* Loop */ = {
+		A8E59C34297F5E9A0064D4BA /* Colonnade */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A8E59C44297F5E9B0064D4BA /* Build configuration list for PBXNativeTarget "Loop" */;
+			buildConfigurationList = A8E59C44297F5E9B0064D4BA /* Build configuration list for PBXNativeTarget "Colonnade" */;
 			buildPhases = (
 				A8E59C31297F5E9A0064D4BA /* Sources */,
 				A8E59C32297F5E9A0064D4BA /* Frameworks */,
@@ -151,17 +151,17 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				A8C751AC2D7BA98600B58784 /* Loop */,
+				A8C751AC2D7BA98600B58784 /* Colonnade */,
 			);
-			name = Loop;
+			name = Colonnade;
 			packageProductDependencies = (
 				2A28B6282EE5050C00A1E26B /* Defaults */,
 				2A28492A2F22B4B700F6CE42 /* Scribe */,
 				2AF9238D2F540B1300F467FD /* Scribe */,
 				2AC4F62B2FDCAF7100CB2FBE /* Luminare */,
 			);
-			productName = WindowManager;
-			productReference = A8E59C35297F5E9A0064D4BA /* Loop.app */;
+			productName = Colonnade;
+			productReference = A8E59C35297F5E9A0064D4BA /* Colonnade.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -182,7 +182,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A8E59C30297F5E9A0064D4BA /* Build configuration list for PBXProject "Loop" */;
+			buildConfigurationList = A8E59C30297F5E9A0064D4BA /* Build configuration list for PBXProject "Colonnade" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -212,8 +212,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A8E59C34297F5E9A0064D4BA /* Loop */,
-				484C54402F8A000100000001 /* LoopHorizontalLayoutTests */,
+				A8E59C34297F5E9A0064D4BA /* Colonnade */,
+				484C54402F8A000100000001 /* ColonnadeTests */,
 			);
 		};
 /* End PBXProject section */
@@ -302,7 +302,7 @@
 		};
 		2AC87FA52F09E3A600082F90 /* Development */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = A8C751AC2D7BA98600B58784 /* Loop */;
+			baseConfigurationReferenceAnchor = A8C751AC2D7BA98600B58784 /* Colonnade */;
 			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -372,14 +372,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Colonnade/Colonnade.entitlements;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Loop/Info.plist;
+				INFOPLIST_FILE = Colonnade/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Colonnade;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Niels Hop. Based on Loop by Kai Azim (GPL-3.0).";
@@ -405,7 +405,7 @@
 		};
 		A8E59C42297F5E9B0064D4BA /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = A8C751AC2D7BA98600B58784 /* Loop */;
+			baseConfigurationReferenceAnchor = A8C751AC2D7BA98600B58784 /* Colonnade */;
 			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -475,7 +475,7 @@
 		};
 		A8E59C43297F5E9B0064D4BA /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = A8C751AC2D7BA98600B58784 /* Loop */;
+			baseConfigurationReferenceAnchor = A8C751AC2D7BA98600B58784 /* Colonnade */;
 			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -543,14 +543,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Colonnade/Colonnade.entitlements;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Loop/Info.plist;
+				INFOPLIST_FILE = Colonnade/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Colonnade;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Niels Hop. Based on Loop by Kai Azim (GPL-3.0).";
@@ -580,14 +580,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Colonnade/Colonnade.entitlements;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Loop/Info.plist;
+				INFOPLIST_FILE = Colonnade/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Colonnade;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Niels Hop. Based on Loop by Kai Azim (GPL-3.0).";
@@ -614,7 +614,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		484C54802F8A000100000001 /* Build configuration list for PBXNativeTarget "LoopHorizontalLayoutTests" */ = {
+		484C54802F8A000100000001 /* Build configuration list for PBXNativeTarget "ColonnadeTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				484C54702F8A000100000001 /* Debug */,
@@ -624,7 +624,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A8E59C30297F5E9A0064D4BA /* Build configuration list for PBXProject "Loop" */ = {
+		A8E59C30297F5E9A0064D4BA /* Build configuration list for PBXProject "Colonnade" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A8E59C42297F5E9B0064D4BA /* Debug */,
@@ -634,7 +634,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A8E59C44297F5E9B0064D4BA /* Build configuration list for PBXNativeTarget "Loop" */ = {
+		A8E59C44297F5E9B0064D4BA /* Build configuration list for PBXNativeTarget "Colonnade" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A8E59C45297F5E9B0064D4BA /* Debug */,

@@ -17,4 +17,4 @@ Build/
 DerivedData
 
 # Machine-specific build overrides (e.g. a self-signed signing identity)
-Loop/Local.xcconfig
+Colonnade/Local.xcconfig

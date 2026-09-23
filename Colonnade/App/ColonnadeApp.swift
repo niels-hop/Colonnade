@@ -1,5 +1,5 @@
 //
-//  LoopApp.swift
+//  ColonnadeApp.swift
 //  Colonnade
 //
 //  Created by Kai Azim on 2023-01-23.
@@ -9,7 +9,7 @@ import Defaults
 import SwiftUI
 
 @main
-struct LoopApp: App {
+struct ColonnadeApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @ObservedObject private var releaseChecker = ReleaseChecker.shared
     @Default(.hideMenuBarIcon) var hideMenuBarIcon

@@ -16,9 +16,9 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "A8E59C34297F5E9A0064D4BA"
-                     BuildableName = "Loop.app"
-                     BlueprintName = "Loop"
-                     ReferencedContainer = "container:Loop.xcodeproj">
+                     BuildableName = "Colonnade.app"
+                     BlueprintName = "Colonnade"
+                     ReferencedContainer = "container:Colonnade.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
             </ActionContent>
@@ -35,9 +35,9 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "A8E59C34297F5E9A0064D4BA"
-                     BuildableName = "Loop.app"
-                     BlueprintName = "Loop"
-                     ReferencedContainer = "container:Loop.xcodeproj">
+                     BuildableName = "Colonnade.app"
+                     BlueprintName = "Colonnade"
+                     ReferencedContainer = "container:Colonnade.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
             </ActionContent>
@@ -53,9 +53,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A8E59C34297F5E9A0064D4BA"
-               BuildableName = "Loop.app"
-               BlueprintName = "Loop"
-               ReferencedContainer = "container:Loop.xcodeproj">
+               BuildableName = "Colonnade.app"
+               BlueprintName = "Colonnade"
+               ReferencedContainer = "container:Colonnade.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -71,9 +71,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "484C54402F8A000100000001"
-               BuildableName = "LoopHorizontalLayoutTests.xctest"
-               BlueprintName = "LoopHorizontalLayoutTests"
-               ReferencedContainer = "container:Loop.xcodeproj">
+               BuildableName = "ColonnadeTests.xctest"
+               BlueprintName = "ColonnadeTests"
+               ReferencedContainer = "container:Colonnade.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -93,9 +93,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A8E59C34297F5E9A0064D4BA"
-            BuildableName = "Loop.app"
-            BlueprintName = "Loop"
-            ReferencedContainer = "container:Loop.xcodeproj">
+            BuildableName = "Colonnade.app"
+            BlueprintName = "Colonnade"
+            ReferencedContainer = "container:Colonnade.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <EnvironmentVariables>
@@ -117,9 +117,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A8E59C34297F5E9A0064D4BA"
-            BuildableName = "Loop.app"
-            BlueprintName = "Loop"
-            ReferencedContainer = "container:Loop.xcodeproj">
+            BuildableName = "Colonnade.app"
+            BlueprintName = "Colonnade"
+            ReferencedContainer = "container:Colonnade.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
