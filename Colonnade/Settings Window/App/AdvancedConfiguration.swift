@@ -133,6 +133,7 @@ struct AdvancedConfigurationView: View {
     @Default(.hapticFeedback) var hapticFeedback
     @Default(.sizeIncrement) var sizeIncrement
     @Default(.enableRadialMenuCustomization) var enableRadialMenuCustomization
+    @Default(.ultrawideDockTriggerMode) var ultrawideDockTriggerMode
 
     @State private var isConfirmingResetKeybinds: Bool = false
     @State private var isConfirmingResetRadialMenuActions: Bool = false
@@ -144,13 +145,17 @@ struct AdvancedConfigurationView: View {
     var body: some View {
         LuminareForm {
             generalSection
-            radialMenuSection
+            // The radial menu only appears as a fallback when the dock isn't always used.
+            if ultrawideDockTriggerMode != .alwaysOn {
+                radialMenuSection
+            }
             keybindsSection
             permissionsSection
                 .onAppear(perform: model.startTracking)
                 .onDisappear(perform: model.stopTracking)
         }
         .animation(luminareAnimation, value: enableRadialMenuCustomization)
+        .animation(luminareAnimation, value: ultrawideDockTriggerMode)
     }
 
     private var generalSection: some View {

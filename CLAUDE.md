@@ -56,9 +56,12 @@ een trigger-sessie is bewust behouden) en regelt de hele cyclus:
 ### Instellingenvenster
 
 `Colonnade/Settings Window/SettingsTab.swift` definieert de tabs, gegroepeerd als Dock (Dock, Indelingen),
-Bediening (Trigger & sneltoetsen, Gedrag), Weergave (Accentkleur, Voorbeeld, Radiaalmenu) en Colonnade
-(Geavanceerd, Uitgesloten apps, Info). Dock-tabs staan in `Colonnade/Settings Window/Dock/`; de inspector toont
-daar `DockIllustrationView`. Nieuwe UI-teksten krijgen een `nl-BE`-vertaling in `Localizable.xcstrings`.
+Bediening (Trigger & sneltoetsen, Gedrag, en Radiaalmenu alleen als dock-modus niet "Altijd aan" is), Weergave
+(Accentkleur, Voorbeeld) en Colonnade (Geavanceerd, Uitgesloten apps, Info). `SettingsTab.inspector` kiest de
+inspector: `DockIllustrationView` (standaard), `SettingsScreenPreview` (breed scherm met kolommen over volle
+hoogte, voor Voorbeeld en Trigger) of het radiaalmenu (alleen op die tab). Toon geen Loop-demo's (kwarten,
+verticale splits) in de UI; de actiekiezer (`PickerSection.windowDirections`) biedt alleen horizontale acties.
+Nieuwe UI-teksten krijgen een `nl-BE`-vertaling in `Localizable.xcstrings`.
 
 ### Updates
 

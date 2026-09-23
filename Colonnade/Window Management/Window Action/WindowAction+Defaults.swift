@@ -11,18 +11,13 @@ import Foundation
 // MARK: Keybinds
 
 extension WindowAction {
+    /// Colonnade only divides the screen horizontally: every default keeps the full height.
     static let defaultKeybinds: [WindowAction] = [
         WindowAction(.maximize, keybind: [.kVK_Space]),
-        WindowAction(.center, keybind: [.kVK_Return]),
         WindowAction(
-            .init(localized: "Top Cycle"),
-            cycle: [.init(.topHalf), .init(.topThird), .init(.topTwoThirds)],
-            keybind: [.kVK_UpArrow]
-        ),
-        WindowAction(
-            .init(localized: "Bottom Cycle"),
-            cycle: [.init(.bottomHalf), .init(.bottomThird), .init(.bottomTwoThirds)],
-            keybind: [.kVK_DownArrow]
+            .init(localized: "Center Cycle"),
+            cycle: [.init(.horizontalCenterThird), .init(.horizontalCenterHalf)],
+            keybind: [.kVK_Return]
         ),
         WindowAction(
             .init(localized: "Right Cycle"),
@@ -33,10 +28,6 @@ extension WindowAction {
             .init(localized: "Left Cycle"),
             cycle: [.init(.leftHalf), .init(.leftThird), .init(.leftTwoThirds)],
             keybind: [.kVK_LeftArrow]
-        ),
-        WindowAction(.topLeftQuarter, keybind: [.kVK_UpArrow, .kVK_LeftArrow]),
-        WindowAction(.topRightQuarter, keybind: [.kVK_UpArrow, .kVK_RightArrow]),
-        WindowAction(.bottomRightQuarter, keybind: [.kVK_DownArrow, .kVK_RightArrow]),
-        WindowAction(.bottomLeftQuarter, keybind: [.kVK_DownArrow, .kVK_LeftArrow])
+        )
     ]
 }

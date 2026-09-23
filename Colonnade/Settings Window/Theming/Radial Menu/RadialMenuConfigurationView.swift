@@ -18,10 +18,28 @@ struct RadialMenuConfigurationView: View {
     @Default(.radialMenuThickness) private var radialMenuThickness
     @Default(.enableRadialMenuCustomization) var enableRadialMenuCustomization
     @Default(.radialMenuActions) private var radialMenuActions
+    @Default(.ultrawideDockTriggerMode) private var ultrawideDockTriggerMode
     @State private var selectedRadialMenuActions: Set<RadialMenuAction> = []
 
     var body: some View {
         LuminareForm {
+            LuminareSection {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Fallback for screens without the dock")
+                        .fontWeight(.medium)
+                    Text(ultrawideDockTriggerMode.caption)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                LuminareButton("When to use the dock", "Change…") {
+                    windowModel.currentTab = .dock
+                }
+            }
+
             LuminareSection {
                 LuminareToggle("Radial menu", isOn: $radialMenuVisibility)
 

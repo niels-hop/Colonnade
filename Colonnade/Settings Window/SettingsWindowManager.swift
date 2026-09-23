@@ -30,21 +30,16 @@ final class SettingsWindowManager: ObservableObject {
     private(set) var previewBounds: CGRect = .zero
     private(set) var didSetBounds: Bool = false
 
-    @Published var showRadialMenu: Bool = true
-    @Published var showPreview: Bool = true
-
     @Published var currentTab: SettingsTab = .dock {
         didSet {
-            if currentTab == .radialMenu {
-                showRadialMenu = true
-                showPreview = false
-            } else if currentTab == .preview {
-                showRadialMenu = false
-                showPreview = true
-            } else {
-                showRadialMenu = true
-                showPreview = true
+            guard currentTab.inspector != oldValue.inspector else { return }
+
+            // The radial menu tab cycles through the radial menu's own actions; every other
+            // preview cycles through full-height columns, so start that sequence from the top.
+            if !isPreviewingUserSelection, let first = showcaseActions.first {
+                setPreviewedAction(to: first)
             }
+            restartTimerIfNeeded()
         }
     }
 
@@ -71,7 +66,7 @@ final class SettingsWindowManager: ObservableObject {
         self.radialMenuViewModel = .init(isSettingsPreview: true)
         self.previewViewModel = .init(isSettingsPreview: true)
 
-        if let firstAction = RadialMenuAction.userConfiguredActions.first?.resolved {
+        if let firstAction = showcaseActions.first {
             setPreviewedAction(to: firstAction)
         }
     }
@@ -134,8 +129,36 @@ final class SettingsWindowManager: ObservableObject {
         startTimer(immediatelySelectNext: true)
     }
 
+    /// Only the screen preview and radial menu inspectors animate through actions.
+    private var inspectorNeedsTimer: Bool {
+        currentTab.inspector != .dockIllustration
+    }
+
+    /// The actions the inspector steps through when the user hasn't selected one.
+    private var showcaseActions: [WindowAction] {
+        if currentTab.inspector == .radialMenu {
+            return RadialMenuAction.userConfiguredActions.compactMap(\.resolved)
+        }
+        return Self.columnShowcase
+    }
+
+    /// Full-height placements, matching how Colonnade divides the screen.
+    private static let columnShowcase: [WindowAction] = [
+        .init(.leftThird),
+        .init(.horizontalCenterThird),
+        .init(.rightThird),
+        .init(.leftHalf),
+        .init(.rightTwoThirds),
+        .init(.maximize)
+    ]
+
     private func startTimer(immediatelySelectNext: Bool = false) {
         previewActionTimerTask?.cancel()
+        guard inspectorNeedsTimer else {
+            previewActionTimerTask = nil
+            return
+        }
+
         previewActionTimerTask = Task(priority: .utility) {
             if !immediatelySelectNext {
                 try await Task.sleep(for: .seconds(1))
@@ -169,13 +192,12 @@ final class SettingsWindowManager: ObservableObject {
             let nextIndex = (index + 1) % cycle.count
             setPreviewedAction(to: parent, cycleAction: cycle[nextIndex])
         } else {
-            let radialMenuActions: [WindowAction] = RadialMenuAction.userConfiguredActions
-                .compactMap(\.resolved)
+            let actions = showcaseActions
 
-            let nextAction = if let index = radialMenuActions.firstIndex(of: previewedParentAction ?? previewedAction) {
-                radialMenuActions[(index + 1) % radialMenuActions.count]
+            let nextAction = if let index = actions.firstIndex(of: previewedParentAction ?? previewedAction) {
+                actions[(index + 1) % actions.count]
             } else {
-                radialMenuActions.first ?? .init(.noAction)
+                actions.first ?? .init(.noAction)
             }
 
             setPreviewedAction(to: nextAction)

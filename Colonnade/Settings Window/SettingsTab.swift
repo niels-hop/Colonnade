@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import Defaults
 import Luminare
 import SwiftUI
 
@@ -93,9 +94,13 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
         }
     }
 
-    /// Tabs whose inspector shows the dock demo instead of the radial menu and preview.
-    var showsDockIllustration: Bool {
-        self == .dock || self == .layouts
+    /// What the inspector beside this tab shows.
+    var inspector: SettingsInspector {
+        switch self {
+        case .keybinds, .preview: .screenPreview
+        case .radialMenu: .radialMenu
+        default: .dockIllustration
+        }
     }
 
     @ViewBuilder func view() -> some View {
@@ -114,9 +119,28 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
     }
 
     static let dockTabs: [Self] = [.dock, .layouts]
-    static let controlTabs: [Self] = [.keybinds, .behavior]
-    static let appearanceTabs: [Self] = [.accentColor, .preview, .radialMenu]
+    static let appearanceTabs: [Self] = [.accentColor, .preview]
     static let appTabs: [Self] = [.advanced, .excludedApps, .about]
+
+    /// The radial menu tab is only listed while the radial menu can actually appear.
+    static var controlTabs: [Self] {
+        isRadialMenuAvailable ? [.keybinds, .behavior, .radialMenu] : [.keybinds, .behavior]
+    }
+
+    /// The radial menu is the fallback for screens where the dock isn't used.
+    static var isRadialMenuAvailable: Bool {
+        Defaults[.ultrawideDockTriggerMode] != .alwaysOn
+    }
+}
+
+/// The inspector content beside a settings tab.
+enum SettingsInspector {
+    /// The looping dock demo.
+    case dockIllustration
+    /// A wide screen showing the placement preview for full-height columns.
+    case screenPreview
+    /// The radial menu fallback with its preview.
+    case radialMenu
 }
 
 struct SettingsTabIconView: View {

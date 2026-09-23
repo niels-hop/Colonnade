@@ -192,7 +192,7 @@ final class URLCommandHandler {
         // Create a unique temporary file that will be automatically cleaned up
         let timestamp = Date().timeIntervalSince1970
         let tempFile = FileManager.default.temporaryDirectory
-            .appendingPathComponent("loop_output_\(timestamp).txt")
+            .appendingPathComponent("colonnade_output_\(timestamp).txt")
 
         do {
             try outputBuffer.joined(separator: "\n").write(to: tempFile, atomically: true, encoding: .utf8)

@@ -16,10 +16,7 @@ struct SettingsContentView: View {
     @Environment(\.luminareAnimation) private var animation
     @Environment(\.luminareTitleBarHeight) private var titleBarHeight
     @Default(.enableRadialMenuCustomization) var enableRadialMenuCustomization
-
-    private var showRadialMenuGuide: Bool {
-        enableRadialMenuCustomization && model.showRadialMenu && model.currentTab == .radialMenu
-    }
+    @Default(.ultrawideDockTriggerMode) private var ultrawideDockTriggerMode
 
     var body: some View {
         LuminareDividedStack {
@@ -77,25 +74,9 @@ struct SettingsContentView: View {
                 // We use an overlay instead of a ZStack so the inspector’s contents
                 // don’t influence the layout of the surrounding views (mainly as a precaution)
                 Color.clear.overlay {
-                    if model.currentTab.showsDockIllustration {
-                        DockIllustrationView()
-                    } else if model.showPreview || showRadialMenuGuide {
-                        PreviewView(viewModel: model.previewViewModel)
-                            .onGeometryChange(for: CGSize.self, of: \.size) {
-                                model.setPreviewBounds(CGRect(origin: .zero, size: $0))
-                            }
-                    }
-
-                    if model.showRadialMenu, !model.currentTab.showsDockIllustration {
-                        RadialMenuView(viewModel: model.radialMenuViewModel)
-                            .allowsHitTesting(false)
-                    }
-
-                    if showRadialMenuGuide {
-                        RadialMenuActionsGuide()
-                    }
+                    inspector
                 }
-                .animation(animation, value: [model.showRadialMenu, model.showPreview, model.currentTab.showsDockIllustration])
+                .animation(animation, value: model.currentTab.inspector)
                 .padding(12)
                 .frame(width: 520)
             }
@@ -103,5 +84,38 @@ struct SettingsContentView: View {
         .luminareTint(overridingWith: accentColorController.color1)
         .ignoresSafeArea()
         .environmentObject(model)
+        .onChange(of: ultrawideDockTriggerMode) { _ in
+            // The radial menu tab disappears from the sidebar once the dock is always used.
+            if model.currentTab == .radialMenu, !SettingsTab.isRadialMenuAvailable {
+                model.currentTab = .dock
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var inspector: some View {
+        switch model.currentTab.inspector {
+        case .dockIllustration:
+            DockIllustrationView()
+        case .screenPreview:
+            SettingsScreenPreview(model: model)
+        case .radialMenu:
+            ZStack {
+                if enableRadialMenuCustomization {
+                    PreviewView(viewModel: model.previewViewModel)
+                }
+
+                RadialMenuView(viewModel: model.radialMenuViewModel)
+                    .allowsHitTesting(false)
+
+                if enableRadialMenuCustomization {
+                    RadialMenuActionsGuide()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onGeometryChange(for: CGSize.self, of: \.size) {
+                model.setPreviewBounds(CGRect(origin: .zero, size: $0))
+            }
+        }
     }
 }

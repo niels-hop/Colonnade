@@ -3162,6 +3162,16 @@
         }
       }
     },
+    "Center Cycle" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Midden"
+          }
+        }
+      }
+    },
     "Change" : {
       "localizations" : {
         "ar" : {
@@ -3215,7 +3225,7 @@
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verandering"
+            "value" : "Wijzig"
           }
         },
         "pl" : {
@@ -5443,7 +5453,7 @@
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dubbelklik om te activeren"
+            "value" : "Dubbelklik om de trigger te starten"
           }
         },
         "pl" : {
@@ -6232,6 +6242,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無法解析關聯的按鍵綁定"
+          }
+        }
+      }
+    },
+    "Fallback for screens without the dock" : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terugvaloptie voor schermen zonder dock"
           }
         }
       }
@@ -11577,7 +11597,7 @@
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Middelste knop om te activeren"
+            "value" : "Middelklik om de trigger te starten"
           }
         },
         "pl" : {
@@ -17343,7 +17363,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Selecione o arquivo de atalhos do \"Loop\""
+            "value" : "Selecione o arquivo de atalhos"
           }
         },
         "ru" : {
@@ -22162,7 +22182,7 @@
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activatie vertraging"
+            "value" : "Triggervertraging"
           }
         },
         "pl" : {
@@ -22261,7 +22281,7 @@
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activatie Knop"
+            "value" : "Triggertoets"
           }
         },
         "pl" : {
@@ -24105,6 +24125,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "窗口貼靠將仍然使用預覽。"
+          }
+        }
+      }
+    },
+    "Windows always fill the full height." : {
+      "localizations" : {
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vensters vullen altijd de volledige hoogte."
           }
         }
       }

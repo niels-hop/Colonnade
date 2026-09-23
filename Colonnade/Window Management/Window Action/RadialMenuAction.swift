@@ -84,44 +84,29 @@ struct RadialMenuAction: Identifiable, Codable, Hashable, Defaults.Serializable 
 }
 
 extension RadialMenuAction {
+    /// Clockwise from the top; the last action is the center. All of them keep the full height,
+    /// matching the dock.
     static let defaultRadialMenuActions: [RadialMenuAction] = [
-        .custom(
-            WindowAction(
-                .init(localized: "Top Cycle"),
-                cycle: [.init(.topHalf), .init(.topThird), .init(.topTwoThirds)]
-            )
-        ),
-        .custom(WindowAction(.topRightQuarter)),
+        .custom(WindowAction(.maximize)),
         .custom(
             WindowAction(
                 .init(localized: "Right Cycle"),
                 cycle: [.init(.rightHalf), .init(.rightThird), .init(.rightTwoThirds)]
             )
         ),
-        .custom(WindowAction(.bottomRightQuarter)),
         .custom(
             WindowAction(
-                .init(localized: "Bottom Cycle"),
-                cycle: [.init(.bottomHalf), .init(.bottomThird), .init(.bottomTwoThirds)]
+                .init(localized: "Center Cycle"),
+                cycle: [.init(.horizontalCenterThird), .init(.horizontalCenterHalf)]
             )
         ),
-        .custom(WindowAction(.bottomLeftQuarter)),
         .custom(
             WindowAction(
                 .init(localized: "Left Cycle"),
                 cycle: [.init(.leftHalf), .init(.leftThird), .init(.leftTwoThirds)]
             )
         ),
-        .custom(WindowAction(.topLeftQuarter)),
-        .custom(
-            WindowAction(
-                "\(WindowDirection.maximize.name) + \(WindowDirection.macOSCenter.name)",
-                cycle: [
-                    .init(.maximize),
-                    .init(.macOSCenter)
-                ]
-            )
-        )
+        .custom(WindowAction(.maximizeHeight))
     ]
 
     static var userConfiguredActions: [RadialMenuAction] {
