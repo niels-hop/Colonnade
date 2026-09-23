@@ -17897,6 +17897,12 @@
     },
     "Settings tab: Dock" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock"
+          }
+        },
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17995,6 +18001,12 @@
     },
     "Settings tab: Layouts" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Layouts"
+          }
+        },
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18181,6 +18193,12 @@
     },
     "Settings tab: Trigger & Shortcuts" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trigger & Shortcuts"
+          }
+        },
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",

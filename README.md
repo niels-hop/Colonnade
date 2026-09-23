@@ -34,12 +34,15 @@ Windows always span the full height of the screen. Colonnade only divides the ho
 ## Install
 
 1. Download [`Colonnade.zip`](https://github.com/niels-hop/Colonnade/releases/latest/download/Colonnade.zip), unzip it and move **Colonnade.app** to **/Applications**.
-2. Releases are not notarised by Apple, so the first launch is blocked. Right-click the app, choose **Open**, then **Open** again. You can also run:
+2. Releases are not notarised by Apple, so macOS blocks the first launch. Open the app once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. You can also clear the quarantine flag from Terminal:
    ```bash
    xattr -dr com.apple.quarantine /Applications/Colonnade.app
    ```
 3. Grant **Accessibility** access when asked: System Settings → Privacy & Security → Accessibility → Colonnade.
    Each macOS user account grants this separately.
+
+> [!NOTE]
+> Release builds are ad-hoc signed. After you replace the app with a newer version, macOS no longer recognises it, so Colonnade asks for Accessibility access again. Remove the old Colonnade entry from the list and enable the new one.
 
 Colonnade checks GitHub once a day for a new release and tells you when one is out. You can turn this off under Settings → About. It never installs anything by itself.
 
