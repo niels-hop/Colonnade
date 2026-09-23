@@ -128,7 +128,7 @@ enum SavedLayoutSupportPaths {
     static func directory(fileManager: FileManager = .default) -> URL {
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         return base
-            .appendingPathComponent(Bundle.main.bundleIdentifier ?? "Loop", isDirectory: true)
+            .appendingPathComponent(Bundle.main.bundleIdentifier ?? "com.nielshop.Colonnade", isDirectory: true)
             .appendingPathComponent("Saved Layouts", isDirectory: true)
     }
 }

@@ -1,51 +1,51 @@
 //
 //  URLCommandHandler.swift
-//  Loop
+//  Colonnade
 //
 //  Created by Kami on 06/03/2025.
 //
 
 /*
- Loop URL Scheme Documentation
+ Colonnade URL Scheme Documentation
  ===========================
 
- The Loop app supports URL scheme commands for window management and automation.
- Base URL format: loop://<command>/<parameters>
+ Colonnade supports URL scheme commands for window management and automation.
+ Base URL format: colonnade://<command>/<parameters>
 
  Available Commands:
  -----------------
 
  1. Window Direction Commands:
-    Format: loop://direction/<direction>
+    Format: colonnade://direction/<direction>
     Examples:
-    - loop://direction/left       (Move window to left half)
-    - loop://direction/right      (Move window to right half)
-    - loop://direction/top        (Move window to top half)
-    - loop://direction/bottom     (Move window to bottom half)
-    - loop://direction/maximize   (Maximize window)
-    - loop://direction/center     (Center window)
+    - colonnade://direction/left       (Move window to left half)
+    - colonnade://direction/right      (Move window to right half)
+    - colonnade://direction/top        (Move window to top half)
+    - colonnade://direction/bottom     (Move window to bottom half)
+    - colonnade://direction/maximize   (Maximize window)
+    - colonnade://direction/center     (Center window)
 
  2. Screen Management:
-    Format: loop://screen/<command>
+    Format: colonnade://screen/<command>
     Examples:
-    - loop://screen/next          (Move window to next screen)
-    - loop://screen/previous      (Move window to previous screen)
+    - colonnade://screen/next          (Move window to next screen)
+    - colonnade://screen/previous      (Move window to previous screen)
 
  3. Action Commands:
-    Format: loop://action/<action>
+    Format: colonnade://action/<action>
     Examples:
-    - loop://action/maximize      (Maximize window)
-    - loop://action/leftHalf      (Move to left half)
-    Note: See 'loop://list/actions' for all available actions
+    - colonnade://action/maximize      (Maximize window)
+    - colonnade://action/leftHalf      (Move to left half)
+    Note: See 'colonnade://list/actions' for all available actions
 
  4. Keybind Commands:
-    Format: loop://keybind/<name>
+    Format: colonnade://keybind/<name>
     Examples:
-    - loop://keybind/myCustomLayout
-    Note: See 'loop://list/keybinds' for available keybinds
+    - colonnade://keybind/myCustomLayout
+    Note: See 'colonnade://list/keybinds' for available keybinds
 
  5. List Commands:
-    Format: loop://list/<type>
+    Format: colonnade://list/<type>
     Types:
     - actions    (List all window actions)
     - keybinds   (List all custom keybinds)
@@ -61,24 +61,24 @@
  Examples:
  --------
  # Move current window to right half
- open "loop://direction/right"
+ open "colonnade://direction/right"
 
  # List all available actions
- open "loop://list/actions"
+ open "colonnade://list/actions"
 
  # Execute custom keybind
- open "loop://keybind/myLayout"
+ open "colonnade://keybind/myLayout"
 
  Error Examples:
  -------------
  # Invalid command
- open "loop://invalid" -> Returns available commands
+ open "colonnade://invalid" -> Returns available commands
 
  # Missing parameter
- open "loop://direction" -> Returns available directions
+ open "colonnade://direction" -> Returns available directions
 
  # Invalid keybind
- open "loop://keybind/nonexistent" -> Returns available keybinds
+ open "colonnade://keybind/nonexistent" -> Returns available keybinds
  */
 
 import Defaults
@@ -86,7 +86,7 @@ import Foundation
 import Scribe
 import SwiftUI
 
-/// Handles URL scheme commands for the Loop application
+/// Handles URL scheme commands for Colonnade
 @Loggable
 final class URLCommandHandler {
     // MARK: - Types
@@ -229,9 +229,9 @@ final class URLCommandHandler {
         currentCommand = url.absoluteString
         writeToOutput("[URLHandler] Processing URL: \(url)")
 
-        guard url.scheme?.lowercased() == "loop" else {
+        guard url.scheme?.lowercased() == "colonnade" else {
             writeToOutput("[URLHandler] Invalid scheme: \(url.scheme ?? "nil")")
-            writeToOutput("[URLHandler] Required format: loop://<command>/<parameters>")
+            writeToOutput("[URLHandler] Required format: colonnade://<command>/<parameters>")
             return
         }
 
@@ -420,7 +420,7 @@ final class URLCommandHandler {
             items.append("Custom Actions:")
             items.append(contentsOf: customKeybinds.compactMap { keybind in
                 guard let name = keybind.name else { return nil }
-                return "  • loop://action/\(name.lowercased())"
+                return "  • colonnade://action/\(name.lowercased())"
             })
             items.append("")
         }
@@ -431,7 +431,7 @@ final class URLCommandHandler {
             items.append("Stash Actions:")
             items.append(contentsOf: stashKeybinds.compactMap { keybind in
                 guard let name = keybind.name else { return nil }
-                return "  • loop://action/\(name.lowercased())"
+                return "  • colonnade://action/\(name.lowercased())"
             })
             items.append("")
         }
@@ -453,7 +453,7 @@ final class URLCommandHandler {
         for (title, actions) in categories {
             if !actions.isEmpty {
                 items.append("\(title):")
-                items.append(contentsOf: actions.map { "  • loop://action/\($0.rawValue.lowercased())" })
+                items.append(contentsOf: actions.map { "  • colonnade://action/\($0.rawValue.lowercased())" })
                 items.append("")
             }
         }
@@ -516,7 +516,7 @@ final class URLCommandHandler {
                 items.append("\nCustom Actions:")
                 items.append(contentsOf: customKeybinds.compactMap { keybind in
                     guard let name = keybind.name else { return nil }
-                    return "  • loop://action/\(name.lowercased())"
+                    return "  • colonnade://action/\(name.lowercased())"
                 })
             }
 
@@ -526,7 +526,7 @@ final class URLCommandHandler {
                 items.append("\nStash Actions:")
                 items.append(contentsOf: stashKeybinds.compactMap { keybind in
                     guard let name = keybind.name else { return nil }
-                    return "  • loop://action/\(name.lowercased())"
+                    return "  • colonnade://action/\(name.lowercased())"
                 })
             }
 
@@ -547,7 +547,7 @@ final class URLCommandHandler {
             for (title, actions) in categories {
                 if !actions.isEmpty {
                     items.append("\n\(title):")
-                    items.append(contentsOf: actions.map { "  • loop://action/\($0.rawValue.lowercased())" })
+                    items.append(contentsOf: actions.map { "  • colonnade://action/\($0.rawValue.lowercased())" })
                 }
             }
 
@@ -555,18 +555,18 @@ final class URLCommandHandler {
             items.append("Available Keybinds:")
             items.append(contentsOf: Defaults[.keybinds].compactMap { keybind in
                 guard let name = keybind.name else { return nil }
-                return "  • loop://keybind/\(name)"
+                return "  • colonnade://keybind/\(name)"
             })
 
         default:
             items.append("Available Commands:")
 
             items.append("\nDirection Commands:")
-            items.append(contentsOf: WindowDirection.allCases.map { "  • loop://direction/\($0.rawValue.lowercased())" })
+            items.append(contentsOf: WindowDirection.allCases.map { "  • colonnade://direction/\($0.rawValue.lowercased())" })
 
             items.append("\nScreen Commands:")
-            items.append("  • loop://screen/next")
-            items.append("  • loop://screen/previous")
+            items.append("  • colonnade://screen/next")
+            items.append("  • colonnade://screen/previous")
 
             items.append("\nActions:")
             // Get any custom keybinds with names and custom direction
@@ -575,7 +575,7 @@ final class URLCommandHandler {
                 items.append("\nCustom Actions:")
                 items.append(contentsOf: customKeybinds.compactMap { keybind in
                     guard let name = keybind.name else { return nil }
-                    return "  • loop://action/\(name.lowercased())"
+                    return "  • colonnade://action/\(name.lowercased())"
                 })
             }
 
@@ -585,20 +585,20 @@ final class URLCommandHandler {
                 items.append("\nStash Actions:")
                 items.append(contentsOf: stashKeybinds.compactMap { keybind in
                     guard let name = keybind.name else { return nil }
-                    return "  • loop://action/\(name.lowercased())"
+                    return "  • colonnade://action/\(name.lowercased())"
                 })
             }
 
             items.append("\nKeybind Commands:")
             items.append(contentsOf: Defaults[.keybinds].compactMap { keybind in
                 guard let name = keybind.name else { return nil }
-                return "  • loop://keybind/\(name)"
+                return "  • colonnade://keybind/\(name)"
             })
 
             items.append("\nList Commands:")
-            items.append("  • loop://list/actions")
-            items.append("  • loop://list/keybinds")
-            items.append("  • loop://list/all")
+            items.append("  • colonnade://list/actions")
+            items.append("  • colonnade://list/keybinds")
+            items.append("  • colonnade://list/all")
         }
 
         writeList(type == "all" ? "All Commands" : items.removeFirst(), Array(items))
@@ -633,7 +633,7 @@ final class URLCommandHandler {
         writeToOutput("[URLHandler] Window: \(window.title ?? "unknown")")
         writeToOutput("  - App: \(app.localizedName ?? "unknown")")
         writeToOutput("  - Bundle ID: \(app.bundleIdentifier ?? "unknown")")
-        writeToOutput("  - Is Loop: \(isLoop)")
+        writeToOutput("  - Is Colonnade: \(isLoop)")
         writeToOutput("  - Is Regular: \(isRegular)")
         writeToOutput("  - Is Visible: \(isVisible)")
     }
