@@ -30,22 +30,6 @@ struct ColonnadeApp: App {
                 Label("Use the Dock", systemImage: "rectangle.split.3x1")
             }
 
-            Menu {
-                ForEach(SavedLayoutSlot.fixedSlots) { slot in
-                    Menu(slot.displayName) {
-                        Button("Restore") {
-                            Task { await SavedLayoutManager.shared.restoreWithFeedback(slot) }
-                        }
-
-                        Button("Save Current Layout") {
-                            Task { await SavedLayoutManager.shared.saveWithFeedback(slot) }
-                        }
-                    }
-                }
-            } label: {
-                Label("Layouts", systemImage: "rectangle.3.group")
-            }
-
             Divider()
 
             Button("Settings…") {

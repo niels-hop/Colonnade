@@ -66,7 +66,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             WindowDragManager.shared.addObservers()
             StashManager.shared.start()
             AccessibilityManager.requestAccess()
-            SavedLayoutLifecycleCoordinator.shared.start()
             ReleaseChecker.shared.start()
         }
     }
@@ -173,7 +172,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         LoopManager.shared.shutdown()
         WindowDragManager.shared.shutdown()
         StashManager.shared.shutdown()
-        SavedLayoutLifecycleCoordinator.shared.stop()
         ReleaseChecker.shared.stop()
         return .terminateNow
     }

@@ -1977,16 +1977,6 @@
         }
       }
     },
-    "Automatic restore" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automatisch terugzetten"
-          }
-        }
-      }
-    },
     "Background" : {
       "comment" : "Section header for configuring the background of the preview.",
       "localizations" : {
@@ -5194,16 +5184,6 @@
         }
       }
     },
-    "Default layout" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Standaardindeling"
-          }
-        }
-      }
-    },
     "Disable cursor interaction" : {
       "localizations" : {
         "ar" : {
@@ -6984,16 +6964,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取得右側焦點"
-          }
-        }
-      }
-    },
-    "Focus slot" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Plek Focus"
           }
         }
       }
@@ -10338,16 +10308,6 @@
         }
       }
     },
-    "Layouts" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Indelingen"
-          }
-        }
-      }
-    },
     "Left" : {
       "comment" : "Label for a slider in Loop’s padding settings\nSide of a trigger key",
       "localizations" : {
@@ -11174,16 +11134,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ontwikkeling Loop"
-          }
-        }
-      }
-    },
-    "MacBook slot" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Plek MacBook"
           }
         }
       }
@@ -16163,52 +16113,12 @@
         }
       }
     },
-    "Restore after wake" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terugzetten na sluimer"
-          }
-        }
-      }
-    },
     "Restore defaults" : {
       "localizations" : {
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Standaardwaarden herstellen"
-          }
-        }
-      }
-    },
-    "Restore on launch or login" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terugzetten bij starten of inloggen"
-          }
-        }
-      }
-    },
-    "Restore when displays change" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terugzetten als schermen veranderen"
-          }
-        }
-      }
-    },
-    "Restore when Spaces change" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terugzetten als Spaces veranderen"
           }
         }
       }
@@ -17008,26 +16918,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "秒"
-          }
-        }
-      }
-    },
-    "Save %@" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bewaar %@"
-          }
-        }
-      }
-    },
-    "Save the current arrangement of your windows to a slot from the menu bar, and restore it whenever you need it." : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bewaar de huidige indeling van je vensters in een plek via de menubalk en zet hem terug wanneer je wilt."
           }
         }
       }
@@ -18015,22 +17905,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "排除的應用程式"
-          }
-        }
-      }
-    },
-    "Settings tab: Layouts" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Layouts"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Indelingen"
           }
         }
       }
@@ -19395,16 +19269,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "尺寸增量"
-          }
-        }
-      }
-    },
-    "Slots" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Plekken"
           }
         }
       }
@@ -24135,16 +23999,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vensters vullen altijd de volledige hoogte."
-          }
-        }
-      }
-    },
-    "Work slot" : {
-      "localizations" : {
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Plek Werk"
           }
         }
       }

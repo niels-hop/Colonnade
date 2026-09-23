@@ -15,7 +15,6 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
     var id: String { title }
 
     case dock
-    case layouts
 
     case keybinds
     case behavior
@@ -36,8 +35,6 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
         switch self {
         case .dock:
             Color(#colorLiteral(red: 0.2549019608, green: 0.4705882353, blue: 0.7843137255, alpha: 1))
-        case .layouts:
-            Color(#colorLiteral(red: 0.2901960784, green: 0.5647058824, blue: 0.5294117647, alpha: 1))
         case .keybinds:
             Color(#colorLiteral(red: 0.3882352941, green: 0.2823529412, blue: 0.1960784314, alpha: 1))
         case .behavior:
@@ -60,7 +57,6 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
     var title: String {
         switch self {
         case .dock: .init(localized: "Settings tab: Dock", defaultValue: "Dock")
-        case .layouts: .init(localized: "Settings tab: Layouts", defaultValue: "Layouts")
         case .keybinds: .init(localized: "Settings tab: Trigger & Shortcuts", defaultValue: "Trigger & Shortcuts")
         case .behavior: .init(localized: "Settings tab: Behavior", defaultValue: "Behavior")
         case .accentColor: .init(localized: "Settings tab: Accent Color", defaultValue: "Accent Color")
@@ -75,7 +71,6 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
     var image: Image {
         switch self {
         case .dock: Image(systemName: "rectangle.split.3x1.fill")
-        case .layouts: Image(systemName: "rectangle.3.group.fill")
         case .keybinds: Image(systemName: "keyboard.fill")
         case .behavior: Image(systemName: "gearshape.fill")
         case .accentColor: Image(systemName: "paintbrush.pointed.fill")
@@ -106,7 +101,6 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
     @ViewBuilder func view() -> some View {
         switch self {
         case .dock: DockConfigurationView()
-        case .layouts: LayoutsConfigurationView()
         case .keybinds: KeybindsConfigurationView()
         case .behavior: BehaviorConfigurationView()
         case .accentColor: AccentColorConfigurationView()
@@ -118,7 +112,7 @@ enum SettingsTab: @MainActor LuminareTabItem, CaseIterable {
         }
     }
 
-    static let dockTabs: [Self] = [.dock, .layouts]
+    static let dockTabs: [Self] = [.dock]
     static let appearanceTabs: [Self] = [.accentColor, .preview]
     static let appTabs: [Self] = [.advanced, .excludedApps, .about]
 

@@ -26,7 +26,6 @@ Windows always span the full height of the screen. Colonnade only divides the ho
 
 - **The dock**: a screen-shaped minimap that shows existing windows, dividers and a live preview of where the window will go.
 - **Stacks and dividers**: windows at exactly the same position form a stack. Dragging a divider resizes the columns on both sides.
-- **Saved layouts**: save your arrangement to one of three slots (Work, Focus, MacBook) and restore it from the menu bar. It can also restore automatically at login, after wake, or when displays or Spaces change.
 - **Works on any screen**: by default the dock is used everywhere. Switch to *Automatic* to use it only on wide screens, with a configurable aspect-ratio threshold, and fall back to a radial menu elsewhere.
 - **Tweakable**: dock size, pointer sensitivity, the click width cycle, padding, animations, accent colour, excluded apps and more, all in Settings.
 - **Keyboard shortcuts**: every window action from Loop's engine is still available as a keybind.

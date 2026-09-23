@@ -9,8 +9,6 @@
 import Defaults
 import SwiftUI
 
-extension SavedLayoutSlot: Defaults.Serializable {}
-
 public enum UltrawideDockTriggerMode: String, Defaults.Serializable, CaseIterable, Identifiable {
     case automatic
     case alwaysOn
@@ -87,14 +85,6 @@ extension Defaults.Keys {
     /// How far the pointer travels across the mini-screen per point of mouse movement.
     static let ultrawideDockPointerSensitivity = Key<Double>("ultrawideDockPointerSensitivity", default: 1.0, iCloud: true)
     static let ultrawideDockClickCycle = Key<UltrawideDockClickCycle>("ultrawideDockClickCycle", default: .halfThirdQuarter, iCloud: true)
-    static let savedLayoutWorkName = Key<String>("savedLayoutWorkName", default: "Work", iCloud: false)
-    static let savedLayoutFocusName = Key<String>("savedLayoutFocusName", default: "Focus", iCloud: false)
-    static let savedLayoutMacBookName = Key<String>("savedLayoutMacBookName", default: "MacBook", iCloud: false)
-    static let defaultSavedLayoutSlot = Key<SavedLayoutSlot>("defaultSavedLayoutSlot", default: .work, iCloud: false)
-    static let restoreSavedLayoutOnLaunch = Key<Bool>("restoreSavedLayoutOnLaunch", default: false, iCloud: false)
-    static let restoreSavedLayoutOnWake = Key<Bool>("restoreSavedLayoutOnWake", default: false, iCloud: false)
-    static let restoreSavedLayoutOnDisplayChange = Key<Bool>("restoreSavedLayoutOnDisplayChange", default: false, iCloud: false)
-    static let restoreSavedLayoutOnSpaceChange = Key<Bool>("restoreSavedLayoutOnSpaceChange", default: false, iCloud: false)
     @available(*, deprecated, message: "Use ultrawideDockTriggerMode instead")
     static let useUltrawideDock = Key<Bool>("useUltrawideDock", default: true, iCloud: true)
 
