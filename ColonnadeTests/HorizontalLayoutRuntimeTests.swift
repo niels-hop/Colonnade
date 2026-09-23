@@ -14,7 +14,9 @@ private final class FakeHorizontalLayoutTarget: HorizontalLayoutFrameTarget {
 
     func applyHorizontalLayoutFrame(_ frame: CGRect) async throws {
         appliedFrames.append(frame)
-        if appliedFrames.count == failureOnApply { throw FakeFailure.rejected }
+        if appliedFrames.count == failureOnApply {
+            throw FakeFailure.rejected
+        }
         horizontalLayoutFrame = frame
     }
 
@@ -73,7 +75,7 @@ final class HorizontalLayoutRuntimeTests: XCTestCase {
         let right = FakeHorizontalLayoutTarget(frame: CGRect(x: 500, y: 0, width: 500, height: 800))
         let requests = [
             HorizontalLayoutBatchRequest(id: a, targetFrame: CGRect(x: 500, y: 0, width: 500, height: 800)),
-            HorizontalLayoutBatchRequest(id: b, targetFrame: CGRect(x: 0, y: 0, width: 500, height: 800)),
+            HorizontalLayoutBatchRequest(id: b, targetFrame: CGRect(x: 0, y: 0, width: 500, height: 800))
         ]
 
         let result = try await HorizontalLayoutBatchExecutor(tolerance: 0.1).execute(
@@ -101,7 +103,7 @@ final class HorizontalLayoutRuntimeTests: XCTestCase {
             _ = try await HorizontalLayoutBatchExecutor(tolerance: 0.1).execute(
                 [
                     HorizontalLayoutBatchRequest(id: a, targetFrame: originalB),
-                    HorizontalLayoutBatchRequest(id: b, targetFrame: originalA),
+                    HorizontalLayoutBatchRequest(id: b, targetFrame: originalA)
                 ],
                 targets: [a: left, b: right],
                 within: bounds

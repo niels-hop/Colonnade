@@ -1,0 +1,52 @@
+name: Release
+
+# Push a tag such as v1.2.0 to publish a release with a downloadable Colonnade.zip.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build & Publish
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Select Xcode
+        run: sudo xcode-select -s "/Applications/Xcode_26.4.app"
+
+      - name: 🏷️ Set version and build number
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          BUILD=$(git rev-list --count HEAD)
+          sed -i '' -e "/^VERSION =/ s/= .*/= $VERSION/" Colonnade/Config.xcconfig
+          sed -i '' -e "/^BUILD_NUMBER =/ s/= .*/= $BUILD/" Colonnade/Config.xcconfig
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: 🔨 Build (Release)
+        run: |
+          xcodebuild -project Colonnade.xcodeproj -scheme Colonnade -configuration Release \
+            -skipMacroValidation -skipPackagePluginValidation \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY=- \
+            build
+
+      - name: 📦 Package
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/Build/Products/Release/Colonnade.app Colonnade.zip
+          shasum -a 256 Colonnade.zip | tee Colonnade.zip.sha256
+
+      - name: 🚀 Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" Colonnade.zip Colonnade.zip.sha256 \
+            --title "Colonnade $VERSION" \
+            --generate-notes

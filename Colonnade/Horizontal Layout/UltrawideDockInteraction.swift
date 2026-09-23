@@ -73,8 +73,12 @@ struct UltrawideDockScene: Equatable, Sendable {
         let others = candidates
             .filter { !$0.contains(currentID) }
             .sorted { lhs, rhs in
-                if lhs.frame.width != rhs.frame.width { return lhs.frame.width > rhs.frame.width }
-                if lhs.frame.minX != rhs.frame.minX { return lhs.frame.minX < rhs.frame.minX }
+                if lhs.frame.width != rhs.frame.width {
+                    return lhs.frame.width > rhs.frame.width
+                }
+                if lhs.frame.minX != rhs.frame.minX {
+                    return lhs.frame.minX < rhs.frame.minX
+                }
                 return lhs.id.rawValue < rhs.id.rawValue
             }
 
@@ -84,7 +88,11 @@ struct UltrawideDockScene: Equatable, Sendable {
             let conflicts = accepted.contains {
                 Self.framesConflict($0.frame, candidate.frame, tolerance: frameTolerance)
             }
-            if conflicts { excluded.append(candidate) } else { accepted.append(candidate) }
+            if conflicts {
+                excluded.append(candidate)
+            } else {
+                accepted.append(candidate)
+            }
         }
 
         // The current window is the incoming one, so it goes last and never pushes an existing
@@ -138,7 +146,9 @@ struct UltrawideDockScene: Equatable, Sendable {
         _ lhs: UltrawideDockWindowSnapshot,
         _ rhs: UltrawideDockWindowSnapshot
     ) -> Bool {
-        if lhs.zIndex == rhs.zIndex { return lhs.id.rawValue < rhs.id.rawValue }
+        if lhs.zIndex == rhs.zIndex {
+            return lhs.id.rawValue < rhs.id.rawValue
+        }
         return lhs.zIndex < rhs.zIndex
     }
 
@@ -297,7 +307,7 @@ struct UltrawideDockInteraction {
     private static let maximumDividerHitRadius: CGFloat = 0.03
     private static let maximumResizeHoldRadius: CGFloat = 0.04
     private static let clickMovementTolerance: CGFloat = 0.01
-    private static let stackZone: ClosedRange<CGFloat> = 0.22 ... 0.78
+    private static let stackZone: ClosedRange<CGFloat> = 0.22...0.78
     static let defaultClickWidthCycle: [CGFloat] = [0.5, 1 / 3, 0.25]
     private static let widthStops: [CGFloat] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 1]
     private static let edgeAlignmentTolerance: CGFloat = 0.005
@@ -339,7 +349,7 @@ struct UltrawideDockInteraction {
     mutating func handle(_ event: UltrawideDockEvent) -> UltrawideDockOutput {
         switch event {
         case let .move(position):
-            lastPointerX = position.clamped(to: 0 ... 1)
+            lastPointerX = position.clamped(to: 0...1)
             hasPointerPosition = true
             if let draggingDividerAfterID {
                 output = resizeDivider(after: draggingDividerAfterID, to: lastPointerX)
@@ -348,7 +358,7 @@ struct UltrawideDockInteraction {
                 output = selectTarget(at: lastPointerX)
             }
         case let .drag(position):
-            lastPointerX = position.clamped(to: 0 ... 1)
+            lastPointerX = position.clamped(to: 0...1)
             hasPointerPosition = true
             if let pointerDownX {
                 pointerTravelSinceDown = max(pointerTravelSinceDown, abs(lastPointerX - pointerDownX))
@@ -360,7 +370,7 @@ struct UltrawideDockInteraction {
                 output = selectTarget(at: lastPointerX)
             }
         case let .pointerDown(position):
-            lastPointerX = position.clamped(to: 0 ... 1)
+            lastPointerX = position.clamped(to: 0...1)
             hasPointerPosition = true
             pointerDownX = lastPointerX
             pointerTravelSinceDown = 0
@@ -377,7 +387,7 @@ struct UltrawideDockInteraction {
                 )
             }
         case let .pointerUp(position):
-            lastPointerX = position.clamped(to: 0 ... 1)
+            lastPointerX = position.clamped(to: 0...1)
             hasPointerPosition = true
             if let pointerDownX {
                 pointerTravelSinceDown = max(pointerTravelSinceDown, abs(lastPointerX - pointerDownX))
@@ -510,8 +520,10 @@ struct UltrawideDockInteraction {
                scene.slots.count > 1 {
                 let sourceIndex = scene.slots.firstIndex(where: { $0.id == currentSlot.id })!
                 var destinationIndex = scene.slots.filter { $0.frame.midX < x }.count
-                if sourceIndex < destinationIndex { destinationIndex -= 1 }
-                destinationIndex = destinationIndex.clamped(to: 0 ... scene.slots.count - 1)
+                if sourceIndex < destinationIndex {
+                    destinationIndex -= 1
+                }
+                destinationIndex = destinationIndex.clamped(to: 0...scene.slots.count - 1)
 
                 guard destinationIndex != sourceIndex else {
                     return UltrawideDockOutput(
@@ -584,9 +596,9 @@ struct UltrawideDockInteraction {
 
         // Subtracting the widths first keeps an exact fit exactly at the gap's origin: rounding the
         // other way round would push the span a fraction outside the gap and reject the placement.
-        let width = (requestedWidth ?? gap.width).clamped(to: engine.minimumWidth ... gap.width)
+        let width = (requestedWidth ?? gap.width).clamped(to: engine.minimumWidth...gap.width)
         let maximumOriginX = max(gap.x, gap.x + (gap.width - width))
-        let originX = (x - width / 2).clamped(to: gap.x ... maximumOriginX)
+        let originX = (x - width / 2).clamped(to: gap.x...maximumOriginX)
         return HorizontalLayoutSpan(
             x: originX,
             width: min(width, gap.x + gap.width - originX)
@@ -594,8 +606,12 @@ struct UltrawideDockInteraction {
     }
 
     private static func distance(from x: CGFloat, to span: HorizontalLayoutSpan) -> CGFloat {
-        if x < span.x { return span.x - x }
-        if x > span.x + span.width { return x - (span.x + span.width) }
+        if x < span.x {
+            return span.x - x
+        }
+        if x > span.x + span.width {
+            return x - (span.x + span.width)
+        }
         return 0
     }
 
@@ -605,8 +621,8 @@ struct UltrawideDockInteraction {
     /// expressible outside the engine. The single-window commit is what guarantees that: it never
     /// produces a `HorizontalLayoutPlan`, so no other window can be staged for execution.
     private func freeOutput(at x: CGFloat) -> UltrawideDockOutput {
-        let width = (requestedWidth ?? defaultFreeWidth).clamped(to: engine.minimumWidth ... 1)
-        let pointerOriginX = (x - width / 2).clamped(to: 0 ... max(0, 1 - width))
+        let width = (requestedWidth ?? defaultFreeWidth).clamped(to: engine.minimumWidth...1)
+        let pointerOriginX = (x - width / 2).clamped(to: 0...max(0, 1 - width))
         let alignedOriginX = alignedOriginX(near: pointerOriginX, width: width)
         let frame = CGRect(x: alignedOriginX ?? pointerOriginX, y: 0, width: width, height: 1)
 
@@ -638,7 +654,7 @@ struct UltrawideDockInteraction {
 
         for edge in alignmentEdges {
             for candidate in [edge, edge - width] {
-                let clamped = candidate.clamped(to: 0 ... maximumOriginX)
+                let clamped = candidate.clamped(to: 0...maximumOriginX)
                 guard abs(clamped - candidate) <= 0.000_001 else { continue }
                 let distance = abs(clamped - originX)
                 guard distance <= Self.edgeAlignmentTolerance else { continue }
@@ -739,7 +755,7 @@ struct UltrawideDockInteraction {
 
     private func adjustedWidth(by delta: CGFloat, default defaultWidth: CGFloat) -> CGFloat {
         let base = requestedWidth ?? currentPreviewWidth ?? defaultWidth
-        return Self.snapped((base + delta).clamped(to: engine.minimumWidth ... 1))
+        return Self.snapped((base + delta).clamped(to: engine.minimumWidth...1))
     }
 
     /// Keeps the common fractions exactly reachable while the wheel is otherwise continuous.
@@ -843,7 +859,7 @@ struct UltrawideDockInteraction {
             tiles.append(HorizontalLayoutTile(id: representative, frame: slot.frame))
             membersByTileID[representative] = members
         }
-        return (try HorizontalLayoutSnapshot(tiles: tiles), membersByTileID)
+        return try (HorizontalLayoutSnapshot(tiles: tiles), membersByTileID)
     }
 
     private func isCompleteRow(_ snapshot: HorizontalLayoutSnapshot) -> Bool {
@@ -862,8 +878,12 @@ struct UltrawideDockInteraction {
     }
 
     private func standaloneEdge(at x: CGFloat) -> UltrawideDockEdge {
-        if x < 1 / 3 { return .leading }
-        if x > 2 / 3 { return .trailing }
+        if x < 1 / 3 {
+            return .leading
+        }
+        if x > 2 / 3 {
+            return .trailing
+        }
         return .center
     }
 

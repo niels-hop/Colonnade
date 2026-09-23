@@ -11,7 +11,9 @@ enum HorizontalLayoutRuntimeGeometry {
         adjacencyTolerance: CGFloat
     ) throws -> HorizontalLayoutSnapshot {
         let sorted = input.sorted {
-            if $0.frame.minX == $1.frame.minX { return $0.id.rawValue < $1.id.rawValue }
+            if $0.frame.minX == $1.frame.minX {
+                return $0.id.rawValue < $1.id.rawValue
+            }
             return $0.frame.minX < $1.frame.minX
         }
         guard sorted.count > 1 else {
@@ -23,7 +25,9 @@ enum HorizontalLayoutRuntimeGeometry {
             let gap = frames[index + 1].minX - frames[index].maxX
             guard abs(gap) <= adjacencyTolerance else {
                 // A real overlap is reported rather than repaired; a real gap stays a real gap.
-                if gap < 0 { return try HorizontalLayoutSnapshot(tiles: sorted) }
+                if gap < 0 {
+                    return try HorizontalLayoutSnapshot(tiles: sorted)
+                }
                 continue
             }
             let boundary = (frames[index].maxX + frames[index + 1].minX) / 2

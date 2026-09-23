@@ -10,21 +10,21 @@ final class HorizontalLayoutEngineTests: XCTestCase {
     func testSnapshotRejectsInvalidInputExplicitly() throws {
         XCTAssertThrowsError(try snapshot([
             tile(a, x: 0.5, width: 0.5),
-            tile(b, x: 0, width: 0.5),
+            tile(b, x: 0, width: 0.5)
         ])) { error in
             XCTAssertEqual(error as? HorizontalLayoutError, .overlappingOrUnordered(b))
         }
 
         XCTAssertThrowsError(try snapshot([
             tile(a, x: 0, width: 0.6),
-            tile(b, x: 0.5, width: 0.5),
+            tile(b, x: 0.5, width: 0.5)
         ])) { error in
             XCTAssertEqual(error as? HorizontalLayoutError, .overlappingOrUnordered(b))
         }
 
         XCTAssertThrowsError(try snapshot([
             tile(a, x: 0, width: 0.5),
-            tile(a, x: 0.5, width: 0.5),
+            tile(a, x: 0.5, width: 0.5)
         ])) { error in
             XCTAssertEqual(error as? HorizontalLayoutError, .duplicateTileID(a))
         }
@@ -42,7 +42,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let engine = try HorizontalLayoutEngine(minimumWidth: 0.2)
         let input = try snapshot([
             tile(a, x: 0.1, width: 0.4),
-            tile(b, x: 0.5, width: 0.4),
+            tile(b, x: 0.5, width: 0.4)
         ])
 
         let plan = try engine.plan(.moveDivider(after: a, to: 0.85), from: input)
@@ -57,7 +57,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let engine = try HorizontalLayoutEngine(minimumWidth: 0.1)
         let input = try snapshot([
             tile(a, x: 0, width: 0.4),
-            tile(b, x: 0.6, width: 0.4),
+            tile(b, x: 0.6, width: 0.4)
         ])
 
         XCTAssertThrowsError(try engine.plan(.moveDivider(after: a, to: 0.5), from: input)) { error in
@@ -70,7 +70,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let input = try snapshot([
             tile(a, x: 0, width: 0.2),
             tile(b, x: 0.4, width: 0.3),
-            tile(c, x: 0.9, width: 0.1),
+            tile(c, x: 0.9, width: 0.1)
         ])
 
         let plan = try engine.plan(.insert(d, near: 0.82), from: input)
@@ -90,7 +90,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let engine = try HorizontalLayoutEngine(minimumWidth: 0.2)
         let input = try snapshot([
             tile(a, x: 0, width: 0.5),
-            tile(b, x: 0.5, width: 0.5),
+            tile(b, x: 0.5, width: 0.5)
         ])
 
         let plan = try engine.plan(.insert(c, near: 0.8), from: input)
@@ -107,7 +107,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let engine = try HorizontalLayoutEngine(minimumWidth: 0.34)
         let input = try snapshot([
             tile(a, x: 0, width: 0.5),
-            tile(b, x: 0.5, width: 0.5),
+            tile(b, x: 0.5, width: 0.5)
         ])
 
         XCTAssertThrowsError(try engine.plan(.insert(c, near: 0.5), from: input)) { error in
@@ -121,7 +121,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let input = try snapshot([
             tile(a, x: 0, width: 0.2),
             tile(b, x: 0.2, width: 0.3),
-            tile(c, x: 0.5, width: 0.5),
+            tile(c, x: 0.5, width: 0.5)
         ])
 
         let swapped = try engine.plan(.swap(a, c), from: input)
@@ -140,7 +140,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let incoming = HorizontalLayoutTileID(rawValue: "incoming")
         let input = try snapshot([
             tile(a, x: 0, width: 0.3),
-            tile(b, x: 0.3, width: 0.3),
+            tile(b, x: 0.3, width: 0.3)
         ])
 
         let plan = try engine.plan(
@@ -165,7 +165,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let incoming = HorizontalLayoutTileID(rawValue: "incoming")
         let input = try snapshot([
             tile(a, x: 0, width: 0.37),
-            tile(b, x: 0.8, width: 0.2),
+            tile(b, x: 0.8, width: 0.2)
         ])
 
         let plan = try engine.plan(
@@ -204,7 +204,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
             tile(a, x: 0, width: 0.15),
             tile(b, x: 0.15, width: 0.25),
             tile(c, x: 0.4, width: 0.4),
-            tile(d, x: 0.8, width: 0.2),
+            tile(d, x: 0.8, width: 0.2)
         ])
 
         let rangePlan = try engine.plan(.balance(.between(b, c)), from: input)
@@ -227,7 +227,7 @@ final class HorizontalLayoutEngineTests: XCTestCase {
         let three = try snapshot([
             tile(a, x: 0, width: 0.2),
             tile(b, x: 0.2, width: 0.3),
-            tile(c, x: 0.5, width: 0.5),
+            tile(c, x: 0.5, width: 0.5)
         ])
 
         let twoEqual = try engine.plan(.apply(.twoEqual), from: two)

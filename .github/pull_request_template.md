@@ -29,5 +29,5 @@ Fixes #(issue) <!-- If applicable -->
 
 ## Please describe to which degree, if any, an LLM was used in creating this pull request.
 
-<!-- Ensure that this complies with Loop's AI usage policy -->
+<!-- Be open about AI assistance; see CONTRIBUTING.md -->
 <!-- If no AI assistance was used, please answer "N/A" -->

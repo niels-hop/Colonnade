@@ -175,12 +175,12 @@ struct HorizontalLayoutBatchExecutor {
     }
 }
 
-extension CGRect {
-    fileprivate var isUsableHorizontalLayoutFrame: Bool {
+private extension CGRect {
+    var isUsableHorizontalLayoutFrame: Bool {
         minX.isFinite && minY.isFinite && width.isFinite && height.isFinite && width > 0 && height > 0
     }
 
-    fileprivate func approximatelyEquals(_ other: CGRect, tolerance: CGFloat) -> Bool {
+    func approximatelyEquals(_ other: CGRect, tolerance: CGFloat) -> Bool {
         abs(minX - other.minX) <= tolerance &&
             abs(minY - other.minY) <= tolerance &&
             abs(width - other.width) <= tolerance &&

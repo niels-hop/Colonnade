@@ -105,7 +105,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testOccupiedTileCenterStacksWithoutChangingExistingSlots() throws {
         let windows = [
             window(a, x: 0, width: 0.5, zIndex: 0),
-            window(b, x: 0.5, width: 0.5, zIndex: 1),
+            window(b, x: 0.5, width: 0.5, zIndex: 1)
         ]
         var interaction = try makeInteraction(windows: windows)
         let originalSlots = interaction.scene.slots
@@ -126,7 +126,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testStackUsesVisibleWindowFrameInsteadOfBridgedLogicalSlot() throws {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.49, zIndex: 0),
-            window(b, x: 0.51, width: 0.49, zIndex: 1),
+            window(b, x: 0.51, width: 0.49, zIndex: 1)
         ])
 
         let output = interaction.handle(.move(to: 0.25))
@@ -141,7 +141,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testOccupiedTileEdgeInsertsInsteadOfStacking() throws {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.5, zIndex: 0),
-            window(b, x: 0.5, width: 0.5, zIndex: 1),
+            window(b, x: 0.5, width: 0.5, zIndex: 1)
         ])
 
         let output = interaction.handle(.move(to: 0.46))
@@ -161,7 +161,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
 
     func testFreeSpaceInsertionDoesNotStageAnUnchangedNeighbour() throws {
         var interaction = try makeInteraction(windows: [
-            window(a, x: 0, width: 0.5, zIndex: 0),
+            window(a, x: 0, width: 0.5, zIndex: 0)
         ])
 
         let output = interaction.handle(.move(to: 0.8))
@@ -184,7 +184,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
         var interaction = try makeInteraction(
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 0),
-                window(b, x: 0.5, width: 0.5, zIndex: 1),
+                window(b, x: 0.5, width: 0.5, zIndex: 1)
             ],
             currentID: a
         )
@@ -211,7 +211,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
         var interaction = try makeInteraction(
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 0),
-                window(b, x: 0.5, width: 0.5, zIndex: 1),
+                window(b, x: 0.5, width: 0.5, zIndex: 1)
             ],
             currentID: a
         )
@@ -227,7 +227,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testDividerHoverClearsAnEarlierPlacementCommit() throws {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.5, zIndex: 0),
-            window(b, x: 0.5, width: 0.5, zIndex: 1),
+            window(b, x: 0.5, width: 0.5, zIndex: 1)
         ])
 
         XCTAssertNotNil(interaction.handle(.move(to: 0.25)).commit)
@@ -252,7 +252,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 0),
                 window(a2, x: 0, width: 0.5, zIndex: 1),
-                window(b, x: 0.5, width: 0.5, zIndex: 2),
+                window(b, x: 0.5, width: 0.5, zIndex: 2)
             ],
             currentID: a
         )
@@ -277,7 +277,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 0),
                 window(a2, x: 0, width: 0.5, zIndex: 1),
-                window(b, x: 0.5, width: 0.5, zIndex: 2),
+                window(b, x: 0.5, width: 0.5, zIndex: 2)
             ],
             currentID: a
         )
@@ -288,7 +288,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
             return XCTFail("Expected the current stack member to become its own slot")
         }
         XCTAssertEqual(plan.snapshot.tiles.count, 3)
-        XCTAssertEqual(Set(membersByTileID.values.flatMap { $0 }), Set([a, a2, b]))
+        XCTAssertEqual(Set(membersByTileID.values.flatMap(\.self)), Set([a, a2, b]))
         XCTAssertTrue(membersByTileID.values.contains([a2]))
         XCTAssertTrue(membersByTileID.values.contains([a]))
     }
@@ -296,7 +296,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testPartialOverlapExcludesOneWindowInsteadOfDisablingTheDock() throws {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.6, zIndex: 0),
-            window(b, x: 0.5, width: 0.5, zIndex: 1),
+            window(b, x: 0.5, width: 0.5, zIndex: 1)
         ])
 
         // The narrower window loses its place in the row, but it is never planned and therefore
@@ -309,7 +309,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
             return XCTFail("Expected the dock to still offer a placement")
         }
         XCTAssertFalse(plan.snapshot.tiles.contains { $0.id == b })
-        XCTAssertFalse(membersByTileID.values.flatMap { $0 }.contains(b))
+        XCTAssertFalse(membersByTileID.values.flatMap(\.self).contains(b))
     }
 
     func testOneNarrowOverlappingWindowDoesNotEvictTheWideOnesAroundIt() throws {
@@ -317,7 +317,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 2),
                 window(current, x: 0.45, width: 0.1, zIndex: 0),
-                window(b, x: 0.55, width: 0.45, zIndex: 1),
+                window(b, x: 0.55, width: 0.45, zIndex: 1)
             ],
             currentID: HorizontalLayoutTileID(rawValue: "absent"),
             frameTolerance: 0.001
@@ -332,7 +332,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 1),
                 window(b, x: 0.5, width: 0.5, zIndex: 2),
-                window(current, x: 0.25, width: 0.5, zIndex: 0),
+                window(current, x: 0.25, width: 0.5, zIndex: 0)
             ],
             currentID: current,
             frameTolerance: 0.001
@@ -347,7 +347,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
         var interaction = try makeInteraction(
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 0),
-                window(b, x: 0.5, width: 0.5, zIndex: 1),
+                window(b, x: 0.5, width: 0.5, zIndex: 1)
             ],
             currentID: a
         )
@@ -370,7 +370,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
         var interaction = try makeInteraction(
             windows: [
                 window(a, x: 0, width: 0.5, zIndex: 0),
-                window(b, x: 0.5, width: 0.5, zIndex: 1),
+                window(b, x: 0.5, width: 0.5, zIndex: 1)
             ],
             currentID: a
         )
@@ -387,7 +387,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
 
     func testScrollResizesAWindowBeingInsertedIntoFreeSpace() throws {
         var interaction = try makeInteraction(windows: [
-            window(a, x: 0, width: 0.5, zIndex: 0),
+            window(a, x: 0, width: 0.5, zIndex: 0)
         ])
 
         _ = interaction.handle(.move(to: 0.8))
@@ -405,7 +405,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testInsertionFillsAGapWithAnAwkwardBoundaryExactly() throws {
         for tileWidth in [0.1, 0.37, 0.45] {
             var interaction = try makeInteraction(windows: [
-                window(a, x: 0, width: tileWidth, zIndex: 0),
+                window(a, x: 0, width: tileWidth, zIndex: 0)
             ])
 
             let output = interaction.handle(.move(to: 0.9))
@@ -419,7 +419,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
 
     func testInsertionWidthStaysInsideItsFreeGap() throws {
         var interaction = try makeInteraction(windows: [
-            window(a, x: 0, width: 0.7, zIndex: 0),
+            window(a, x: 0, width: 0.7, zIndex: 0)
         ])
 
         _ = interaction.handle(.move(to: 0.9))
@@ -437,7 +437,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.5, zIndex: 0),
             window(b, x: 0.5, width: 0.5, zIndex: 1),
-            window(current, x: 0, width: 0.5, zIndex: 2),
+            window(current, x: 0, width: 0.5, zIndex: 2)
         ])
 
         _ = interaction.handle(.move(to: 0.5))
@@ -455,7 +455,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testFreeformStartsAtTheWindowsOwnWidthAndScrollResizesIt() throws {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.7, zIndex: 0),
-            window(current, x: 0.7, width: 0.3, zIndex: 1),
+            window(current, x: 0.7, width: 0.3, zIndex: 1)
         ])
 
         _ = interaction.handle(.move(to: 0.4))
@@ -476,7 +476,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testFreeformAlignsToANeighbouringEdgeWithoutTouchingThatNeighbour() throws {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.4, zIndex: 0),
-            window(b, x: 0.4, width: 0.6, zIndex: 1),
+            window(b, x: 0.4, width: 0.6, zIndex: 1)
         ])
         let originalSlots = interaction.scene.slots
 
@@ -496,7 +496,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testFreeformIgnoresDividersAndLeavingItRestoresRowTargets() throws {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.5, zIndex: 0),
-            window(b, x: 0.5, width: 0.5, zIndex: 1),
+            window(b, x: 0.5, width: 0.5, zIndex: 1)
         ])
 
         XCTAssertEqual(interaction.handle(.move(to: 0.5)).target, .divider(after: a))
@@ -514,7 +514,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
     func testFreeformSwitchMidDividerDragKeepsTheResize() throws {
         var interaction = try makeInteraction(windows: [
             window(a, x: 0, width: 0.5, zIndex: 0),
-            window(b, x: 0.5, width: 0.5, zIndex: 1),
+            window(b, x: 0.5, width: 0.5, zIndex: 1)
         ])
 
         _ = interaction.handle(.move(to: 0.5))
@@ -529,7 +529,7 @@ final class UltrawideDockInteractionTests: XCTestCase {
 
     func testFreeformBeforeAnyPointerMovementStaysNeutral() throws {
         var interaction = try makeInteraction(windows: [
-            window(a, x: 0, width: 1, zIndex: 0),
+            window(a, x: 0, width: 1, zIndex: 0)
         ])
 
         let output = interaction.handle(.setFreeform(true))

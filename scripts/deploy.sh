@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# Bouwt Loop met het stabiele self-signed certificaat en installeert de app in
-# /Applications zodat alle macOS-accounts op deze Mac dezelfde build draaien.
+# Bouwt Colonnade met een stabiel code-signing certificaat en installeert de app in
+# /Applications, zodat alle macOS-accounts op deze Mac dezelfde build draaien.
 #
-# Vereist (eenmalig): een code-signing certificaat met common name "Loop Self-Signed"
-# in de login-keychain. Zie CLAUDE.md, sectie "Signing & deploy".
+# Het certificaat komt uit Colonnade/Local.xcconfig (CODE_SIGN_IDENTITY = ...), of uit de
+# omgevingsvariabele SIGN_IDENTITY. Zie README.md, sectie "Building from source".
 #
 # Gebruik:
-#   ./scripts/deploy.sh            # Release build -> /Applications/Loop.app
+#   ./scripts/deploy.sh            # Release build -> /Applications/Colonnade.app
 #   CONFIG=Debug ./scripts/deploy.sh
 #
 set -euo pipefail
@@ -15,46 +15,55 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONFIG="${CONFIG:-Release}"
-SIGN_IDENTITY="Loop Self-Signed"
-DEST="/Applications/Loop.app"
+DEST="/Applications/Colonnade.app"
+LOCAL_XCCONFIG="$REPO_ROOT/Colonnade/Local.xcconfig"
 
 cd "$REPO_ROOT"
 
-# 1. Controleer dat het signing-certificaat bestaat.
+# 1. Bepaal en controleer het signing-certificaat.
 #    Geen -v: een self-signed cert is "untrusted" en valt buiten de valid-only lijst,
 #    maar codesign kan er prima mee tekenen (TCC pint de leaf-hash, niet de CA-trust).
+if [[ -z "${SIGN_IDENTITY:-}" && -f "$LOCAL_XCCONFIG" ]]; then
+    SIGN_IDENTITY="$(awk -F' *= *' '/^CODE_SIGN_IDENTITY/{print $2; exit}' "$LOCAL_XCCONFIG")"
+fi
+if [[ -z "${SIGN_IDENTITY:-}" || "$SIGN_IDENTITY" == "-" ]]; then
+    echo "FOUT: geen stabiel signing-certificaat ingesteld."
+    echo "      Zet 'CODE_SIGN_IDENTITY = <naam>' in Colonnade/Local.xcconfig (zie README.md)."
+    echo "      Met ad-hoc signing vergeet macOS de Toegankelijkheid-toestemming bij elke build."
+    exit 1
+fi
 if ! security find-identity -p codesigning | grep -q "$SIGN_IDENTITY"; then
     echo "FOUT: code-signing certificaat '$SIGN_IDENTITY' niet gevonden in de keychain."
-    echo "      Maak het eenmalig aan via Keychain Access (zie CLAUDE.md)."
     exit 1
 fi
 
-# 2. Build (SwiftFormat draait automatisch via de build phase).
+# 2. Build.
 #    -skipMacroValidation: de Scribe-package levert een Swift-macro (@Loggable) die
 #    Xcode anders interactief wil laten goedkeuren; in een CLI-build slaan we die check over.
-echo "==> Bouwen ($CONFIG)..."
-xcodebuild -scheme Loop -configuration "$CONFIG" -skipMacroValidation build
+echo "==> Bouwen ($CONFIG, getekend met '$SIGN_IDENTITY')..."
+xcodebuild -project Colonnade.xcodeproj -scheme Colonnade -configuration "$CONFIG" \
+    -skipMacroValidation CODE_SIGN_IDENTITY="$SIGN_IDENTITY" build
 
 # 3. Vind de gebouwde app.
-BUILT_DIR="$(xcodebuild -scheme Loop -configuration "$CONFIG" -showBuildSettings 2>/dev/null \
+BUILT_DIR="$(xcodebuild -project Colonnade.xcodeproj -scheme Colonnade -configuration "$CONFIG" -showBuildSettings 2>/dev/null \
     | awk -F' = ' '/ BUILT_PRODUCTS_DIR /{print $2; exit}')"
-APP="$BUILT_DIR/Loop.app"
+APP="$BUILT_DIR/Colonnade.app"
 if [[ ! -d "$APP" ]]; then
     echo "FOUT: gebouwde app niet gevonden op $APP"
     exit 1
 fi
 
-# 4. Sluit een draaiende Loop af (anders kan de kopie mislukken / blijft oude versie actief).
-echo "==> Eventuele draaiende Loop afsluiten..."
-osascript -e 'tell application "Loop" to quit' 2>/dev/null || true
-pkill -x Loop 2>/dev/null || true
+# 4. Sluit een draaiende Colonnade af, en ook de voorganger van deze fork (Loop.app met
+#    bundle-ID com.nielshop.Loop): twee apps op dezelfde trigger zitten elkaar in de weg.
+echo "==> Draaiende Colonnade (en de oude Loop-build) afsluiten..."
+osascript -e 'tell application id "com.nielshop.Colonnade" to quit' 2>/dev/null || true
+osascript -e 'tell application id "com.nielshop.Loop" to quit' 2>/dev/null || true
+pkill -x Colonnade 2>/dev/null || true
 sleep 1
 
-# 5. Installeer in /Applications. nhop is admin en /Applications is groep-schrijfbaar,
-#    dus dit lukt normaal zonder sudo, ook als de bestaande app van een ander account is.
-#    We *verplaatsen* de build uit DerivedData i.p.v. te kopiëren: zo blijft er geen
-#    tweede Loop.app met dezelfde bundle-ID (com.nielshop.Loop) achter die Finder/Spotlight
-#    en LaunchServices in de war brengt. xcodebuild maakt 'm bij de volgende build weer aan.
+# 5. Installeer in /Applications. We *verplaatsen* de build uit DerivedData i.p.v. te kopiëren:
+#    zo blijft er geen tweede Colonnade.app met hetzelfde bundle-ID achter die Spotlight en
+#    LaunchServices in de war brengt. xcodebuild maakt 'm bij de volgende build weer aan.
 echo "==> Installeren naar $DEST..."
 if [[ -d "$DEST" ]]; then
     if ! rm -rf "$DEST" 2>/dev/null; then
@@ -71,11 +80,15 @@ echo "==> Handtekening verifiëren..."
 codesign --verify --deep --strict --verbose=2 "$DEST"
 codesign -dvv "$DEST" 2>&1 | grep -E "Identifier|Authority|TeamIdentifier" || true
 
-# 7. Start de zojuist geïnstalleerde app (deploy verwacht je dat Loop daarna draait).
-echo "==> Loop starten..."
+# 7. Start de zojuist geïnstalleerde app.
+echo "==> Colonnade starten..."
 open "$DEST"
 
 echo ""
-echo "Klaar. Loop staat in $DEST."
-echo "Per account nog éénmalig: Systeeminstellingen -> Privacy & Beveiliging -> Toegankelijkheid -> Loop aanvinken."
-echo "Daarna blijft de toestemming staan over rebuilds heen (stabiele handtekening)."
+echo "Klaar. Colonnade staat in $DEST."
+echo "Per account nog éénmalig: Systeeminstellingen -> Privacy & Beveiliging -> Toegankelijkheid -> Colonnade aanvinken."
+if [[ -d "/Applications/Loop.app" ]]; then
+    echo ""
+    echo "Let op: /Applications/Loop.app (de oude build) staat er nog. Verwijder die en zijn"
+    echo "login-item (Systeeminstellingen -> Algemeen -> Inloggen) zodra Colonnade goed draait."
+fi

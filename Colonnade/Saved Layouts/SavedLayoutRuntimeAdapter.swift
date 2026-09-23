@@ -86,9 +86,9 @@ final class SavedLayoutRuntimeAdapter {
                 SavedLayoutGeometry.normalizedPlacement(for: window.frame, in: Self.workingBounds(for: $0))
             }
             let token = RuntimeWindowToken()
-            let observed = ObservedWindow(
+            let observed = try ObservedWindow(
                 token: token,
-                identity: try identity(
+                identity: identity(
                     for: window,
                     placement: placement,
                     ordinal: ordinals[window.cgWindowID],
@@ -162,8 +162,12 @@ final class SavedLayoutRuntimeAdapter {
         var result: [CGWindowID: Int] = [:]
         for group in grouped.values {
             let sorted = group.sorted {
-                if $0.frame.minX != $1.frame.minX { return $0.frame.minX < $1.frame.minX }
-                if $0.frame.minY != $1.frame.minY { return $0.frame.minY < $1.frame.minY }
+                if $0.frame.minX != $1.frame.minX {
+                    return $0.frame.minX < $1.frame.minX
+                }
+                if $0.frame.minY != $1.frame.minY {
+                    return $0.frame.minY < $1.frame.minY
+                }
                 return $0.cgWindowID < $1.cgWindowID
             }
             for (index, window) in sorted.enumerated() {
@@ -190,8 +194,8 @@ final class SavedLayoutRuntimeAdapter {
 
         return try PersistentWindowIdentity(
             bundleIdentifier: bundleIdentifier,
-            titleOrDocumentHint: try titleOrDocument.map { try PrivateWindowHint(rawValue: $0, salt: salt) },
-            stableAccessibilityHint: try stableAccessibility.map { try PrivateWindowHint(rawValue: $0, salt: salt) },
+            titleOrDocumentHint: titleOrDocument.map { try PrivateWindowHint(rawValue: $0, salt: salt) },
+            stableAccessibilityHint: stableAccessibility.map { try PrivateWindowHint(rawValue: $0, salt: salt) },
             role: window.role?.rawValue,
             subrole: window.subrole?.rawValue,
             ordinalHint: ordinal,

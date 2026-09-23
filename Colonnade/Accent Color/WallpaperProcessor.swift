@@ -205,7 +205,9 @@ extension NSImage {
                 let alpha = (bytesPerPixel == 4) ? CGFloat(data[pixelData + 3]) / 255.0 : 1.0
 
                 // Skip fully transparent pixels
-                if alpha < 0.1 { continue }
+                if alpha < 0.1 {
+                    continue
+                }
 
                 // Simple quantization - this maps similar colors to the same key
                 // Converting to integers reduces memory usage and improves comparison speed

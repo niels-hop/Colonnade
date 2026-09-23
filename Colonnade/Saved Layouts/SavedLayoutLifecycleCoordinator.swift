@@ -15,7 +15,7 @@ final class SavedLayoutLifecycleCoordinator {
 
     private let manager: SavedLayoutManager
     private var observers: [NSObjectProtocol] = []
-    private var pendingRestore: Task<Void, Never>?
+    private var pendingRestore: Task<(), Never>?
 
     init(manager: SavedLayoutManager? = nil) {
         self.manager = manager ?? .shared

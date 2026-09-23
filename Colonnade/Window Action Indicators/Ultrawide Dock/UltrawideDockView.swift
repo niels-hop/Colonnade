@@ -277,7 +277,7 @@ struct UltrawideDockView: View {
         let fractions: [(width: CGFloat, label: String)] = [
             (0.5, "1/2"),
             (1 / 3, "1/3"),
-            (0.25, "1/4"),
+            (0.25, "1/4")
         ]
         return fractions.first { abs($0.width - width) <= 0.005 }?.label
     }

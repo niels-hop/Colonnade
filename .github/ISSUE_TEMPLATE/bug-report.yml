@@ -53,9 +53,9 @@ body:
     attributes:
       label: Expected vs Actual Behavior
       description: |
-        Expected: I expected my icon to unlock when reaching the target number of Loops.
+        Expected: Releasing the trigger over the free space places the window in that gap at full height.
 
-        Actual: The icon did not unlock when reaching the target number of Loops, I think it's because...
+        Actual: The window was placed on top of the neighbouring window instead, I think it's because...
     validations:
       required: true
 
@@ -89,22 +89,19 @@ body:
 
   - type: input
     attributes:
-      label: Loop Version
-      description: You can find this in Loop’s About tab in the settings window
+      label: Colonnade Version
+      description: You can find this in the About tab of Colonnade's settings, or in the menu bar menu
       placeholder: Version 1.4.0 (1581)
     validations:
       required: true
 
-  - type: dropdown
+  - type: input
     attributes:
-      label: Did You Try the Development Build?
-      description: In the About tab of Loop's settings, enable “Include development version,” then click “Check for updates.”
-      options:
-        - "Yes"
-        - "No"
-        - "There was a developer build? Let's try that."
+      label: Screen setup
+      description: Resolution / aspect ratio of the screen(s) you used the dock on
+      placeholder: 5120×1440 (32:9) external + built-in MacBook display
     validations:
-      required: true
+      required: false
 
   - type: textarea
     attributes:

@@ -20,14 +20,14 @@ struct DockIllustrationView: View {
     }
 
     /// Windows already on screen, as horizontal fractions. Everything is full height.
-    private let existingColumns: [ClosedRange<CGFloat>] = [0 ... 0.28, 0.28 ... 0.62]
+    private let existingColumns: [ClosedRange<CGFloat>] = [0...0.28, 0.28...0.62]
 
     private let steps: [Step] = [
-        .init(target: 0.62 ... 1, caption: "Fill the free space"),
-        .init(target: 0.62 ... 0.81, caption: "Click to change the width"),
-        .init(target: 0.28 ... 0.62, caption: "Stack on an existing window"),
-        .init(target: 0.2 ... 0.4, caption: "Insert beside a window"),
-        .init(target: 0.35 ... 0.65, caption: "Move down to place freely")
+        .init(target: 0.62...1, caption: "Fill the free space"),
+        .init(target: 0.62...0.81, caption: "Click to change the width"),
+        .init(target: 0.28...0.62, caption: "Stack on an existing window"),
+        .init(target: 0.2...0.4, caption: "Insert beside a window"),
+        .init(target: 0.35...0.65, caption: "Move down to place freely")
     ]
 
     @State private var stepIndex = 0

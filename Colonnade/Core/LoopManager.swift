@@ -320,11 +320,10 @@ extension LoopManager {
                 } catch {
                     log.error("Horizontal layout transaction failed: \(error.localizedDescription)")
                 }
-            } else if (wasDockActive ? hasPendingDockCommit : Defaults[.previewVisibility]),
+            } else if wasDockActive ? hasPendingDockCommit : Defaults[.previewVisibility],
                       !resizeContext.action.direction.willFocusWindow {
                 _ = try? await WindowActionEngine.shared.apply(context: resizeContext)
             }
-
         }
     }
 }

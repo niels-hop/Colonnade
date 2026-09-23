@@ -36,7 +36,11 @@ struct VersionDisplay {
         let devBuildEmoji = "🧪"
         let shouldTreatAsPrerelease = isPrerelease || version.contains(devBuildEmoji)
 
-        let buildString = if let build { "(\(build))" } else { "" }
+        let buildString = if let build {
+            "(\(build))"
+        } else {
+            ""
+        }
 
         let baseVersion = version
             .replacing(devBuildEmoji, with: "")

@@ -3,18 +3,18 @@
 <plist version="1.0">
 <dict>
 	<key>DeveloperName</key>
-	<string>MrKai77</string>
+	<string>Niels Hop</string>
 	<key>ApplicationDescription</key>
-	<string>Loop is a macOS window management utility with a radial menu and configurable keybinds for moving, resizing, and arranging windows.</string>
+	<string>Colonnade is a macOS window manager for wide screens: hold a trigger key and move the mouse to arrange windows side by side at full height.</string>
 	<key>Website</key>
-	<string>https://github.com/MrKai77/Loop</string>
+	<string>https://github.com/niels-hop/Colonnade</string>
 	<key>Connections</key>
 	<array>
 		<dict>
 			<key>IsIncoming</key>
 			<false/>
 			<key>Host</key>
-			<string>*.github.com</string>
+			<string>api.github.com</string>
 			<key>NetworkProtocol</key>
 			<string>TCP</string>
 			<key>Port</key>
@@ -22,25 +22,9 @@
 			<key>Relevance</key>
 			<string>Default</string>
 			<key>Purpose</key>
-			<string>Loop periodically checks if a newer version of the app is available. You can disable these automatic software update checks in the About tab of Loop&apos;s settings.</string>
+			<string>Colonnade checks once a day whether a newer release is available. You can turn this off in the About tab of Colonnade's settings.</string>
 			<key>DenyConsequences</key>
-			<string>If you deny these connections, you will not be notified about new versions of Loop.</string>
-		</dict>
-		<dict>
-			<key>IsIncoming</key>
-			<false/>
-			<key>Host</key>
-			<string>*.githubusercontent.com</string>
-			<key>NetworkProtocol</key>
-			<string>TCP</string>
-			<key>Port</key>
-			<string>443</string>
-			<key>Relevance</key>
-			<string>Default</string>
-			<key>Purpose</key>
-			<string>Loop downloads software updates from GitHub if a newer version is available.</string>
-			<key>DenyConsequences</key>
-			<string>If you deny these connections, Loop will not be able to install software updates by iteslf.</string>
+			<string>If you deny these connections, you will not be notified about new versions of Colonnade.</string>
 		</dict>
 	</array>
 </dict>

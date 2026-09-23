@@ -54,8 +54,12 @@ struct Keycorder: View {
                 HStack(spacing: 4) {
                     // First show modifiers in order
                     let sortedKeys = selectionKeybind.sorted { (a: CGKeyCode, b: CGKeyCode) in
-                        if a.isModifier, !b.isModifier { return true }
-                        if !a.isModifier, b.isModifier { return false }
+                        if a.isModifier, !b.isModifier {
+                            return true
+                        }
+                        if !a.isModifier, b.isModifier {
+                            return false
+                        }
                         return a < b
                     }
 

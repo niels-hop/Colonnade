@@ -40,7 +40,9 @@ final class ReleaseChecker: ObservableObject {
     @Published private(set) var state: State = .idle
 
     var isUpdateAvailable: Bool {
-        if case .available = state { return true }
+        if case .available = state {
+            return true
+        }
         return false
     }
 
@@ -146,7 +148,9 @@ final class ReleaseChecker: ObservableObject {
     /// Strips a leading "v" and any pre-release/build suffix: "v1.2.3-beta" -> "1.2.3".
     nonisolated static func normalized(_ version: String) -> String {
         var trimmed = version.trimmingCharacters(in: .whitespaces)
-        if trimmed.first == "v" || trimmed.first == "V" { trimmed.removeFirst() }
+        if trimmed.first == "v" || trimmed.first == "V" {
+            trimmed.removeFirst()
+        }
         return String(trimmed.prefix { $0.isNumber || $0 == "." })
     }
 
@@ -156,10 +160,12 @@ final class ReleaseChecker: ObservableObject {
         let rhs = normalized(current).split(separator: ".").map { Int($0) ?? 0 }
         guard !lhs.isEmpty else { return false }
 
-        for index in 0..<max(lhs.count, rhs.count) {
+        for index in 0 ..< max(lhs.count, rhs.count) {
             let left = index < lhs.count ? lhs[index] : 0
             let right = index < rhs.count ? rhs[index] : 0
-            if left != right { return left > right }
+            if left != right {
+                return left > right
+            }
         }
         return false
     }

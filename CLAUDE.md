@@ -1,146 +1,107 @@
 # Claude Development Notes
 
-## Doel & Visie van deze fork
+## Doel & Visie
 
-Dit is een **persoonlijke fork van Loop** (origineel: MrKai77/Loop) die wordt toegespitst op één gerichte
-window-management workflow. Houd dit als leidraad voor elke bug fix en nieuwe feature:
+**Colonnade** is een publieke macOS-app, ontstaan als fork van Loop (MrKai77/Loop, GPL-3.0). De app is
+volledig gebouwd rond één interactie: **twee toetsen inhouden (de trigger) en met de muis kiezen waar het
+venster heen gaat**. Houd dit als leidraad voor elke bug fix en nieuwe feature:
 
-- **Primaire use case: super ultrawide schermen.** Daar is de Ultrawide Dock voor gemaakt en daar moet alles
-  op geoptimaliseerd zijn.
-- **Ook bruikbaar op de MacBook zelf** (zonder extern scherm). De feature moet dus niet stuk gaan op gewone
-  16:10 schermen — gewoon nuttig blijven.
-- **Alleen horizontaal rangschikken.** Vensters worden altijd over de **volledige hoogte** geplaatst; de app
-  verdeelt enkel de horizontale ruimte. Geen verticale splits, geen kwart-tegels.
-- **Bediening blijft simpel, precies zoals nu:** twee toetsen ingedrukt houden (de trigger) en met de muis
-  bepalen waar het venster heen gaat. Dat moet *de hele app/fork* zijn — de dock is geen extra modus naast de
-  radial menu, maar het hoofdmechanisme. Stuur features richting dit ene, eenvoudige interactiemodel.
-- **Moet ook werken op het andere account op deze MacBook (`werkdv`).** Dat betekent: vermijd aannames over
-  één specifieke gebruiker en houd er rekening mee dat Accessibility-permissions per macOS-account apart
-  toegekend moeten worden (zie "Eerste gebruik").
+- **Primaire use case: super ultrawide schermen.** De dock (minimap) is daarvoor gemaakt en alles moet daarop
+  geoptimaliseerd zijn.
+- **Ook bruikbaar op de MacBook zelf** (zonder extern scherm). Niet stuk laten gaan op 16:10/16:9.
+- **Alleen horizontaal rangschikken.** Vensters altijd over de **volledige hoogte**; de app verdeelt enkel de
+  horizontale ruimte. Geen verticale splits, geen kwart-tegels.
+- **Bediening blijft simpel:** trigger + muis is de hele app. De dock is het hoofdmechanisme; het radiaalmenu
+  bestaat alleen nog als fallback (dock-modus "Nooit" of "Automatisch" op smalle schermen).
+- **Meerdere macOS-accounts** (bij de maintainer: `nhop` en `werkDV`): geen aannames over één gebruiker;
+  Accessibility-permissie is per account.
+- **Bestaande functionaliteit niet breken.** Instelbaarheid toevoegen mag; gedrag wijzigen alleen bewust.
 
-Bij twijfel over scope: kies de oplossing die de **simpele "twee toetsen + muis"-bediening** behoudt en die
+Bij twijfel over scope: kies de oplossing die de **"twee toetsen + muis"-bediening** behoudt en
 **horizontale verdeling over volle hoogte** versterkt.
+
+## Identiteit
+
+- Naam **Colonnade**, bundle-ID `com.nielshop.Colonnade`, URL-scheme `colonnade://`.
+- Repo/releases: `niels-hop/Colonnade` (constante in `Colonnade/Updates/ReleaseChecker.swift`).
+- Upstream-attributie (GPL-3.0) staat in README en in Settings → About; laat de "Created by Kai Azim"-headers
+  in bestanden uit Loop staan.
+- `LegacyDataMigration` (in `Colonnade/App/`) kopieert eenmalig instellingen en Application Support-data uit de
+  oude build `com.nielshop.Loop`. Nieuwe Defaults-keys hebben dus geen migratie nodig.
 
 ## Architectuuroverzicht
 
-De motor zit in `Loop/Core/LoopManager.swift` (singleton `LoopManager.shared`) en regelt de hele cyclus:
+De motor zit in `Colonnade/Core/LoopManager.swift` (singleton `LoopManager.shared`; de interne naam "Loop" voor
+een trigger-sessie is bewust behouden) en regelt de hele cyclus:
 
-1. **Triggers** (`Loop/Core/Triggers/`): `KeybindObserver` en `MiddleClickObserver` detecteren de
-   trigger-toets en roepen `openLoop` / `closeLoop` aan.
-2. **Event-monitoring**: zodra Loop open is starten `mouseMovedEventMonitor`, `leftClickMonitor` en
-   `scrollWheelMonitor`. Muisbeweging bepaalt de gekozen `WindowAction`.
-3. **Indicators** (los gekoppelde controllers): `RadialMenuController`, `PreviewController` en
-   `UltrawideDockController`. `LoopManager` pusht dezelfde `setWindow`/`setAction` naar alle drie.
-4. **Uitvoering** (`Loop/Window Management/Window Manipulation/WindowEngine.swift`): bij loslaten wordt de
-   gekozen actie toegepast. `WindowRecords` houdt per venster de huidige actie bij.
+1. **Triggers** (`Colonnade/Core/Observers/`): `KeybindTrigger` en `MiddleClickTrigger` roepen `openLoop` /
+   `closeLoop` aan.
+2. **Event-monitoring**: `MouseInteractionObserver` stuurt muisbeweging, klik, sleep en scroll naar de dock.
+3. **Indicators**: `WindowActionIndicatorService` beheert `UltrawideDockController`, `RadialMenuController`
+   en `PreviewController`.
+4. **Uitvoering**: dock-plannen via `Colonnade/Horizontal Layout/` (`HorizontalLayoutEngine`,
+   `HorizontalLayoutRuntimeAdapter`, `HorizontalLayoutExecutor`); losse acties via `WindowEngine`.
 
-### Ultrawide Dock (de kernfeature)
+### De dock (kernfeature)
 
-Bestanden in `Loop/Window Action Indicators/Ultrawide Dock/`:
+- **Reducer:** `Colonnade/Horizontal Layout/UltrawideDockInteraction.swift` — pure event-reducer
+  (move/pointerDown/drag/pointerUp/scroll/setFreeform/cancel → `UltrawideDockOutput`). Configuratie
+  (bv. `clickWidthCycle`) wordt via `init` geïnjecteerd; **lees nooit `Defaults` in de reducer**.
+- **UI:** `Colonnade/Window Action Indicators/Ultrawide Dock/` (Controller = NSPanel + pointer-mapping,
+  ViewModel = presentatie, View = SwiftUI).
+- **Instellingen** (`Colonnade/Extensions/Defaults+Extensions.swift`, sectie "Ultrawide Dock"):
+  `ultrawideDockTriggerMode` (default `.alwaysOn`), `ultrawideDockAutomaticAspectRatio`,
+  `ultrawideDockBaseWidth`, `ultrawideDockPointerSensitivity`, `ultrawideDockClickCycle`.
 
-- **`UltrawideDockController.swift`** — beheert het borderless `NSPanel`, schaalt de dock-breedte met de
-  aspect ratio en snapt de muiscursor naar het midden bij openen.
-- **`UltrawideDockViewModel.swift`** — het brein. **Anchor-snap-model**: berekent vrije horizontale ranges
-  (stukken scherm die niet door een Loop-geplaatst venster bezet zijn) en maakt daar anchors van
-  (`screenEdge`, `windowAdjacent`, `gapCenter`; edge leading/trailing/center). Muis-X kiest de dichtstbijzijnde
-  anchor (`updateForMouseX`), klik cycelt door groottes (`cycleSize`), scrollwiel fine-tunet (`adjustSize`).
-  Alles is full-height (`height: 1`).
-- **`UltrawideDockView.swift`** — SwiftUI-weergave: glass-effect, bestaande vensters (gedimd op z-order),
-  anchor-tickmarks en de actieve preview in accentkleur.
+### Instellingenvenster
 
-Integratie in `LoopManager`: `shouldUseUltrawideDock` beslist via `Defaults[.ultrawideDockTriggerMode]`
-(`.automatic` = aspect ratio ≥ 2.0, `.alwaysOn`, `.never`). Settings: `BehaviorConfiguration.swift` (sectie
-"Ultrawide Dock") + Picker in het menubar-menu (`LoopApp.swift`). Defaults staan in
-`Loop/Extensions/Defaults+Extensions.swift`.
+`Colonnade/Settings Window/SettingsTab.swift` definieert de tabs, gegroepeerd als Dock (Dock, Indelingen),
+Bediening (Trigger & sneltoetsen, Gedrag), Weergave (Accentkleur, Voorbeeld, Radiaalmenu) en Colonnade
+(Geavanceerd, Uitgesloten apps, Info). Dock-tabs staan in `Colonnade/Settings Window/Dock/`; de inspector toont
+daar `DockIllustrationView`. Nieuwe UI-teksten krijgen een `nl-BE`-vertaling in `Localizable.xcstrings`.
 
-> Let op: de oude `Defaults[.useUltrawideDock]` bool is **deprecated** ten gunste van
-> `ultrawideDockTriggerMode` — kandidaat om later op te ruimen.
+### Updates
 
-## Setup
-- **Code signing**: Self-signed certificaat `Loop Self-Signed` (geen Apple Developer account nodig). Zie "Signing & deploy".
-- **SwiftFormat**: Vereist via Homebrew - `brew install swiftformat`
-- **Xcode**: Developer directory moet wijzen naar Xcode.app, niet CommandLineTools
+Geen auto-updater (die vereiste Kai's Apple Developer-certificaat). `ReleaseChecker` vraagt dagelijks de
+laatste GitHub-release op en opent de downloadpagina. Een release maak je door een tag `vX.Y.Z` te pushen;
+`.github/workflows/release.yml` bouwt en publiceert `Colonnade.zip`.
 
 ## Build & Run
 
-> **Let op — Swift-macro:** sinds de upstream-merge gebruikt het project de `Scribe`-package
-> met een Swift-macro (`@Loggable`). Xcode wil die eenmalig interactief laten goedkeuren; in
-> CLI-builds geef je daarom `-skipMacroValidation` mee (zoals hieronder en in `deploy.sh`).
-
-**Standaard build:**
 ```bash
-xcodebuild -scheme Loop -configuration Debug -skipMacroValidation build
+xcodebuild -project Colonnade.xcodeproj -scheme Colonnade -configuration Debug -skipMacroValidation build
+xcodebuild -project Colonnade.xcodeproj -scheme Colonnade -configuration Debug -skipMacroValidation test
 ```
 
-**Build + Open:**
-```bash
-xcodebuild -scheme Loop -configuration Debug -skipMacroValidation build && \
-open ~/Library/Developer/Xcode/DerivedData/Loop-*/Build/Products/Debug/Loop.app
-```
-
-**Gebouwde app locatie:**
-```
-~/Library/Developer/Xcode/DerivedData/Loop-*/Build/Products/Debug/Loop.app
-```
+`-skipMacroValidation` is nodig voor de Scribe-macro (`@Loggable`). Gebouwde app:
+`~/Library/Developer/Xcode/DerivedData/Colonnade-*/Build/Products/Debug/Colonnade.app`.
 
 ## Signing & deploy
 
-Doel: Accessibility-toestemming hoeft niet meer bij elke build opnieuw, en de app draait op
-beide accounts op deze Mac (`nhop` + `werkDV`).
+- Standaard **ad-hoc** (`CODE_SIGN_IDENTITY = -` in `Colonnade/Config.xcconfig`), zodat iedereen kan bouwen.
+- Lokaal overschrijft het gitignored `Colonnade/Local.xcconfig` dit met een stabiel self-signed certificaat
+  (op deze Mac: `Loop Self-Signed`), zodat Accessibility-toestemming over rebuilds heen blijft staan.
+- `./scripts/deploy.sh` bouwt Release, sluit Colonnade én de oude `com.nielshop.Loop` af, installeert in
+  `/Applications/Colonnade.app` en verifieert de handtekening.
 
-**Achtergrond:** ad-hoc signing (`CODE_SIGN_IDENTITY = "-"`) gaf elke build een nieuwe cdhash,
-waardoor macOS' TCC de Accessibility-toestemming telkens vergat. Daarom signen we nu met een
-**stabiel self-signed certificaat**. TCC blijft per account werken (elk account geeft één keer
-toestemming), maar die toestemming blijft nu staan over rebuilds heen.
+### Single-install invariant
 
-**Eenmalig — certificaat aanmaken (op het `nhop`-account, dat bouwt):**
-1. Open *Keychain Access* → menu *Keychain Access → Certificate Assistant → Create a Certificate…*
-2. Name: `Loop Self-Signed` · Identity Type: `Self Signed Root` · Certificate Type: `Code Signing`
-3. Maak aan, daarna verschijnt het in `security find-identity -v -p codesigning`.
+Bij iedere opdracht om te installeren of deployen:
 
-De projectinstellingen verwachten dit certificaat: `CODE_SIGN_IDENTITY = "Loop Self-Signed"`,
-`CODE_SIGN_STYLE = Manual`, bundle ID `com.nielshop.Loop` (hernoemd van `com.MrKai77.Loop` om
-TCC-botsing met een eventuele officiële Loop te voorkomen). Het certificaat hoeft alleen in de
-keychain van het bouwende account te staan; `werkDV` draait enkel de gekopieerde app.
-
-**Deployen naar beide accounts:**
-```bash
-./scripts/deploy.sh          # Release build, signt + kopieert naar /Applications/Loop.app
-CONFIG=Debug ./scripts/deploy.sh
-```
-Het script controleert het certificaat, bouwt, sluit een draaiende Loop af, installeert in
-`/Applications` (nhop is admin → geen sudo nodig) en verifieert dat de handtekening geldig en
-niet-adhoc is. Autostart (login item) staat per account apart in.
-
-## Project Configuratie
-
-**Dependencies (auto-resolved):**
-- Luminare (main branch)
-- Defaults (sindresorhus, main branch)
-- swiftui-introspect (1.3.0)
-- swift-syntax (602.0.0)
-- swiftui-variadic-views (1.0.0)
-
-**Schemes:**
-- Loop (gebruik deze voor development)
-- Loop (GH ACTIONS)
-- Luminare
-
-**Code signing settings (in project.pbxproj):**
-- `DEVELOPMENT_TEAM = ""`
-- `CODE_SIGN_IDENTITY = "Loop Self-Signed"`
-- `CODE_SIGN_STYLE = Manual`
-- `ENABLE_HARDENED_RUNTIME = NO`
-- `PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Loop`
+1. Gebruik `./scripts/deploy.sh` (Release). Geen tweede kopie in een gebruikersmap; alle accounts draaien
+   `/Applications/Colonnade.app`. **Vraag eerst toestemming**: deploy vervangt de werkende installatie.
+2. Verifieer met `codesign --verify --deep --strict --verbose=2 /Applications/Colonnade.app` (bundle-ID
+   `com.nielshop.Colonnade`, authority = het self-signed certificaat).
+3. `mdfind 'kMDItemCFBundleIdentifier == "com.nielshop.Colonnade"'` moet alleen `/Applications/Colonnade.app`
+   teruggeven (buiten DerivedData-builds).
+4. De oude `/Applications/Loop.app` (`com.nielshop.Loop`) en zijn login-item alleen verwijderen na expliciete
+   toestemming.
+5. Rapporteer dat elk account Colonnade eenmalig moet aanvinken onder Toegankelijkheid en autostart apart
+   instelt.
 
 ## Development
 
-**SwiftFormat runs automatisch bij elke build** - project heeft `.swiftformat` config
-
-**Vereisten bij PR:**
-- Code moet SwiftFormat checks passeren
-- Uitgebreide comments volgens project stijl (zie CONTRIBUTING.md)
-- Emoji prefixes in commits: 🐞 (bug), ✨ (feature), 🌐 (i18n)
-
-## Eerste gebruik
-Loop vraagt om **Accessibility permissions** (System Settings → Privacy & Security → Accessibility)
+- SwiftFormat: `swiftformat .` (CI lint via `.github/workflows/lint.yml`).
+- Commit-prefixen: 🐞 bug, ✨ feature, 🌐 i18n, 📝 docs, 🚚 verplaatsen/hernoemen.
+- Tests: `ColonnadeTests/` compileert specifieke bronbestanden (geen app-host); houd de reducer en engine
+  vrij van AppKit/Defaults zodat ze testbaar blijven.

@@ -63,7 +63,7 @@ public enum UltrawideDockClickCycle: String, Defaults.Serializable, CaseIterable
 // MARK: - UI-configurable Settings
 
 extension Defaults.Keys {
-    // App
+    /// App
     static let showDockIcon = Key<Bool>("showDockIcon", default: false, iCloud: true)
 
     // Accent Color
@@ -78,7 +78,7 @@ extension Defaults.Keys {
     static let radialMenuThickness = Key<CGFloat>("radialMenuThickness", default: 22, iCloud: true)
     static let radialMenuActions = Key<[RadialMenuAction]>("radialMenuActions", default: RadialMenuAction.defaultRadialMenuActions, iCloud: true)
 
-    // Ultrawide Dock
+    /// Ultrawide Dock
     static let ultrawideDockTriggerMode = Key<UltrawideDockTriggerMode>("ultrawideDockTriggerMode", default: .alwaysOn, iCloud: true)
     /// In `.automatic` mode, the narrowest aspect ratio (width / height) that still counts as "wide".
     static let ultrawideDockAutomaticAspectRatio = Key<Double>("ultrawideDockAutomaticAspectRatio", default: 2.0, iCloud: true)
@@ -151,7 +151,7 @@ extension Defaults.Keys {
     /// Excluded apps
     static let excludedApps = Key<[URL]>("excludedApps", default: [], iCloud: true)
 
-    // About
+    /// About
     static let checkForUpdatesAutomatically = Key<Bool>("checkForUpdatesAutomatically", default: true, iCloud: false)
 }
 

@@ -518,10 +518,18 @@ extension WindowFrameResolver {
             var maxY = screenFrame.maxY
 
             for frame in nonIntersectingWindowFrames {
-                if frame.maxX <= currentFrame.minX { minX = max(minX, frame.maxX) }
-                if frame.maxY <= currentFrame.minY { minY = max(minY, frame.maxY) }
-                if frame.minX >= currentFrame.maxX { maxX = min(maxX, frame.minX) }
-                if frame.minY >= currentFrame.maxY { maxY = min(maxY, frame.minY) }
+                if frame.maxX <= currentFrame.minX {
+                    minX = max(minX, frame.maxX)
+                }
+                if frame.maxY <= currentFrame.minY {
+                    minY = max(minY, frame.maxY)
+                }
+                if frame.minX >= currentFrame.maxX {
+                    maxX = min(maxX, frame.minX)
+                }
+                if frame.minY >= currentFrame.maxY {
+                    maxY = min(maxY, frame.minY)
+                }
             }
 
             return (minX, minY, maxX, maxY)

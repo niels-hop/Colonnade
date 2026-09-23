@@ -66,7 +66,7 @@ public struct HorizontalLayoutEngine: Sendable {
             throw HorizontalLayoutError.minimumWidthsDoNotFit
         }
 
-        let dividerX = requestedPosition.clamped(to: minimumDividerX ... maximumDividerX)
+        let dividerX = requestedPosition.clamped(to: minimumDividerX...maximumDividerX)
         var tiles = snapshot.tiles
         tiles[leftIndex] = tile(left.id, x: left.frame.minX, width: dividerX - left.frame.minX)
         tiles[rightIndex] = tile(right.id, x: dividerX, width: right.frame.maxX - dividerX)
@@ -92,7 +92,7 @@ public struct HorizontalLayoutEngine: Sendable {
             throw HorizontalLayoutError.duplicateTileID(id)
         }
 
-        let position = requestedPosition.clamped(to: 0 ... 1)
+        let position = requestedPosition.clamped(to: 0...1)
         var adjustments: [HorizontalLayoutAdjustment] = []
         if position != requestedPosition {
             adjustments.append(.positionClamped(requested: requestedPosition, applied: position))
@@ -228,7 +228,7 @@ public struct HorizontalLayoutEngine: Sendable {
         let indices: ClosedRange<Int>
         switch range {
         case .all:
-            indices = snapshot.tiles.startIndex ... snapshot.tiles.index(before: snapshot.tiles.endIndex)
+            indices = snapshot.tiles.startIndex...snapshot.tiles.index(before: snapshot.tiles.endIndex)
         case let .between(firstID, lastID):
             guard let first = snapshot.tiles.firstIndex(where: { $0.id == firstID }) else {
                 throw HorizontalLayoutError.missingTile(firstID)
@@ -239,7 +239,7 @@ public struct HorizontalLayoutEngine: Sendable {
             guard first <= last else {
                 throw HorizontalLayoutError.invalidRange
             }
-            indices = first ... last
+            indices = first...last
         }
 
         let outerX = snapshot.tiles[indices.lowerBound].frame.minX
@@ -280,7 +280,7 @@ public struct HorizontalLayoutEngine: Sendable {
             tiles = [
                 tile(sideIDs[0], x: 0, width: 0.25),
                 tile(focusID, x: 0.25, width: 0.5),
-                tile(sideIDs[1], x: 0.75, width: 0.25),
+                tile(sideIDs[1], x: 0.75, width: 0.25)
             ]
         case let .mainAndSidebar(mainID, sidebarEdge):
             try requireTileCount(2, actual: ids.count)
@@ -327,8 +327,12 @@ public struct HorizontalLayoutEngine: Sendable {
     }
 
     private func gapDistance(_ span: HorizontalLayoutSpan, to position: CGFloat) -> CGFloat {
-        if position < span.x { return span.x - position }
-        if position > span.x + span.width { return position - (span.x + span.width) }
+        if position < span.x {
+            return span.x - position
+        }
+        if position > span.x + span.width {
+            return position - (span.x + span.width)
+        }
         return 0
     }
 

@@ -1,617 +1,77 @@
 <div align="center">
-  <img width="225" height="225" src="/assets/graphics/Classic.png" alt="Logo">
-  <h1><b>Loop</b></h1>
-  <p>Window management made elegant.<br>
-  <a href="https://github.com/MrKai77/Loop#features"><strong>Explore Loop »</strong></a><br><br>
-  <a href="https://github.com/MrKai77/Loop/releases/latest/download/Loop.zip">Download for macOS</a><br>
-  <i>~ Compatible with macOS 13 and later. ~</i></p>
+  <img width="160" height="160" src="assets/graphics/icon.png" alt="Colonnade icon">
+  <h1><b>Colonnade</b></h1>
+  <p>Horizontal window management for wide screens.<br>
+  <a href="https://github.com/niels-hop/Colonnade/releases/latest/download/Colonnade.zip"><strong>Download for macOS »</strong></a><br>
+  <i>macOS 13 or later · free and open source (GPL-3.0)</i></p>
 </div>
 
-Loop is a macOS app that simplifies window management for you. You can effortlessly choose your window direction using a radial menu triggered by a simple key press, and customize it according to your preferences with personalized colors and settings. You can easily move, resize, and arrange your windows with just a few clicks, saving you valuable time and energy.
+Colonnade arranges your windows side by side as full-height columns. You hold two keys and move the mouse, and that's the whole app.
 
-> [!NOTE]
->
-> Loop is constantly evolving, with new features and improvements added regularly to enhance your window management experience on macOS.
+It is built for super-ultrawide monitors (32:9 and wider), where half and quarter tiles stop making sense. It works just as well on a MacBook's built-in display.
 
-<h6 align="center">
-  <img src="assets/graphics/loop_demo.gif" alt="Loop Demo">
-  <br /><br />
-  <a href="https://discord.gg/2CZ2N6PKjq">
-    <img src="https://img.shields.io/badge/Discord-join%20us-7289DA?logo=discord&logoColor=white&style=for-the-badge&labelColor=23272A" />
-  </a>
-  <a href="https://github.com/MrKai77/Loop/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/MrKai77/Loop?label=License&color=5865F2&style=for-the-badge&labelColor=23272A" />
-  </a>
-  <a href="https://github.com/MrKai77/Loop/stargazers">
-    <img src="https://img.shields.io/github/stars/MrKai77/Loop?label=Stars&color=57F287&style=for-the-badge&labelColor=23272A" />
-  </a>
-  <a href="https://github.com/MrKai77/Loop/network/members">
-    <img src="https://img.shields.io/github/forks/MrKai77/Loop?label=Forks&color=ED4245&style=for-the-badge&labelColor=23272A" />
-  </a>
-  <a href="https://github.com/MrKai77/Loop/issues">
-    <img src="https://img.shields.io/github/issues/MrKai77/Loop?label=Issues&color=FEE75C&style=for-the-badge&labelColor=23272A" />
-  </a>
-  <br />
-</h6>
+## How it works
+
+1. **Hold the trigger** (by default <kbd>fn</kbd>; many people use <kbd>⌃</kbd> + <kbd>⌥</kbd>). The **dock** appears: a live miniature of your screen with the windows that are already there.
+2. **Move the mouse sideways** to pick a spot:
+   - **empty space** fills the gap,
+   - **the edge of a window** inserts the new window next to it, and the neighbours make room,
+   - **the middle of a window** stacks on top of it at the same width.
+3. **Click** to cycle through widths (½ → ⅓ → ¼ by default). **Scroll** to fine-tune. **Drag a divider** to resize two neighbours at once. **Move down** into the lower lane to place a window freely.
+4. **Release** to place the window. <kbd>Esc</kbd> cancels.
+
+Windows always span the full height of the screen. Colonnade only divides the horizontal space: no vertical splits and no quarter tiles.
 
 ## Features
 
-### Radial Menu
+- **The dock**: a screen-shaped minimap that shows existing windows, dividers and a live preview of where the window will go.
+- **Stacks and dividers**: windows at exactly the same position form a stack. Dragging a divider resizes the columns on both sides.
+- **Saved layouts**: save your arrangement to one of three slots (Work, Focus, MacBook) and restore it from the menu bar. It can also restore automatically at login, after wake, or when displays or Spaces change.
+- **Works on any screen**: by default the dock is used everywhere. Switch to *Automatic* to use it only on wide screens, with a configurable aspect-ratio threshold, and fall back to a radial menu elsewhere.
+- **Tweakable**: dock size, pointer sensitivity, the click width cycle, padding, animations, accent colour, excluded apps and more, all in Settings.
+- **Keyboard shortcuts**: every window action from Loop's engine is still available as a keybind.
 
-The Radial Menu allows you to manipulate windows using your mouse/trackpad. Hold down the trigger key and move your cursor in the desired direction to move and resize the window.
+## Install
 
-<div><video controls src="https://github.com/user-attachments/assets/658f7043-79a1-4690-83b6-a714fe6245c8" muted="false"></video></div>
+1. Download [`Colonnade.zip`](https://github.com/niels-hop/Colonnade/releases/latest/download/Colonnade.zip), unzip it and move **Colonnade.app** to **/Applications**.
+2. Releases are not notarised by Apple, so the first launch is blocked. Right-click the app, choose **Open**, then **Open** again. You can also run:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/Colonnade.app
+   ```
+3. Grant **Accessibility** access when asked: System Settings → Privacy & Security → Accessibility → Colonnade.
+   Each macOS user account grants this separately.
 
-### Preview
+Colonnade checks GitHub once a day for a new release and tells you when one is out. You can turn this off under Settings → About. It never installs anything by itself.
 
-The preview window enables you to see the resize action *before* committing to it.
+## Building from source
 
-<div><video controls src="https://github.com/user-attachments/assets/5ecb3ae8-f295-406f-b968-31e539f4a098" muted="false"></video></div>
-
-### Keyboard Shortcuts
-
-Loop allows you to assign any key in tandem with the trigger key to initiate a window manipulation action.
-
-<div><video controls src="https://github.com/user-attachments/assets/d865329f-0533-4eeb-829d-9aa6159f454b" muted="false"></video></div>
-
-### Cycles
-
-Loop can become very powerful when paired with cycles. These enable you to perform multiple window manipulations in quick succession by pressing the same key combination repeatedly, or by left-clicking repeatedly!
-
-<div><video controls src="https://github.com/user-attachments/assets/1adb1325-775d-4687-9085-71c7f775d65d" muted="false"></video></div>
-
-### Stash
-
-Hide windows at the screen edge to declutter your workspace. Hover near the edge or use a keybind to access them whenever you need.
-
-<div><video controls src="https://github.com/user-attachments/assets/080ba2fb-41b3-4b39-9000-a76f2fc794ed" muted="false"></video></div>
-
-### Theming
-
-#### Radial Menu
-
-The radial menu is fully customizable in terms of width, shape, and color. It is also completely optional and can be disabled. Both the cursor interaction and the radial menu itself are independently toggleable.
-
-<div><video controls src="https://github.com/user-attachments/assets/b2d3f6c8-dd68-4ac2-a30a-19f36a8fd94d" muted="false"></video></div>
-
-#### Preview
-
-Adjust the padding, corner radius, border color, and border width of the optional preview window.
-
-<div><video controls src="https://github.com/user-attachments/assets/fc107861-8125-42c2-b987-2fff554078d5" muted="false"></video></div>
-
-## Usage
-
-### Installation
-
-#### Homebrew
+Requirements: Xcode 26 or later, macOS 13 or later.
 
 ```bash
-brew install loop
+git clone https://github.com/niels-hop/Colonnade.git
+cd Colonnade
+xcodebuild -project Colonnade.xcodeproj -scheme Colonnade -configuration Debug -skipMacroValidation build
 ```
 
-#### Manual Download
+`-skipMacroValidation` is needed on the command line because a dependency (Scribe) ships a Swift macro. In Xcode, you approve it once.
 
-Navigate to the [release page](https://github.com/MrKai77/Loop/releases/latest) and download the latest `.zip` file located at the bottom, or [click me](https://github.com/MrKai77/Loop/releases/latest/download/Loop.zip).
+By default builds are **ad-hoc signed**. macOS then forgets the Accessibility permission after every rebuild. To avoid that, create a stable self-signed certificate once:
 
-### Triggering
+1. Open **Keychain Access → Certificate Assistant → Create a Certificate…**
+2. Name: `Colonnade Self-Signed` · Identity Type: *Self Signed Root* · Certificate Type: *Code Signing*
+3. Create `Colonnade/Local.xcconfig` (it is gitignored) containing:
+   ```
+   CODE_SIGN_IDENTITY = Colonnade Self-Signed
+   ```
 
-Loop uses a trigger key to function. This key must be held down or pressed to activate certain features within Loop. To access the radial menu, hold down the trigger key and move the cursor in the desired direction. Users who prefer keyboard shortcuts can assign a key to work with the trigger key, activating specific actions. The trigger key can be set in the "Behavior" tab of the "Settings" section. The trigger key can consist of one or multiple keys.
+`scripts/deploy.sh` builds a Release, installs it into `/Applications` and verifies the signature.
 
-To set Caps Lock as your trigger key, you have two options:
+## Coming from Loop?
 
-#### a. Change System Settings
+Colonnade is a separate app with its own bundle identifier (`com.nielshop.Colonnade`), so it can sit next to Loop. Don't run both at once with the same trigger key. Settings from the earlier personal build of this fork (`com.nielshop.Loop`) are imported automatically on first launch. Keybinds exported from Loop can be imported under Settings → Advanced.
 
-1. Go to System Settings → Keyboard → "Keyboard Shortcuts...".
-2. In the "Modifier Keys" tab, remap `Caps Lock (⇪) key` to `(^) Control`.
-3. Repeat this remapping process for every connected keyboard.
-4. In Loop, select the `Right Control` key as your trigger.
+## Credits and license
 
-#### b. Use an external App
+Colonnade is a fork of **[Loop](https://github.com/MrKai77/Loop)** by [Kai Azim](https://github.com/MrKai77) and contributors. Its window engine, settings framework ([Luminare](https://github.com/MrKai77/Luminare)) and much more come from Loop. Thank you!
 
-- [Hyperkey](https://hyperkey.app/)
-- [Karabiner Elements](https://karabiner-elements.pqrs.org/)
-
-#### c. Shell/AppleScript
-
-Loop can be controlled via shell commands or AppleScript using its URL scheme:
-
-```bash
-# Shell examples
-open "loop://direction/right"     # Move window to right half
-open "loop://action/maximize"     # Maximize window
-open "loop://screen/next"         # Move to next screen
-
-# AppleScript examples
-osascript -e 'tell application "Loop" to activate'
-osascript -e 'open location "loop://direction/left"'
-```
-
-You can also create custom scripts to chain multiple actions:
-
-```bash
-#!/bin/bash
-# Example: Move window right and then maximize
-open "loop://direction/right"
-sleep 0.5
-open "loop://action/maximize"
-```
-
-For a complete list of available commands:
-
-```bash
-open "loop://list/all"           # List all commands
-open "loop://list/actions"       # List window actions
-open "loop://list/keybinds"      # List custom keybinds
-```
-
-### Keyboard Shortcuts
-
-<table>
-  <thead>
-    <tr>
-      <th>Category</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>General</strong></td>
-      <td>Fullscreen, Maximize, Almost Maximize, Centre, MacOS Centre, Minimize, Hide</td>
-    </tr>
-    <tr>
-      <td><strong>Halves</strong></td>
-      <td>Top Half, Bottom Half, Left Half, Right Half</td>
-    </tr>
-    <tr>
-      <td><strong>Quarters</strong></td>
-      <td>Top Left Quarter, Top Right Quarter, Bottom Left Quarter, Bottom Right Quarter</td>
-    </tr>
-    <tr>
-      <td><strong>Horizontal Thirds</strong></td>
-      <td>Right Third, Right Two Thirds, Horizontal Center Third, Left Two Thirds, Left Third</td>
-    </tr>
-    <tr>
-      <td><strong>Vertical Thirds</strong></td>
-      <td>Top Third, Top Two Thirds, Vertical Center Third, Bottom Two Thirds, Bottom Third</td>
-    </tr>
-    <tr>
-      <td><strong>Screen Switching</strong></td>
-      <td>Next Screen, Previous Screen, Left Screen, Right Screen, Top Screen, Bottom Screen</td>
-    </tr>
-    <tr>
-      <td><strong>Window Manipulation</strong></td>
-      <td>Larger, Smaller, Shrink Top, Shrink Bottom, Shrink Right, Shrink Left, Grow Top, Grow Bottom, Grow Right, Grow Left, Move Up, Move Down, Move Right, Move Left</td>
-    </tr>
-    <tr>
-      <td><strong>More</strong></td>
-      <td>Initial Frame, Undo, Custom, Cycle</td>
-    </tr>
-  </tbody>
-</table>
-
-## Contributors
-
-To see all the contributors who have played a significant role in developing Loop, visit our [Contributors](CONTRIBUTORS.md) page.
-
-### How to Contribute
-
-For an extensive guide on how to contribute, check out the [contributing guide](CONTRIBUTING.md).
-
-## FAQ
-
-### Comparison
-
-<table>
-  <thead>
-    <tr>
-      <th></th>
-      <th>Loop</th>
-      <th>macOS&nbsp;15+</th>
-      <th>Rectangle&nbsp;Pro</th>
-      <th>Rectangle</th>
-      <th>Magnet</th>
-      <th>Moom</th>
-      <th>Swish</th>
-      <th>BetterTouchTool</th>
-      <th>Multitouch</th>
-      <th>Hammerspoon</th>
-      <th>Yabai</th>
-      <th>Amethyst</th>
-      <th>AeroSpace</th>
-      <th>1Piece</th>
-      <th>Wins</th>
-      <th>MacsyZones</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Price</td>
-      <td>Free</td>
-      <td>Free</td>
-      <td>$9.99</td>
-      <td>Free</td>
-      <td>$4.99</td>
-      <td>$15.00</td>
-      <td>$16.00</td>
-      <td>$14.00</td>
-      <td>$15.99</td>
-      <td>Free</td>
-      <td>Free</td>
-      <td>Free</td>
-      <td>Free</td>
-      <td>Free</td>
-      <td>$13.99</td>
-      <td>Free</td>
-    </tr>
-    <tr>
-      <td>Open&nbsp;Source</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Custom&nbsp;Frames</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Preview&nbsp;Window</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-    </tr>
-    <tr>
-      <td>Theming&nbsp;Options</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-    </tr>
-    <tr>
-      <td>Modifier&nbsp;+&nbsp;Mouse</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Modifier&nbsp;+&nbsp;Arrows</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Modifier&nbsp;+&nbsp;Trackpad</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Trackpad&nbsp;Gestures</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Padding&nbsp;/&nbsp;Margins</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Stashed&nbsp;Windows</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-    </tr>
-    <tr>
-      <td>Save&nbsp;Workspace</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Restore&nbsp;Initial&nbsp;Frame</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Pin&nbsp;Windows&nbsp;On&nbsp;Top</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-    </tr>
-    <tr>
-      <td>Snap&nbsp;Windows&nbsp;via&nbsp;Drag</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-    </tr>
-    <tr>
-      <td>Resize&nbsp;Adjacent&nbsp;Windows</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Action&nbsp;Sequences&nbsp;(Cycles)</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-    </tr>
-    <tr>
-      <td>Move&nbsp;Windows&nbsp;Across&nbsp;Screens</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-    </tr>
-    <tr>
-      <td>Switch&nbsp;Focus&nbsp;Between&nbsp;Windows</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-    </tr>
-    <tr>
-      <td>Scripting&nbsp;(URL&nbsp;/&nbsp;AppleScript&nbsp;or&nbsp;other)</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>✅</td>
-      <td>✅</td>
-      <td>❌</td>
-      <td>❌</td>
-    </tr>
-  </tbody>
-</table>
-
-> Information was gathered from each app’s official website and other online sources and may be outdated.
-> If you notice any inaccuracies, please open an issue or contact the maintainers.
-> Special thanks to the [Definitive MacApp Comparisons](https://docs.google.com/spreadsheets/d/1HtJN4oQ6oBDFmFaF4Qeq5vCGEU1g-KB1DEz5Sp_OwXo/edit?gid=456166567#gid=456166567) spreadsheet.
-
-### License
-
-This project is licensed under the [GNU GPLv3 license](LICENSE).
+Like Loop, Colonnade is licensed under the **GNU General Public License v3.0**; see [LICENSE](LICENSE). Source files that come from Loop keep their original author headers.

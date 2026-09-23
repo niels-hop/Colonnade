@@ -168,12 +168,18 @@ enum WindowEngine {
         willChangeScreens: Bool,
         resolvedProperties: Window.ResolvedProperties?
     ) -> Bool {
-        if resolvedProperties?.isEnhancedUserInterface ?? window.enhancedUserInterface { return false }
+        if resolvedProperties?.isEnhancedUserInterface ?? window.enhancedUserInterface {
+            return false
+        }
         if !willChangeScreens, #available(macOS 15, *), Defaults[.useSystemWindowManagerWhenAvailable] {
             return SystemWindowManager.MoveAndResize.enableAnimations
         }
-        if !Defaults[.animateWindowResizes] { return false }
-        if ProcessInfo.processInfo.isLowPowerModeEnabled, !Defaults[.ignoreLowPowerMode] { return false }
+        if !Defaults[.animateWindowResizes] {
+            return false
+        }
+        if ProcessInfo.processInfo.isLowPowerModeEnabled, !Defaults[.ignoreLowPowerMode] {
+            return false
+        }
         return true
     }
 

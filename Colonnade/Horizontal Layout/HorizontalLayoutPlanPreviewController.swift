@@ -59,7 +59,9 @@ final class HorizontalLayoutPlanPreviewController {
         }
 
         if let panel = controller?.window {
-            if panel.screen != screen { panel.setFrame(screen.frame, display: true) }
+            if panel.screen != screen {
+                panel.setFrame(screen.frame, display: true)
+            }
             panel.orderFrontRegardless()
             return
         }

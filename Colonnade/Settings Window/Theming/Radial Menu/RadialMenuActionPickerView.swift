@@ -146,10 +146,14 @@ struct RadialMenuActionPickerView: View {
         let pattern = pattern.lowercased()
 
         // Strong prefix match
-        if text.hasPrefix(pattern) { return 0 }
+        if text.hasPrefix(pattern) {
+            return 0
+        }
 
         // Contains substring
-        if text.contains(pattern) { return 1 }
+        if text.contains(pattern) {
+            return 1
+        }
 
         // Subsequence fuzzy match (letters appear in order)
         var tIndex = text.startIndex
@@ -161,7 +165,9 @@ struct RadialMenuActionPickerView: View {
             tIndex = text.index(after: tIndex)
         }
 
-        if pIndex == pattern.endIndex { return 2 }
+        if pIndex == pattern.endIndex {
+            return 2
+        }
 
         return nil
     }

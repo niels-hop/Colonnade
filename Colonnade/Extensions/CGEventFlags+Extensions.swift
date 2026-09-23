@@ -26,23 +26,49 @@ extension CGEventFlags {
     var keyCodes: Set<CGKeyCode> {
         var result: Set<CGKeyCode> = []
 
-        if contains(.maskRightShift) { result.insert(.kVK_RightShift) }
-        if contains(.maskLeftShift) { result.insert(.kVK_Shift) }
-        if !result.contains(.kVK_Shift), !result.contains(.kVK_RightShift), contains(.maskShift) { result.insert(.kVK_Shift) }
+        if contains(.maskRightShift) {
+            result.insert(.kVK_RightShift)
+        }
+        if contains(.maskLeftShift) {
+            result.insert(.kVK_Shift)
+        }
+        if !result.contains(.kVK_Shift), !result.contains(.kVK_RightShift), contains(.maskShift) {
+            result.insert(.kVK_Shift)
+        }
 
-        if contains(.maskRightControl) { result.insert(.kVK_RightControl) }
-        if contains(.maskLeftControl) { result.insert(.kVK_Control) }
-        if !result.contains(.kVK_Control), !result.contains(.kVK_RightControl), contains(.maskControl) { result.insert(.kVK_Control) }
+        if contains(.maskRightControl) {
+            result.insert(.kVK_RightControl)
+        }
+        if contains(.maskLeftControl) {
+            result.insert(.kVK_Control)
+        }
+        if !result.contains(.kVK_Control), !result.contains(.kVK_RightControl), contains(.maskControl) {
+            result.insert(.kVK_Control)
+        }
 
-        if contains(.maskRightAlternate) { result.insert(.kVK_RightOption) }
-        if contains(.maskLeftAlternate) { result.insert(.kVK_Option) }
-        if !result.contains(.kVK_Option), !result.contains(.kVK_RightOption), contains(.maskAlternate) { result.insert(.kVK_Option) }
+        if contains(.maskRightAlternate) {
+            result.insert(.kVK_RightOption)
+        }
+        if contains(.maskLeftAlternate) {
+            result.insert(.kVK_Option)
+        }
+        if !result.contains(.kVK_Option), !result.contains(.kVK_RightOption), contains(.maskAlternate) {
+            result.insert(.kVK_Option)
+        }
 
-        if contains(.maskRightCommand) { result.insert(.kVK_RightCommand) }
-        if contains(.maskLeftCommand) { result.insert(.kVK_Command) }
-        if !result.contains(.kVK_Command), !result.contains(.kVK_RightCommand), contains(.maskCommand) { result.insert(.kVK_Command) }
+        if contains(.maskRightCommand) {
+            result.insert(.kVK_RightCommand)
+        }
+        if contains(.maskLeftCommand) {
+            result.insert(.kVK_Command)
+        }
+        if !result.contains(.kVK_Command), !result.contains(.kVK_RightCommand), contains(.maskCommand) {
+            result.insert(.kVK_Command)
+        }
 
-        if contains(.maskSecondaryFn) { result.insert(.kVK_Function) }
+        if contains(.maskSecondaryFn) {
+            result.insert(.kVK_Function)
+        }
 
         return result
     }
