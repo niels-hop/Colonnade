@@ -103,6 +103,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Config.xcconfig,
+				Local.xcconfig,
 				Info.plist,
 				"Resources/AppIcon-Black Hole.icon",
 				"Resources/AppIcon-Black.icon",
@@ -458,7 +459,7 @@
 				CODE_SIGNING_ALLOWED = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.LoopHorizontalLayoutTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.ColonnadeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -471,7 +472,7 @@
 				CODE_SIGNING_ALLOWED = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.LoopHorizontalLayoutTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.ColonnadeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -484,7 +485,7 @@
 				CODE_SIGNING_ALLOWED = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.LoopHorizontalLayoutTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.ColonnadeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
@@ -494,7 +495,6 @@
 		2A8689092F809625005B521B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Loop Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -505,7 +505,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MrKai77.Loop.DockTile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.DockTile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -518,7 +518,6 @@
 		2A86890A2F809625005B521B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Loop Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -529,7 +528,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MrKai77.Loop.DockTile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.DockTile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -542,7 +541,6 @@
 		2A86890B2F809625005B521B /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Loop Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -553,7 +551,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MrKai77.Loop.DockTile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.DockTile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -603,7 +601,7 @@
 				CURRENT_PROJECT_VERSION = "$(BUILD_NUMBER)";
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 5F967GYF84;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -636,24 +634,23 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Loop/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Loop;
+				INFOPLIST_KEY_CFBundleDisplayName = Colonnade;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Loop";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Niels Hop. Based on Loop by Kai Azim (GPL-3.0).";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MrKai77.Loop;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -808,7 +805,6 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
-				CODE_SIGN_IDENTITY = "Loop Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
@@ -816,16 +812,16 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Loop/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Loop;
+				INFOPLIST_KEY_CFBundleDisplayName = Colonnade;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Loop";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Niels Hop. Based on Loop by Kai Azim (GPL-3.0).";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Loop;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -846,7 +842,6 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Loop/Loop.entitlements;
-				CODE_SIGN_IDENTITY = "Loop Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
@@ -854,16 +849,16 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Loop/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Loop;
+				INFOPLIST_KEY_CFBundleDisplayName = Colonnade;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Loop";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Niels Hop. Based on Loop by Kai Azim (GPL-3.0).";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Loop;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -881,7 +876,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				AUTOMATION_APPLE_EVENTS = NO;
-				CODE_SIGN_IDENTITY = "Loop Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -894,7 +888,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LoopUpdaterHelper/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MrKai77.Loop.UpdaterHelper;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.UpdaterHelper;
 				PRODUCT_NAME = LoopUpdaterHelper;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
 				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
@@ -912,7 +906,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				AUTOMATION_APPLE_EVENTS = NO;
-				CODE_SIGN_IDENTITY = "Loop Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -925,7 +918,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LoopUpdaterHelper/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MrKai77.Loop.UpdaterHelper;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.UpdaterHelper;
 				PRODUCT_NAME = LoopUpdaterHelper;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
 				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
@@ -944,7 +937,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				AUTOMATION_APPLE_EVENTS = NO;
-				CODE_SIGN_IDENTITY = "Loop Self-Signed";
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -957,7 +949,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LoopUpdaterHelper/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.MrKai77.Loop.UpdaterHelper;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nielshop.Colonnade.UpdaterHelper;
 				PRODUCT_NAME = LoopUpdaterHelper;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
 				RUNTIME_EXCEPTION_ALLOW_JIT = NO;

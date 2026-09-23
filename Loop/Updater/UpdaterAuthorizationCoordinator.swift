@@ -254,7 +254,7 @@ final class UpdaterAuthorizationCoordinator {
     }
 
     private func installerAuthorizationRightName() -> String {
-        let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.MrKai77.Loop"
+        let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.nielshop.Colonnade"
         return "\(bundleIdentifier).updater-auth"
     }
 

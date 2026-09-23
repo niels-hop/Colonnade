@@ -15,7 +15,7 @@ import UserNotifications
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let urlCommandHandler = URLCommandHandler()
 
-    private static let terminateNotificationName = Notification.Name("com.MrKai77.Loop.terminate")
+    private static let terminateNotificationName = Notification.Name("com.nielshop.Colonnade.terminate")
     private var terminateObserver: Any?
 
     private var launchedAsLoginItem: Bool {
@@ -100,7 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @discardableResult
     private func broadcastTerminateToOtherInstances() -> [pid_t] {
         let currentPID = ProcessInfo.processInfo.processIdentifier
-        let bundleId = Bundle.main.bundleIdentifier ?? "com.MrKai77.Loop"
+        let bundleId = Bundle.main.bundleIdentifier ?? "com.nielshop.Colonnade"
 
         let otherInstances = NSWorkspace.shared.runningApplications.filter {
             $0.bundleIdentifier == bundleId && $0.processIdentifier != currentPID

@@ -15,6 +15,11 @@ struct LoopApp: App {
     @Default(.hideMenuBarIcon) var hideMenuBarIcon
     @Default(.ultrawideDockTriggerMode) var ultrawideDockTriggerMode
 
+    init() {
+        // Must run before any setting is read, so upgrades from the pre-rename build keep their data.
+        LegacyDataMigration.runIfNeeded()
+    }
+
     var body: some Scene {
         MenuBarExtra(Bundle.main.appName, image: "menubarIcon", isInserted: Binding.constant(!hideMenuBarIcon)) {
             Picker(selection: $ultrawideDockTriggerMode) {

@@ -1,4 +1,4 @@
 /* Bundle display name */
-"CFBundleDisplayName" = "Loop";
+"CFBundleDisplayName" = "Colonnade";
 /* Copyright (human-readable) */
-"NSHumanReadableCopyright" = "Copyright ©️ 2026 Loop";
+"NSHumanReadableCopyright" = "Copyright © 2026 Niels Hop. Based on Loop by Kai Azim (GPL-3.0).";

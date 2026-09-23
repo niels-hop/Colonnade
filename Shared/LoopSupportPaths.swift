@@ -13,22 +13,22 @@ enum LoopSupportPaths {
         canonical(homeDirectory.appendingPathComponent("Library/Application Support", isDirectory: true))
     }
 
-    /// Returns the Loop application support root under the supplied home directory.
+    /// Returns the Colonnade application support root under the supplied home directory.
     static func loopDirectory(homeDirectory: URL) -> URL {
-        canonical(appSupportDirectory(homeDirectory: homeDirectory).appendingPathComponent("Loop", isDirectory: true))
+        canonical(appSupportDirectory(homeDirectory: homeDirectory).appendingPathComponent("Colonnade", isDirectory: true))
     }
 
-    /// Returns the Loop backups directory under the supplied home directory.
+    /// Returns the Colonnade backups directory under the supplied home directory.
     static func backupsDirectory(homeDirectory: URL) -> URL {
         canonical(loopDirectory(homeDirectory: homeDirectory).appendingPathComponent("Backups", isDirectory: true))
     }
 
-    /// Returns the Loop staging directory under the supplied home directory.
+    /// Returns the Colonnade staging directory under the supplied home directory.
     static func stagingDirectory(homeDirectory: URL) -> URL {
         canonical(loopDirectory(homeDirectory: homeDirectory).appendingPathComponent("Staging", isDirectory: true))
     }
 
-    /// Returns the Loop rollback directory under the supplied home directory.
+    /// Returns the Colonnade rollback directory under the supplied home directory.
     static func rollbackDirectory(homeDirectory: URL) -> URL {
         canonical(loopDirectory(homeDirectory: homeDirectory).appendingPathComponent("Rollback.noindex", isDirectory: true))
     }
